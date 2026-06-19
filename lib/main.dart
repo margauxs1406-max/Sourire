@@ -1,0 +1,216 @@
+import 'package:flutter/foundation.dart'; 
+import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:sourire/l10n/app_localizations.dart';
+import 'package:sourire/models/theme_app.dart';
+import 'package:sourire/screens/home.dart';
+import 'package:sourire/screens/screen_boot.dart'; 
+import 'package:sourire/screens/screen_lock.dart';
+import 'package:sourire/theme/tokens.dart';
+import 'package:sourire/theme/user_prefs.dart';
+import 'package:sourire/services/notifications_service.dart';
+import 'package:sourire/models/note_model.dart';      
+import 'package:timezone/data/latest.dart' as tz; 
+import 'package:timezone/timezone.dart' as tz;      
+import 'package:permission_handler/permission_handler.dart';
+import 'package:sourire/theme/theme_service.dart'; 
+
+// Variables globales
+NoteSourire? souvenirEnAttenteGlobal;
+int? idSouvenirEnCacheGlobal; 
+bool bocalVideEnCacheGlobal = false; // Cache pour le bocal vide
+
+// On démarre verrouillé par défaut pour laisser le ScreenBoot décider
+final ValueNotifier<bool> isAppLockedNotifier = ValueNotifier<bool>(true);
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // 1. INITIALISATION DES PRÉFÉRENCES DISQUE ET TIMEZONES
+  await UserPrefs.init(); 
+  tz.initializeTimeZones();
+  tz.setLocalLocation(tz.getLocation('Pacific/Noumea'));
+
+  // SÉCURITÉ AU DÉMARRAGE
+  if (!UserPrefs.biomatrieActive && UserPrefs.password.isEmpty) {
+    isAppLockedNotifier.value = false;
+  }
+  
+  // RECHARGER LE THEME SAUVEGARDÉ...
+  final String savedThemeId = UserPrefs.themeId;
+  final themeSauvegarde = ThemeRepository.tousLesThemes.firstWhere(
+    (t) => t.id == savedThemeId,
+    orElse: () => ThemeRepository.themeClassique,
+  );
+  
+  ThemeService.themeVisuelNotifier.value = themeSauvegarde;
+  await NotificationService.init();
+
+  // Permissions et rappels...
+  if (await Permission.notification.isDenied) {
+    await Permission.notification.request();
+  }
+  final statusExact = await Permission.scheduleExactAlarm.status;
+  if (statusExact.isDenied || statusExact.isPermanentlyDenied) {
+    await Permission.scheduleExactAlarm.request();
+  }
+
+  await NotificationService.planifierRappelGratitude();
+  await NotificationService.planifierRappelSouvenirs();
+  
+  runApp(const MyApp());
+}
+
+class MyApp extends StatefulWidget {
+  const MyApp({super.key});
+
+  static final ValueNotifier<ThemeMode> themeNotifier = ValueNotifier(_initialiseThemeInitial());
+  static final ValueNotifier<Locale> localeNotifier = ValueNotifier(
+    Locale(UserPrefs.langue == 'en' ? 'en' : 'fr', UserPrefs.langue == 'en' ? 'US' : 'FR'),
+  );
+
+  static ThemeMode _initialiseThemeInitial() {
+    final int hour = DateTime.now().hour;
+    return (hour >= 18 || hour < 6) ? ThemeMode.dark : ThemeMode.light;
+  }
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
+  DateTime? _timeWhenPaused;
+  final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    
+    // On attend que la structure de l'app soit stable avant d'intercepter le payload
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      NotificationService.configurerClic((payload) {
+        _analyserPayload(payload);
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  void _analyserPayload(String? payload) {
+    if (payload == null) return;
+
+    if (payload == 'rappel_gratitude') {
+      _traiterRappelSansSouvenir();
+    } else if (payload.startsWith('ouvrir_souvenir:')) {
+      final String idString = payload.split(':').last;
+      if (idString == 'aucun') {
+        bocalVideEnCacheGlobal = true; // On stocke l'information en cache
+      } else {
+        final int? idSouvenir = int.tryParse(idString);
+        if (idSouvenir != null) {
+          idSouvenirEnCacheGlobal = idSouvenir; // On stocke l'ID en cache
+        }
+      }
+    }
+
+    // On ne force la navigation vers la Home que si l'app n'est pas verrouillée
+    if (!isAppLockedNotifier.value) {
+      _navigatorKey.currentState?.pushAndRemoveUntil(
+        MaterialPageRoute(builder: (context) => const Home()),
+        (route) => false,
+      );
+    }
+  }
+
+  void _traiterRappelSansSouvenir() {
+    if (!isAppLockedNotifier.value) {
+      _navigatorKey.currentState?.pushAndRemoveUntil(
+        MaterialPageRoute(builder: (context) => const Home()),
+        (route) => false,
+      );
+    }
+  }
+
+  void _surAuthentificationReussie() {
+    isAppLockedNotifier.value = false;
+    _navigatorKey.currentState?.pushAndRemoveUntil(
+      MaterialPageRoute(builder: (context) => const Home()),
+      (route) => false,
+    );
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (!UserPrefs.biomatrieActive && UserPrefs.password.isEmpty) return;
+
+    if (state == AppLifecycleState.paused) {
+      _timeWhenPaused = DateTime.now();
+    }
+
+    if (state == AppLifecycleState.resumed) {
+      if (_timeWhenPaused != null) {
+        final deconnexionDuration = DateTime.now().difference(_timeWhenPaused!);
+        if (deconnexionDuration.inSeconds >= 30) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (!isAppLockedNotifier.value) {
+              isAppLockedNotifier.value = true;
+              _navigatorKey.currentState?.push(
+                MaterialPageRoute(
+                  settings: const RouteSettings(name: 'ScreenLock'),
+                  builder: (context) => ScreenLock(onAuthenticated: _surAuthentificationReussie),
+                ),
+              );
+            }
+          });
+        }
+        _timeWhenPaused = null;
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder<ThemeMode>(
+      valueListenable: MyApp.themeNotifier,
+      builder: (_, ThemeMode currentMode, __) {
+        return ValueListenableBuilder<Locale>(
+          valueListenable: MyApp.localeNotifier,
+          builder: (context, Locale currentLocale, __) { 
+            return MaterialApp(
+              navigatorKey: _navigatorKey,
+              title: 'Sourire',
+              debugShowCheckedModeBanner: false,
+              themeMode: currentMode,
+              locale: currentLocale,
+              theme: ThemeData(
+                brightness: Brightness.light,
+                primarySwatch: Colors.orange,
+                scaffoldBackgroundColor: Colors.white,
+                colorScheme: ColorScheme.fromSeed(seedColor: orange, primary: orange, brightness: Brightness.light),
+              ),
+              darkTheme: ThemeData(
+                brightness: Brightness.dark,
+                primarySwatch: Colors.orange,
+                scaffoldBackgroundColor: const Color(0xFF121212),
+                colorScheme: ColorScheme.fromSeed(seedColor: orange, primary: orange, brightness: Brightness.dark),
+              ),
+              localizationsDelegates: const [
+                AppLocalizations.delegate, 
+                GlobalMaterialLocalizations.delegate,
+                GlobalWidgetsLocalizations.delegate,
+                GlobalCupertinoLocalizations.delegate,
+              ],
+              supportedLocales: const [Locale('fr', 'FR'), Locale('en', 'US')],
+              home: const ScreenBoot(),
+            );
+          },
+        );
+      },
+    );
+  }
+}

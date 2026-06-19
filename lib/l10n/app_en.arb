@@ -1,0 +1,243 @@
+{
+  "@@locale": "en",
+
+  "titleSourire": "Sourire",
+
+  "welcomeMessage": "Hello {prenom},",
+  "mainQuestion": "What makes you happy today?",
+
+  "personalData": "Personal data",
+  "firstName": "First name",
+  "email": "Email",
+  "password": "Password",
+  "biometrics": "Biometrics",
+
+  "accountSettings": "Account settings",
+  "notifications": "Notifications",
+  "permissions": "Permissions",
+  "archiving": "Archiving",
+  "accessibility": "Appearance",
+  "languages": "Languages",
+  "help": "Help",
+  "logout": "Log out",
+
+  "dailyGratitudeReminder": "Daily gratitude reminder",
+  "dailyReminderSubtitle": "Remind me to write down a positive memory",
+  "reminderTime": "Reminder time",
+
+  "drawnMemoriesFrequency": "Frequency of drawn memories",
+  "drawnMemoriesSubtitle": "Suggest an old memory for me to review",
+  "frequencySettings": "Frequency settings",
+  "categoriesIncluded": "Categories included",
+
+  "everyDay": "Every day",
+  "everyTwoDays": "Every 2 days",
+  "everyWeek": "Every week",
+
+  "photoGalleryAccess": "Photo gallery access",
+  "photoGallerySubtitle": "Essential for adding photos of your precious moments.",
+
+  "secureLocalStorage": "Secure local storage",
+  "secureStorageSubtitle": "Your memories are automatically saved locally on your private storage space.",
+  "active": "Active",
+  "spaceOccupied": "Storage used",
+  "storageCounter": "Photos: {photos} KB | Notes: {notes} KB",
+
+  "darkMode": "Dark mode",
+  "darkModeSubtitle": "Switch the interface to dark tones to rest your eyes at night.",
+  "smoothAnimations": "Smooth animations",
+  "smoothAnimationsSubtitle": "Replaces the jar's tornado effect with a lighter fade-in effect.",
+
+  "french": "Français",
+  "english": "English",
+
+  "helpFaq": "Help / FAQ",
+  "faqQuestion1": "Where are my memories stored?",
+  "faqAnswer1": "They remain locally in your phone's secure folder, no one else has access to them.",
+  "faqQuestion2": "How does the lucky draw work?",
+  "faqAnswer2": "Shake your phone or click on the jar to bring up a random memory.",
+  "faqQuestion3": "How to categorize memories?",
+  "faqAnswer3": "Go to history and long-press a memory. You can then select multiple items and choose 'Categorize'.",
+  "faqQuestion4": "How to delete memories?",
+  "faqAnswer4": "Go to history, long-press the memory, select it and press the 'Delete' button.",
+
+  "filterTitle": "Filter",
+  "categoriesTitle": "Categories",
+  "catSelfLove": "Self-love",
+  "catFriendship": "Friendship",
+  "catCouple": "Couple",
+  "catFamily": "Family",
+  "catLeisure": "Leisure",
+  "catWork": "Work",
+  "catOthers": "Others",
+  "catUnclassified": "Unclassified",
+  "btnNewCategory": "New category",
+  "hintNewCategory": "Category name...",
+  "btnDeleteCategories": "Delete categories",
+  "noCustomCategoryToDelete": "No custom categories to delete.",
+  "btnClose": "Close"
+  "titleDeleteModal": "Manage categories",
+  "btnReset": "Reset",
+  "btnFilter": "Filter",
+
+  "writeHappyThought": "Write down what makes you happy...",
+  "btnValidate": "Validate",
+
+  "categoryQuestion": "Which category(ies) does this souvenir belong to?",
+  "btnSkip": "Skip",
+
+  "today": "Today",
+  "yesterday": "Yesterday",
+  "btnDeleteSelection": "Delete",
+  "btnCategorizeSelection": "Categorize",
+
+  "galleryRecent": "Recent",
+  "galleryPreview": "Preview",
+  "btnOk": "OK"
+
+  "alertWarningTitle": "Warning",
+  "galleryDisabledMessage": "You have disabled access to your photo gallery. Please enable it in your permissions.",
+  "btnEnableAccess": "Enable access"
+
+  "emptyJarMessage": "The jar is empty, add a memory!",
+  "deleteConfirmMessage": "Are you sure you want to permanently delete these memories?",
+  "btnCancel": "Cancel",
+  "btnDeleteConfirm": "Delete",
+  "recategorizeTitle": "Select the categories to apply to the selected memories:",
+  "btnSave": "Save"
+
+  "onboardingBtnGetStarted": "Get started",
+  "onboardingWelcomeMessage": "Welcome to your\npersonal space designed\nto bring back your\nsmile!",
+  "onboardingQuestionName": "What is your name?",
+  "onboardingHintName": "First name",
+  "onboardingQuestionGender": "You are...",
+  "onboardingGenderMale": "A man",
+  "onboardingGenderFemale": "A woman",
+  "onboardingSecurityTitle": "Secure your data",
+  "onboardingHintEmail": "Email",
+  "onboardingEmailValid": "valid email",
+  "onboardingEmailInvalid": "invalid email",
+  "onboardingHintPassword": "Password (min. 6 chars)",
+  "onboardingBiometricsTitle": "Simplify your access to the app",
+  "onboardingBiometricsLabel": "Enable biometrics",
+  "onboardingBtnNext": "Next",
+  "onboardingBtnValidate": "Validate"
+
+  {
+  "demoSkip": "SKIP",
+  "demoBtnNext": "Next",
+  "demoBtnFinish": "Finish",
+  "demoPhotoTitle": "Add a photo",
+  "demoPhotoDesc": "Click here to import your favorite photos and organize them in your personal space.",
+  "demoNoteTitle": "Write a note",
+  "demoNoteDesc": "Save a thought, a sweet word, or a text-based memory to keep.",
+  "demoBocalTitle": "Your memory jar",
+  "demoBocalDesc": "Tap the jar at any time to randomly draw a saved memory and put a smile back on your face!",
+  "demoBurgerTitle": "Your history",
+  "demoBurgerDesc": "Open this menu at any time to find the chronological list of all your precious saved memories."
+}
+
+  {
+  "@@locale": "en",
+  "profilTitlePersonalData": "Personal data",
+  "profilLabelFirstName": "First name",
+  "profilLabelEmail": "Email",
+  "profilLabelPassword": "Password",
+  "profilLabelBiometrics": "Biometrics",
+  "profilTitleAccountSettings": "Account settings",
+  "profilMenuNotifications": "Notifications",
+  "profilMenuLanguage": "Application language",
+  "profilMenuDarkMode": "Dark theme",
+  "profilMenuSoftAnimations": "Smooth animations",
+  "profilTitleStorage": "Device storage",
+  "profilLabelImportedPhotos": "Imported photos",
+  "profilLabelTextMemories": "Textual memories",
+  "profilLabelGalleryAccess": "Gallery access",
+  "profilBtnEmpty": "Clear",
+  "profilSnackbarEmptied": "{label} cleared",
+  "@profilSnackbarEmptied": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "profilTitleHelp": "Need help?",
+  "profilHelpQuestion1": "How to add a memory?",
+  "profilHelpAnswer1": "Click the '+' button on the home screen to start writing a memory or importing a photo.",
+  "profilHelpQuestion2": "Is my data secure?",
+  "profilHelpAnswer2": "Yes, all your data is stored locally on your phone and encrypted.",
+  "profilAlertTitle": "Warning",
+  "profilAlertGalleryMessage": "Warning, if you decide to remove access to your photo gallery, you will no longer be able to save photos in your memories.",
+  "profilAlertBtnDisable": "Disable access",
+  "notifLabelTitleGratitude": "Daily gratitude reminder",
+  "notifLabelSubGratitude": "Remind me to write down a positive memory",
+  "notifLabelTime": "Reminder time",
+  "notifLabelTitleSouvenirs": "Drawn memories frequency",
+  "notifLabelSubSouvenirs": "Suggest an old memory for me to review",
+  "notifLabelFreqSettings": "Frequency settings",
+  "notifFreqEveryDay": "Every day",
+  "notifFreqEveryTwoDays": "Every 2 days",
+  "notifFreqEveryWeek": "Every week",
+  "notifLabelDayOfWeek": "Day of the week",
+  "notifDayMonday": "Monday",
+  "notifDayTuesday": "Tuesday",
+  "notifDayWednesday": "Wednesday",
+  "notifDayThursday": "Thursday",
+  "notifDayFriday": "Friday",
+  "notifDaySaturday": "Saturday",
+  "notifDaySunday": "Sunday",
+  "notifLabelCategoriesIncluded": "Categories included",
+  "notifAllCategories": "All categories"
+}
+}
+{
+  "resetPasswordTitle": "Reset your password",
+  "resetPasswordHintNew": "New password",
+  "resetPasswordHintConfirm": "Confirm password",
+  "resetPasswordErrorEmpty": "Please fill in all fields",
+  "resetPasswordErrorMismatch": "Passwords do not match",
+  "resetPasswordSuccess": "Password reset successfully",
+  "btnValidate": "Validate"
+}
+{
+  "lockBiometricReason": "Sourire security lock",
+  "lockInputHint": "Enter your password",
+  "lockErrorIncorrect": "Incorrect password",
+  "lockForgotPassword": "Forgot password?",
+  "lockBtnBiometric": "Use fingerprint",
+  "btnValidate": "Validate"
+}
+
+  "purchaseAlertTitle": "Limit reached",
+  "purchaseAlertPhotosMessage": "You have reached the maximum limit of 10 photos for the free version. Upgrade to Premium to add unlimited memories and unlock new themes!",
+  "purchaseAlertNotesMessage": "You have reached the maximum limit of 5 notes for the free version. Upgrade to Premium to add unlimited memories and unlock new themes!",
+  "btnGoPremium": "Go Premium"
+
+  // À l'intérieur de votre map ou classe de traduction EN
+  "emptyHistory": "History is empty",
+
+  {
+  "@@locale": "en",
+  "notifGratitudeChannelName": "Gratitude Reminder",
+  "notifGratitudeChannelDesc": "To remind you to write down your positive thoughts",
+  "notifSouvenirsChannelName": "Happy memory",
+  "notifSouvenirsChannelDesc": "Psst, look what just popped up...",
+  "notifGratitudeTitle": "Gratitude reminder",
+  "notifGratitudeBody": "What positive thing happened in your day? ☀️ ",
+  "notifSouvenirsDefaultTitle": "Psst, look what just popped up...😉",
+  "notifSouvenirsEmptyTitle": "Your happiness jar is empty...",
+  "notifSouvenirsEmptyBody": "Add your first happy memories to be able to see them!",
+  "notifSouvenirsPhotoBody": "📸 Take a look at this photo!"
+}
+
+  "themeClassique": "Classic",
+  "themeMontagne": "Mountain",
+  "themeMer": "Ocean",
+  "themeAbstrait": "Abstract",
+  "themeSport": "Sports",
+  "themeMusique": "Music",
+  "themeCinema": "Cinema",
+  "themeAnimauxMarins": "Marine Animals",
+  "themeFloral": "Floral",
+  "themeKawaii": "Kawaii",

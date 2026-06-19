@@ -1,0 +1,282 @@
+{
+  "@@locale": "fr",
+
+  "titleSourire": "Sourire",
+
+  "welcomeMessage": "Bonjour {prenom},",
+  "@welcomeMessage": {
+    "description": "Message d'accueil personnalisé",
+    "placeholders": {
+      "prenom": {
+        "type": "String",
+        "example": "Margaux"
+      }
+    }
+  },
+  "mainQuestion": "Qu’est-ce qui te rend {accord} aujourd’hui ?"
+
+  "personalData": "Données personnelles",
+  "firstName": "Prénom",
+  "email": "Email",
+  "password": "Mot de passe",
+  "biometrics": "Biométrie",
+
+  "accountSettings": "Paramètres du compte",
+  "notifications": "Notifications",
+  "permissions": "Autorisations",
+  "archiving": "Archivage",
+  "accessibility": "Apparence",
+  "languages": "Langues",
+  "help": "Aide",
+  "logout": "Se déconnecter",
+
+  "dailyGratitudeReminder": "Rappel quotidien de gratitude",
+  "dailyReminderSubtitle": "Me rappeler de noter un souvenir positif",
+  "reminderTime": "Heure du rappel",
+
+  "drawnMemoriesFrequency": "Fréquence des souvenirs tirés",
+  "drawnMemoriesSubtitle": "Me proposer un vieux souvenir à revoir",
+  "frequencySettings": "Réglages de la fréquence",
+  "categoriesIncluded": "Catégories incluses",
+
+  "everyDay": "Tous les jours",
+  "everyTwoDays": "Tous les 2 jours",
+  "everyWeek": "Toutes les semaines",
+
+  "photoGalleryAccess": "Accès à la galerie photo",
+  "photoGallerySubtitle": "Indispensable pour ajouter des photos de tes moments précieux.",
+
+  "secureLocalStorage": "Stockage local sécurisé",
+  "secureStorageSubtitle": "Tes souvenirs sont automatiquement sauvegardés localement sur ton espace de stockage privé.",
+  "active": "Actif",
+  "spaceOccupied": "Espace occupé",
+  "storageCounter": "Photos : {photos} Ko | Notes : {notes} Ko",
+  "@storageCounter": {
+    "placeholders": {
+      "photos": { "type": "String" },
+      "notes": { "type": "String" }
+    }
+  },
+
+  "darkMode": "Mode sombre",
+  "darkModeSubtitle": "Bascule l'interface dans des tons sombres pour reposer tes yeux le soir.",
+  "smoothAnimations": "Animations douces",
+  "smoothAnimationsSubtitle": "Remplace l'effet tornade du bocal par une apparition en fondu plus légère.",
+
+  "french": "Français",
+  "english": "English",
+
+  "helpFaq": "Aide / FAQ",
+  "faqQuestion1": "Où sont stockés mes souvenirs ?",
+  "faqAnswer1": "Ils restent localement dans le dossier sécurisé de ton téléphone, personne d'autre n'y a accès.",
+  "faqQuestion2": "Comment fonctionne le tirage au sort ?",
+  "faqAnswer2": "Secoue ton téléphone ou clique sur le bocal pour faire remonter un souvenir au hasard.",
+  "faqQuestion3": "Comment catégoriser des souvenirs ?",
+  "faqAnswer3": "Va dans l'historique et appuie longuement sur un souvenir. Tu pourras alors en sélectionner plusieurs et choisir 'Catégoriser'.",
+  "faqQuestion4": "Comment supprimer des souvenirs ?",
+  "faqAnswer4": "Va dans l'historique, fais un appui long le souvenir, sélectionne-le et appuie sur le bouton 'Supprimer'.",
+
+  "filterTitle": "Filtrer",
+  "categoriesTitle": "Catégories",
+  "catSelfLove": "Amour de soi",
+  "catFriendship": "Amitié",
+  "catCouple": "Couple",
+  "catFamily": "Famille",
+  "catLeisure": "Loisirs",
+  "catWork": "Travail",
+  "catOthers": "Autres",
+  "catUnclassified": "Non classées",
+  "btnNewCategory": "Nouvelle catégorie",
+  "hintNewCategory": "Nom de la catégorie..."
+  "btnDeleteCategories": "Supprimer des catégories",
+  "noCustomCategoryToDelete": "Aucune catégorie personnalisée à supprimer.",
+  "btnClose": "Fermer"
+  "titleDeleteModal": "Gérer les catégories",
+  "btnReset": "Rétablir",
+  "btnFilter": "Filtrer",
+
+  "writeHappyThought": "Écris ce qui te rend {accord}...",
+  "btnValidate": "Valider",
+
+  "categoryQuestion": "À quelle(s) catégorie(s) appartient ce souvenir ?",
+  "btnSkip": "Passer",
+
+  "today": "Aujourd'hui",
+  "yesterday": "Hier",
+  "btnDeleteSelection": "Supprimer",
+  "btnCategorizeSelection": "Catégoriser",
+
+  "galleryRecent": "Recent",
+  "galleryPreview": "Aperçu",
+  "btnOk": "OK"
+
+  "alertWarningTitle": "Attention",
+  "galleryDisabledMessage": "Tu as désactivé l'accès à ta galerie photo. Active-la dans tes autorisations.",
+  "btnEnableAccess": "Activer l'accès"
+
+  "emptyJarMessage": "Le bocal est vide, ajoute un souvenir !",
+  "deleteConfirmMessage": "Voulez-vous vraiment supprimer définitivement ces souvenirs ?",
+  "btnCancel": "Annuler",
+  "btnDeleteConfirm": "Supprimer",
+  "recategorizeTitle": "Sélectionnez les catégories à appliquer aux souvenirs sélectionnés :",
+  "btnSave": "Enregistrer"
+
+  "onboardingBtnGetStarted": "Commencer",
+  "onboardingWelcomeMessage": "Bienvenue dans ton\nespace personnel conçu\npour te redonner le\nsourire !",
+  "onboardingQuestionName": "Comment t'appelles-tu ?",
+  "onboardingHintName": "Prénom",
+  "onboardingQuestionGender": "Tu es...",
+  "onboardingGenderMale": "Un homme",
+  "onboardingGenderFemale": "Une femme",
+  "onboardingSecurityTitle": "Sécurise tes données",
+  "onboardingHintEmail": "Email",
+  "onboardingEmailValid": "email valide",
+  "onboardingEmailInvalid": "email non valide",
+  "onboardingHintPassword": "Mot de passe (6 caractères min.)",
+  "onboardingBiometricsTitle": "Facilite ton accès à l'application",
+  "onboardingBiometricsLabel": "Activer la biométrie",
+  "onboardingBtnNext": "Suivant",
+  "onboardingBtnValidate": "Valider"
+
+  {
+  "demoSkip": "PASSER",
+  "demoBtnNext": "Suivant",
+  "demoBtnFinish": "Terminer",
+  "demoPhotoTitle": "Ajouter une photo",
+  "demoPhotoDesc": "Clique ici pour importer tes photos préférées et les classer dans ton espace personnel.",
+  "demoNoteTitle": "Écrire une note",
+  "demoNoteDesc": "Enregistre une pensée, un mot doux ou un souvenir marquant textuel à conserver.",
+  "demoBocalTitle": "Ton bocal à souvenirs",
+  "demoBocalDesc": "Appuie sur le bocal à tout moment pour tirer au sort un souvenir enregistré et te redonner le sourire !",
+  "demoBurgerTitle": "Ton historique",
+  "demoBurgerDesc": "Ouvre ce menu à tout moment pour retrouver la liste chronologique de tous tes précieux souvenirs enregistrés."
+}
+
+  {
+  "@@locale": "fr",
+  "profilTitlePersonalData": "Données personnelles",
+  "profilLabelFirstName": "Prénom",
+  "profilLabelEmail": "Email",
+  "profilLabelPassword": "Mot de passe",
+  "profilLabelBiometrics": "Biométrie",
+  "profilTitleAccountSettings": "Paramètres du compte",
+  "profilMenuNotifications": "Notifications",
+  "profilMenuLanguage": "Langue de l'application",
+  "profilMenuDarkMode": "Thème sombre",
+  "profilMenuSoftAnimations": "Animations douces",
+  "profilTitleStorage": "Stockage de l'appareil",
+  "profilLabelImportedPhotos": "Photos importées",
+  "profilLabelTextMemories": "Souvenirs textuels",
+  "profilLabelGalleryAccess": "Accès à la galerie",
+  "profilBtnEmpty": "Vider",
+  "profilSnackbarEmptied": "{label} vidé",
+  "@profilSnackbarEmptied": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "profilTitleHelp": "Besoin d'aide ?",
+  "profilHelpQuestion1": "Comment ajouter un souvenir ?",
+  "profilHelpAnswer1": "Clique sur le bouton '+' sur l'écran d'accueil pour commencer à rédiger un souvenir ou importer une photo.",
+  "profilHelpQuestion2": "Mes données sont-elles sécurisées ?",
+  "profilHelpAnswer2": "Oui, toutes tes données sont stockées localement sur ton téléphone et chiffrées.",
+  "profilAlertTitle": "Attention",
+  "profilAlertGalleryMessage": "Attention, si tu décides de supprimer l'accès à ta galerie photo, tu ne pourras plus enregistrer de photos dans tes souvenirs.",
+  "profilAlertBtnDisable": "Désactiver l'accès",
+  "notifLabelTitleGratitude": "Rappel quotidien de gratitude",
+  "notifLabelSubGratitude": "Me rappeler de noter un souvenir positif",
+  "notifLabelTime": "Heure du rappel",
+  "notifLabelTitleSouvenirs": "Fréquence des souvenirs tirés",
+  "notifLabelSubSouvenirs": "Me proposer un vieux souvenir à revoir",
+  "notifLabelFreqSettings": "Réglages de la fréquence",
+  "notifFreqEveryDay": "Tous les jours",
+  "notifFreqEveryTwoDays": "Tous les 2 jours",
+  "notifFreqEveryWeek": "Toutes les semaines",
+  "notifLabelDayOfWeek": "Jour de la semaine",
+  "notifDayMonday": "Lundi",
+  "notifDayTuesday": "Mardi",
+  "notifDayWednesday": "Mercredi",
+  "notifDayThursday": "Jeudi",
+  "notifDayFriday": "Vendredi",
+  "notifDaySaturday": "Samedi",
+  "notifDaySunday": "Dimanche",
+  "notifLabelCategoriesIncluded": "Catégories incluses",
+  "notifAllCategories": "Toutes catégories"
+}
+}
+{
+  "resetPasswordTitle": "Réinitialise ton mot de passe",
+  "resetPasswordHintNew": "Nouveau mot de passe",
+  "resetPasswordHintConfirm": "Confirmez le mot de passe",
+  "resetPasswordErrorEmpty": "Veuillez remplir tous les champs",
+  "resetPasswordErrorMismatch": "Les mots de passe ne correspondent pas",
+  "resetPasswordSuccess": "Mot de passe réinitialisé avec succès",
+  "btnValidate": "Valider"
+}
+{
+  "lockBiometricReason": "Verrouillage de sécurité Sourire",
+  "lockInputHint": "Entrez votre mot de passe",
+  "lockErrorIncorrect": "Mot de passe incorrect",
+  "lockForgotPassword": "Mot de passe oublié ?",
+  "lockBtnBiometric": "Utiliser l'empreinte",
+  "btnValidate": "Valider"
+}
+  "purchaseAlertTitle": "Limite atteinte",
+  "purchaseAlertPhotosMessage": "Tu as atteint la limite maximale de 10 photos pour la version gratuite. Passe à la version Premium pour ajouter des souvenirs en illimité et débloquer de nouveaux thèmes !",
+  "purchaseAlertNotesMessage": "Tu as atteint la limite maximale de 5 notes pour la version gratuite. Passe à la version Premium pour ajouter des souvenirs en illimité et débloquer de nouveaux thèmes !",
+  "btnGoPremium": "Passer Premium"
+
+  "emptyHistory": "L'historique est vide",
+
+  {
+  "@@locale": "fr",
+  "notifGratitudeChannelName": "Rappel de Gratitude",
+  "notifGratitudeChannelDesc": "Pour te rappeler de noter tes pensées positives",
+  "notifSouvenirsChannelName": "Souvenir heureux",
+  "notifSouvenirsChannelDesc": "Psst, regarde ce qui vient de remonter...",
+  "notifGratitudeTitle": "Rappel de gratitude",
+  "notifGratitudeBody": "Que s'est-il passé de positif dans ta journée ? ☀️ ",
+  "notifSouvenirsDefaultTitle": "Psst, regarde ce qui vient de remonter...😉",
+  "notifSouvenirsEmptyTitle": "Ton bocal à bonheur est vide...",
+  "notifSouvenirsEmptyBody": "Ajoute tes premiers souvenirs heureux pour pouvoir les revoir ! ",
+  "notifSouvenirsPhotoBody": "📸 Jette un oeil à cette photo !"
+}
+
+{
+  "premiumSuccessSnackBar": "Premium Activé ! Tous les verrous ont sauté. Thème '{themeLabel}' appliqué.",
+  "@premiumSuccessSnackBar": {
+    "description": "Message de succès après activation du thème premium",
+    "placeholders": {
+      "themeLabel": {
+        "type": "String"
+      }
+    }
+  },
+  "btnPasserPremium": "Passer Premium",
+  "btnAppliquer": "Appliquer",
+  "themesTitle": "Thèmes",
+  "themesDescription": "Personnalise ton interface et tes notes à tout moment en choisissant parmi les thèmes suivants.",
+  "notesPurchaseSuccessSnackBar": "Achat simulé avec succès ! Notes et photos illimitées débloquées."
+}
+
+{
+  "premiumSuccessSnackBar": "Premium Activated! All locks have been removed. '{themeLabel}' theme applied.",
+  "btnPasserPremium": "Go Premium",
+  "btnAppliquer": "Apply",
+  "themesTitle": "Themes",
+  "themesDescription": "Customize your interface and notes at any time by choosing from the following themes.",
+  "notesPurchaseSuccessSnackBar": "Purchase successfully simulated! Unlimited notes and photos unlocked."
+}
+
+  "themeClassique": "Classique",
+  "themeMontagne": "Montagne",
+  "themeMer": "Mer",
+  "themeAbstrait": "Abstrait",
+  "themeSport": "Sport",
+  "themeMusique": "Musique",
+  "themeCinema": "Cinéma",
+  "themeAnimauxMarins": "Animaux marins",
+  "themeFloral": "Floral",
+  "themeKawaii": "Kawaii",
