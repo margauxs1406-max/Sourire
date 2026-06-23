@@ -82,8 +82,8 @@ class _ScreenProfilState extends State<ScreenProfil> {
   Future<void> _calculerEspaceOccupe() async {
     Map<String, String> tailles = await StockageService.calculerEspaceOccupe();
     setState(() {
-      _taillePhotos = tailles['photos'] ?? '0 Ko';
-      _tailleNotes = tailles['notes'] ?? '0 Ko';
+      _taillePhotos = tailles['photos'] ?? '0';
+      _tailleNotes = tailles['notes'] ?? '0';
     });
   }
 

@@ -50,7 +50,7 @@
   "secureStorageSubtitle": "Tes souvenirs sont automatiquement sauvegardés localement sur ton espace de stockage privé.",
   "active": "Actif",
   "spaceOccupied": "Espace occupé",
-  "storageCounter": "Photos : {photos} Ko | Notes : {notes} Ko",
+  "storageCounter": "Photos : {photos} | Notes : {notes}",
   "@storageCounter": {
     "placeholders": {
       "photos": { "type": "String" },

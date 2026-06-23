@@ -41,7 +41,7 @@
   "secureStorageSubtitle": "Your memories are automatically saved locally on your private storage space.",
   "active": "Active",
   "spaceOccupied": "Storage used",
-  "storageCounter": "Photos: {photos} KB | Notes: {notes} KB",
+  "storageCounter": "Photos: {photos} | Notes: {notes}",
 
   "darkMode": "Dark mode",
   "darkModeSubtitle": "Switch the interface to dark tones to rest your eyes at night.",

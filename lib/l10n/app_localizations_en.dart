@@ -105,7 +105,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get spaceOccupied => 'Storage used';
 
   @override
-  String storageCounter(String photos, String notes) => 'Photos: $photos KB | Notes: $notes KB';
+  String storageCounter(String photos, String notes) => 'Photos: $photos | Notes: $notes';
 
   @override
   String get darkMode => 'Dark mode';

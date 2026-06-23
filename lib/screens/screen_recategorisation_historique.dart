@@ -121,7 +121,7 @@ class _ScreenRecategorisationHistoriqueState extends State<ScreenRecategorisatio
                             trailing: IconButton(
                               icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
                               onPressed: () {
-                                _databaseService.insertCategory(currentCat);
+                                _databaseService.deleteCategory(currentCat);
                                 setState(() {
                                   _selectedCategories.remove(currentCat);
                                 });
@@ -217,7 +217,6 @@ class _ScreenRecategorisationHistoriqueState extends State<ScreenRecategorisatio
                     return Stack(
                       children: [
                         
-                        // 1. BANDEAU HAUT (STRICTEMENT FIXE)
                         Positioned(
                           top: 0,
                           left: 0,
@@ -243,7 +242,6 @@ class _ScreenRecategorisationHistoriqueState extends State<ScreenRecategorisatio
                           ),
                         ),
 
-                        // 1b. TITRE + VISUEL FIXE
                         Positioned(
                           top: topBarHeight,
                           left: 0,
@@ -278,7 +276,6 @@ class _ScreenRecategorisationHistoriqueState extends State<ScreenRecategorisatio
                           ),
                         ),
 
-                        // 2. ZONE SCROLLABLE
                         Positioned(
                           top: topBarHeight + titleHeight,
                           left: 0,
@@ -288,6 +285,7 @@ class _ScreenRecategorisationHistoriqueState extends State<ScreenRecategorisatio
                             stream: _databaseService.getCategoriesStream(),
                             builder: (context, snapshot) {
                               final categoriesList = snapshot.data ?? _databaseService.getAllCategories();
+
                               double screenWidth = MediaQuery.of(context).size.width;
                               double adaptiveFontSize = (screenWidth * 0.045).clamp(14.0, 22.0);
 
@@ -314,7 +312,7 @@ class _ScreenRecategorisationHistoriqueState extends State<ScreenRecategorisatio
                                               fontSize: adaptiveFontSize,
                                             ),
                                             suffixIcon: IconButton(
-                                              icon: Icon(Icons.check, color: orange),
+                                              icon: const Icon(Icons.check, color: orange),
                                               onPressed: _soumettreNouvelleCategorie,
                                             ),
                                             border: OutlineInputBorder(
@@ -373,7 +371,6 @@ class _ScreenRecategorisationHistoriqueState extends State<ScreenRecategorisatio
                           ),
                         ),
                         
-                        // 3. BANDEAU BAS
                         Positioned(
                           left: 0,
                           right: 0,

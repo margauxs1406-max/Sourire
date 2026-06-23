@@ -315,7 +315,7 @@ class _WidgetHistoriqueState extends State<WidgetHistorique> {
                                             itemBuilder: (context, itemIndex) {
                                               final souvenir = items[itemIndex];
                                               _getThemeFromLabel(souvenir.themeLabel);
-                                              final bool estSelectionne = _souvenirsSelectionnes.contains(souvenir);
+                                              final bool estSelectionne = _souvenirsSelectionnes.any((s) => s.id == souvenir.id);
 
                                               return GestureDetector(
                                                 onLongPress: () {
@@ -330,7 +330,7 @@ class _WidgetHistoriqueState extends State<WidgetHistorique> {
                                                   if (_modeSelection) {
                                                     setState(() {
                                                       if (estSelectionne) {
-                                                        _souvenirsSelectionnes.remove(souvenir);
+                                                        _souvenirsSelectionnes.removeWhere((s) => s.id == souvenir.id);
                                                         if (_souvenirsSelectionnes.isEmpty) {
                                                           _modeSelection = false;
                                                         }

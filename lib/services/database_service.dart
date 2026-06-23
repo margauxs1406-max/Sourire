@@ -16,7 +16,6 @@ class DatabaseService {
     "leisure", 
     "work",
   ];
-
   // Les contrôleurs de flux (Streams) d'origine pour ne pas casser tes StreamBuilders
   final StreamController<List<NoteSourire>> _notesStreamController = StreamController<List<NoteSourire>>.broadcast();
   final StreamController<List<String>> _categoriesStreamController = StreamController<List<String>>.broadcast();

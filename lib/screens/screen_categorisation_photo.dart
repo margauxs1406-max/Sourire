@@ -261,7 +261,6 @@ class _ScreenCategorisationPhotoState extends State<ScreenCategorisationPhoto> {
                     return Stack(
                       children: [
                         
-                        // 1. BANDEAU HAUT (FIXE)
                         Positioned(
                           top: 0,
                           left: 0,
@@ -285,7 +284,6 @@ class _ScreenCategorisationPhotoState extends State<ScreenCategorisationPhoto> {
                           ),
                         ),
 
-                        // 1b. TITRE ET APERÇU PHOTO
                         Positioned(
                           top: topBarHeight,
                           left: 0,
@@ -322,7 +320,6 @@ class _ScreenCategorisationPhotoState extends State<ScreenCategorisationPhoto> {
                           ),
                         ),
 
-                        // 2. ZONE DE SCROLL
                         Positioned(
                           top: topBarHeight + titleHeight,
                           left: 0,
@@ -332,6 +329,7 @@ class _ScreenCategorisationPhotoState extends State<ScreenCategorisationPhoto> {
                             stream: _databaseService.getCategoriesStream(),
                             builder: (context, snapshot) {
                               final categoriesList = snapshot.data ?? _databaseService.getAllCategories();
+
                               double screenWidth = MediaQuery.of(context).size.width;
                               double adaptiveFontSize = (screenWidth * 0.045).clamp(14.0, 22.0);
 
@@ -417,7 +415,6 @@ class _ScreenCategorisationPhotoState extends State<ScreenCategorisationPhoto> {
                           ),
                         ),
 
-                        // 3. BANDEAU DE BOUTONS
                         Positioned(
                           left: 0,
                           right: 0,
@@ -430,7 +427,6 @@ class _ScreenCategorisationPhotoState extends State<ScreenCategorisationPhoto> {
                               mainAxisSize: MainAxisSize.max,
                               crossAxisAlignment: CrossAxisAlignment.center,
                               children: [
-                                // BOUTON PASSER
                                 Expanded(
                                   child: BtnCategorisation(
                                     text: localizations.btnSkip,
@@ -439,7 +435,6 @@ class _ScreenCategorisationPhotoState extends State<ScreenCategorisationPhoto> {
                                   ),
                                 ),
                                 const SizedBox(width: 20),
-                                // BOUTON VALIDER / SUIVANT
                                 Expanded(
                                   child: BtnCategorisation(
                                     text: isLast 
