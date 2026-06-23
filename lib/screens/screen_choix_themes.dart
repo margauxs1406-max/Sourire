@@ -22,15 +22,13 @@ class _ScreenChoixThemesState extends State<ScreenChoixThemes> {
       ? 'classique' 
       : UserPrefs.themeId;
 
-  // Applique le thème définitivement
-  // Applique le thème définitivement
   void _appliquerTheme(ThemeApp theme) {
     setState(() {
       _currentThemeId = theme.id;
       UserPrefs.themeId = theme.id;
     });
 
-    // 1. MISE À JOUR DU THEME GLOBAL (Informe la Home et toute l'application)
+    // 1. MISE À JOUR DU THEME GLOBAL
     ThemeService.changerThemeVisuel(theme);
 
     // ignore: invalid_use_of_visible_for_testing_member, invalid_use_of_protected_member
@@ -41,16 +39,22 @@ class _ScreenChoixThemesState extends State<ScreenChoixThemes> {
     showDialog(
       context: context,
       builder: (BuildContext dialogContext) {
+        final double screenWidth = MediaQuery.of(dialogContext).size.width;
         final double screenHeight = MediaQuery.of(dialogContext).size.height;
 
-        // Détermination dynamique du texte du bouton de l'aperçu
-        final bool afficherBoutonPremium = theme.isPremium && !ThemeService.estUtilisateurPremium;
+        // Facteurs responsives pour la modale d'aperçu
+        final double textScaleFactor = screenWidth / 390;
+        final double sizeTitle = (screenWidth * 18) / 390;
+        final double sizeButtonText = (screenWidth * 15) / 390;
+
+        // CORRECTION : On se base maintenant sur UserPrefs.isPremium pour masquer le bouton définitivement
+        final bool afficherBoutonPremium = theme.isPremium && !UserPrefs.isPremium;
 
         return Dialog(
           backgroundColor: dialogBgColor,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           child: Padding(
-            padding: const EdgeInsets.all(20.0),
+            padding: EdgeInsets.all(20.0 * textScaleFactor.clamp(0.8, 1.2)),
             child: SingleChildScrollView( 
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -60,14 +64,14 @@ class _ScreenChoixThemesState extends State<ScreenChoixThemes> {
                   Text(
                     theme.label(context),
                     style: TextStyle(
-                      fontSize: 18,
+                      fontSize: sizeTitle,
                       fontWeight: FontWeight.bold,
                       color: textColor,
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  SizedBox(height: 16 * textScaleFactor.clamp(0.8, 1.2)),
                   
-                  // Image adaptative
+                  // Image adaptative dans l'aperçu
                   Center(
                     child: ConstrainedBox(
                       constraints: BoxConstraints(
@@ -79,11 +83,11 @@ class _ScreenChoixThemesState extends State<ScreenChoixThemes> {
                           aspectRatio: 0.78,
                           child: Image.asset(
                             theme.vignettePath,
-                            fit: BoxFit.fill, // Optimisation anti-rognage
+                            fit: BoxFit.fill,
                             errorBuilder: (context, error, stackTrace) {
                               return Container(
                                 color: orange,
-                                child: const Icon(Icons.image_not_supported, color: Colors.white, size: 40),
+                                child: Icon(Icons.image_not_supported, color: Colors.white, size: 40 * textScaleFactor),
                               );
                             },
                           ),
@@ -93,27 +97,26 @@ class _ScreenChoixThemesState extends State<ScreenChoixThemes> {
                   ),
                   
                   // Bouton d'action
-                  const SizedBox(height: 24),
+                  SizedBox(height: 24 * textScaleFactor.clamp(0.8, 1.2)),
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
                         backgroundColor: orange,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        padding: EdgeInsets.symmetric(vertical: 14 * textScaleFactor.clamp(0.8, 1.2)),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                         elevation: 0,
                       ),
                       onPressed: () {
-                        Navigator.of(dialogContext).pop(); // Ferme la modale
+                        Navigator.of(dialogContext).pop();
                         
                         if (afficherBoutonPremium) {
-                          // 1. SIMULATION DU PAIEMENT REUSSI GLOBAL
                           ThemeService.deverrouillerPremium();
                           
-                          // 2. Application immédiate du thème cliqué
-                          _appliquerTheme(theme);
+                          // CORRECTION : Sauvegarde locale persistante pour que ça survive au redémarrage
+                          UserPrefs.isPremium = true; 
                           
-                          // 3. Force le rafraîchissement complet pour faire sauter TOUS les verrous de la grille
+                          _appliquerTheme(theme);
                           setState(() {});
                           
                           ScaffoldMessenger.of(context).showSnackBar(
@@ -130,10 +133,10 @@ class _ScreenChoixThemesState extends State<ScreenChoixThemes> {
                         afficherBoutonPremium 
                             ? AppLocalizations.of(context)!.btnPasserPremium 
                             : AppLocalizations.of(context)!.btnAppliquer,
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: white, 
                           fontWeight: FontWeight.bold, 
-                          fontSize: 15,
+                          fontSize: sizeButtonText,
                         ),
                       ),
                     ),
@@ -153,6 +156,12 @@ class _ScreenChoixThemesState extends State<ScreenChoixThemes> {
     final Color textColor = widget.isDarkMode ? white : black;
     final Color headerBgColor = widget.isDarkMode ? darkSurface : white;
     final Color dialogBgColor = widget.isDarkMode ? darkSurface : white;
+
+    // Calculs de tailles responsives pour la grille principale
+    final double screenWidth = MediaQuery.of(context).size.width;
+    final double titleFontSize = (screenWidth * 18) / 390;
+    final double itemFontSize = (screenWidth * 14) / 390;
+    final double iconScaleFactor = (screenWidth * 14) / 390;
 
     List<ThemeApp> themesTries = List.from(ThemeRepository.tousLesThemes);
 
@@ -196,7 +205,7 @@ class _ScreenChoixThemesState extends State<ScreenChoixThemes> {
                     Text(
                       AppLocalizations.of(context)!.themesTitle,
                       style: TextStyle(
-                        fontSize: 18,
+                        fontSize: titleFontSize,
                         fontWeight: FontWeight.bold,
                         color: textColor,
                       ),
@@ -210,7 +219,7 @@ class _ScreenChoixThemesState extends State<ScreenChoixThemes> {
                         crossAxisCount: 2,
                         crossAxisSpacing: 16,
                         mainAxisSpacing: 20,
-                        childAspectRatio: 0.78,
+                        childAspectRatio: 0.70, 
                       ),
                       itemBuilder: (context, index) {
                         final theme = themesTries[index];
@@ -223,8 +232,10 @@ class _ScreenChoixThemesState extends State<ScreenChoixThemes> {
                             children: [
                               Text(
                                 theme.label(context),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
-                                  fontSize: 14,
+                                  fontSize: itemFontSize,
                                   fontWeight: FontWeight.w600,
                                   color: textColor,
                                 ),
@@ -233,13 +244,13 @@ class _ScreenChoixThemesState extends State<ScreenChoixThemes> {
                               Expanded(
                                 child: Stack(
                                   children: [
-                                    // Affichage de l'image PNG
+                                    // Affichage de l'image PNG (Contrainte par le layout parent étendu)
                                     Positioned.fill(
                                       child: ClipRRect(
                                         borderRadius: BorderRadius.circular(12),
                                         child: Image.asset(
                                           theme.vignettePath,
-                                          fit: BoxFit.fill, // Optimisation anti-rognage
+                                          fit: BoxFit.fill,
                                           errorBuilder: (context, error, stackTrace) {
                                             return Container(
                                               color: orange,
@@ -261,12 +272,12 @@ class _ScreenChoixThemesState extends State<ScreenChoixThemes> {
                                             color: Colors.white,
                                             shape: BoxShape.circle,
                                           ),
-                                          child: const Icon(Icons.check, color: orange, size: 14),
+                                          child: Icon(Icons.check, color: orange, size: iconScaleFactor),
                                         ),
                                       ),
 
-                                    // Overlay Premium (Cadenas masqué dynamiquement si premium)
-                                    if (theme.isPremium && !isSelected && !ThemeService.estUtilisateurPremium)
+                                    // CORRECTION : Cadenas masqué définitivement si UserPrefs.isPremium est vrai
+                                    if (theme.isPremium && !isSelected && !UserPrefs.isPremium)
                                       Positioned(
                                         top: 10,
                                         right: 10,
@@ -276,7 +287,7 @@ class _ScreenChoixThemesState extends State<ScreenChoixThemes> {
                                             color: Colors.black.withOpacity(0.3),
                                             shape: BoxShape.circle,
                                           ),
-                                          child: const Icon(Icons.lock_outline, color: Colors.white, size: 14),
+                                          child: Icon(Icons.lock_outline, color: Colors.white, size: iconScaleFactor),
                                         ),
                                       ),
                                   ],

@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart'; 
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:device_preview/device_preview.dart'; // <--- Importation du package Device Preview
 import 'package:sourire/l10n/app_localizations.dart';
 import 'package:sourire/models/theme_app.dart';
 import 'package:sourire/screens/home.dart';
@@ -58,7 +59,13 @@ void main() async {
   await NotificationService.planifierRappelGratitude();
   await NotificationService.planifierRappelSouvenirs();
   
-  runApp(const MyApp());
+  // Enveloppement de l'application dans DevicePreview
+  runApp(
+    DevicePreview(
+      enabled: !kReleaseMode, // Activé uniquement en mode développement / debug
+      builder: (context) => const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatefulWidget {
@@ -148,8 +155,6 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
     // Si l'utilisateur quitte l'application ou la met en arrière-plan
     if (state == AppLifecycleState.paused || state == AppLifecycleState.detached) {
       MyApp.themeNotifier.value = ThemeMode.system; // Le mode par défaut système reprend la main
-      // En option, réinitialiser la variable de session si présente :
-      // ScreenProfil.isDarkMode = null; 
     }
 
     if (!UserPrefs.biomatrieActive && UserPrefs.password.isEmpty) return;
@@ -191,8 +196,14 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
               navigatorKey: _navigatorKey,
               title: 'Sourire',
               debugShowCheckedModeBanner: false,
+
+              // --- PARAMÈTRES REQUIS POUR DEVICE PREVIEW ---
+              useInheritedMediaQuery: true, 
+              locale: DevicePreview.locale(context), 
+              builder: DevicePreview.appBuilder, 
+              // ----------------------------------------------
+
               themeMode: currentMode,
-              locale: currentLocale,
               theme: ThemeData(
                 brightness: Brightness.light,
                 primarySwatch: Colors.orange,

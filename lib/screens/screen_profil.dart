@@ -392,205 +392,190 @@ class _ScreenProfilState extends State<ScreenProfil> {
                     const SizedBox(height: 15),
 
                     // 1. NOTIFICATIONS
-                    _buildMenuRow(
-                      icon: Icons.notifications_none_outlined,
-                      title: localizations?.notifications ?? "Notifications",
-                      couleurTextePrincipal: couleurTextePrincipal,
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => StatefulBuilder(
-                              builder: (context, setLocalState) => ScreenTemplateReglages(
-                                isDarkMode: isDark,
-                                titre: localizations?.notifications ?? "Notifications",
-                                content: [
-                                  // --- SWITCH 1 : GRATITUDE ---
-                                  _buildRowWithSwitch(
-                                    localizations?.notifLabelTitleGratitude ?? "Rappel quotidien de gratitude",
-                                    localizations?.notifLabelSubGratitude ?? "Me rappeler de noter un souvenir positif",
-                                    UserPrefs.rappelGratitudeActive, 
-                                    isDark: isDark,
-                                    (val) async {
-                                      // On met directement à jour la configuration globale
-                                      UserPrefs.rappelGratitudeActive = val;
-                                      
-                                      // On force le rafraîchissement visuel de la boîte de dialogue
-                                      setLocalState(() {}); 
-                                      
-                                      // Planification centralisée via le Service
-                                      await NotificationService.planifierRappelGratitude();
-                                    },
-                                  ),
-                                  
-                                  if (UserPrefs.rappelGratitudeActive) ...[
-                                    const SizedBox(height: 10),
-                                    Text(localizations?.notifLabelTime ?? "Heure du rappel", style: const TextStyle(color: grey, fontSize: 14)),
-                                    const SizedBox(height: 8),
-                                    GestureDetector(
-                                      onTap: () async {
-                                        TimeOfDay? picked = await showTimePicker(
-                                          context: context,
-                                          initialTime: TimeOfDay(
-                                            hour: UserPrefs.heureRappelGratitude, 
-                                            minute: UserPrefs.minuteRappelGratitude
-                                          ),
-                                          builder: (BuildContext context, Widget? child) {
-                                            return Theme(
-                                              data: Theme.of(context).copyWith(
-                                                colorScheme: ColorScheme.light(
-                                                  primary: orange,
-                                                  onPrimary: white,
-                                                  surface: isDark ? const Color(0xFF1E1E1E) : white,
-                                                  onSurface: isDark ? white : black,
-                                                ),
-                                                textButtonTheme: TextButtonThemeData(
-                                                  style: TextButton.styleFrom(foregroundColor: orange),
-                                                ),
-                                              ),
-                                              child: child!,
-                                            );
-                                          },
-                                        );
-                                        if (picked != null) {
-                                          // Sauvegarde complète dans les préférences globales
-                                          UserPrefs.heureRappelGratitude = picked.hour;
-                                          UserPrefs.minuteRappelGratitude = picked.minute;
-                                          
-                                          setLocalState(() {});
-                                          
-                                          // Relance la planification à la nouvelle heure
-                                          await NotificationService.planifierRappelGratitude();
-                                        }
-                                      },
-                                      child: Container(
-                                        width: 100,
-                                        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                                        decoration: BoxDecoration(
-                                          color: couleurInputFond,
-                                          borderRadius: BorderRadius.circular(8)
-                                        ),
-                                        child: Center(
-                                          child: Text(
-                                            // Formatage dynamique basé sur la valeur stockée
-                                            "${UserPrefs.heureRappelGratitude.toString().padLeft(2, '0')}:${UserPrefs.minuteRappelGratitude.toString().padLeft(2, '0')}",
-                                            style: TextStyle(fontWeight: FontWeight.bold, color: couleurTextePrincipal)
-                                          )
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                  const SizedBox(height: 25),
-                                  Divider(color: couleurSeparateur),
-                                  const SizedBox(height: 15),
-
-                                  // --- SWITCH 2 : SOUVENIRS ---
-                                  _buildRowWithSwitch(
-                                    localizations?.notifLabelTitleSouvenirs ?? "Fréquence des souvenirs tirés",
-                                    localizations?.notifLabelSubSouvenirs ?? "Me proposer un vieux souvenir à revoir",
-                                    UserPrefs.rappelSouvenirsActive, // Se base sur la variable globale
-                                    isDark: isDark,
-                                    (val) async {
-                                      UserPrefs.rappelSouvenirsActive = val;
-                                      setLocalState(() {});
-                                      
-                                      // Planification réelle
-                                      await NotificationService.planifierRappelSouvenirs();
-                                    }
-                                  ),
-                                  
-                                  if (UserPrefs.rappelSouvenirsActive) ...[
-                                    const SizedBox(height: 10),
-                                    Text(localizations?.notifLabelFreqSettings ?? "Réglages de la fréquence", style: const TextStyle(color: grey, fontSize: 14)),
-                                    const SizedBox(height: 10),
-                                    _buildDropdownButton<String>(
-                                      value: _frequenceSouvenirs,
-                                      items: const ["Tous les jours", "Tous les 2 jours", "Toutes les semaines"],
-                                      isDark: isDark,
-                                      itemTranslator: _getFrequencyDisplayLabel,
-                                      onChanged: (val) async {
-                                        if (val != null) {
-                                          setState(() => _frequenceSouvenirs = val);
-                                          setLocalState(() {});
-
-                                          UserPrefs.frequenceSouvenirs = val;
-                                          
-                                          // Recalcule le calendrier du rappel suite au changement de fréquence
-                                          await NotificationService.planifierRappelSouvenirs();
-                                        }
-                                      },
-                                    ),
-                                    if (_frequenceSouvenirs == "Toutes les semaines") ...[
-                                      const SizedBox(height: 12),
-                                      Text(
-                                        localizations?.notifLabelDayOfWeek ?? "Jour de la semaine",
-                                        style: TextStyle(color: isDark ? lightGrey : grey, fontSize: 14)
-                                      ),
-                                      const SizedBox(height: 8),
-                                      _buildDropdownButton<String>(
-                                        value: _jourSemaineSouvenirs,
-                                        items: const ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"],
-                                        isDark: isDark,
-                                        itemTranslator: _getDayDisplayLabel,
-                                        onChanged: (val) async {
-                                          if (val != null) {
-                                            setState(() => _jourSemaineSouvenirs = val);
-                                            setLocalState(() {});
-
-                                            UserPrefs.jourSemaineSouvenirs = val;
-                                            
-                                            // Recalcule le calendrier du rappel suite au changement de jour choisi
-                                            await NotificationService.planifierRappelSouvenirs();
-                                          }
-                                        },
-                                      ),
-                                    ],
-                                    const SizedBox(height: 16),
-                                    Text(
-                                      localizations?.notifLabelCategoriesIncluded ?? "Catégories incluses",
-                                      style: TextStyle(color: isDark ? lightGrey : grey, fontSize: 14)
-                                    ),
-                                    const SizedBox(height: 8),
-
-                                    StreamBuilder<List<String>>(
-                                      stream: _databaseService.getCategoriesStream(),
-                                      builder: (context, snapshot) {
-                                        final List<String> categoriesBDD = snapshot.data ?? _databaseService.getAllCategories();
-                                        final List<String> optionsMenu = ["Toutes catégories", ...categoriesBDD];
-
-                                        _categoriesSouvenirs.removeWhere((cat) => cat != "Toutes catégories" && !categoriesBDD.contains(cat));
-                                        if (_categoriesSouvenirs.isEmpty) {
-                                          _categoriesSouvenirs = ["Toutes catégories"];
-                                        }
-
-                                        return _buildMultiSelectDropdownButton(
-                                          selectedValues: _categoriesSouvenirs,
-                                          items: optionsMenu,
-                                          isDark: isDark,
-                                          itemTranslator: _getCategoryDisplayLabel,
-                                          menuMaxHeight: 240.0,
-                                          onChanged: (List<String> nouvellesValeurs) async {
-                                            setState(() {
-                                              _categoriesSouvenirs = nouvellesValeurs;
-                                            });
-                                            setLocalState(() {});
-
-                                            UserPrefs.categoriesSouvenirs = nouvellesValeurs;
-                                            
-                                            // Recalcule et adapte le tirage par rapport au nouveau filtre de catégories
-                                            await NotificationService.planifierRappelSouvenirs();
-                                          },
-                                        );
-                                      },
-                                    ),
-                                  ],
-                                ],
-                              ),
+_buildMenuRow(
+  icon: Icons.notifications_none_outlined,
+  title: localizations?.notifications ?? "Notifications",
+  couleurTextePrincipal: couleurTextePrincipal,
+  onTap: () {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => StatefulBuilder(
+          builder: (context, setLocalState) => ScreenTemplateReglages(
+            isDarkMode: isDark,
+            titre: localizations?.notifications ?? "Notifications",
+            content: [
+              // --- SWITCH 1 : GRATITUDE ---
+              _buildRowWithSwitch(
+                localizations?.notifLabelTitleGratitude ?? "Rappel quotidien de gratitude",
+                localizations?.notifLabelSubGratitude ?? "Me rappeler de noter un souvenir positif",
+                UserPrefs.rappelGratitudeActive, 
+                isDark: isDark,
+                (val) async {
+                  UserPrefs.rappelGratitudeActive = val;
+                  setLocalState(() {}); 
+                  await NotificationService.planifierRappelGratitude();
+                },
+              ),
+              
+              if (UserPrefs.rappelGratitudeActive) ...[
+                const SizedBox(height: 10),
+                Text(localizations?.notifLabelTime ?? "Heure du rappel", style: const TextStyle(color: grey, fontSize: 14)),
+                const SizedBox(height: 8),
+                GestureDetector(
+                  onTap: () async {
+                    TimeOfDay? picked = await showTimePicker(
+                      context: context,
+                      initialTime: TimeOfDay(
+                        hour: UserPrefs.heureRappelGratitude, 
+                        minute: UserPrefs.minuteRappelGratitude
+                      ),
+                      builder: (BuildContext context, Widget? child) {
+                        return Theme(
+                          data: Theme.of(context).copyWith(
+                            colorScheme: ColorScheme.light(
+                              primary: orange,
+                              onPrimary: white,
+                              surface: isDark ? const Color(0xFF1E1E1E) : white,
+                              onSurface: isDark ? white : black,
+                            ),
+                            textButtonTheme: TextButtonThemeData(
+                              style: TextButton.styleFrom(foregroundColor: orange),
                             ),
                           ),
+                          child: child!,
                         );
                       },
+                    );
+                    if (picked != null) {
+                      UserPrefs.heureRappelGratitude = picked.hour;
+                      UserPrefs.minuteRappelGratitude = picked.minute;
+                      setLocalState(() {});
+                      await NotificationService.planifierRappelGratitude();
+                    }
+                  },
+                  child: Container(
+                    width: 100,
+                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                    decoration: BoxDecoration(
+                      color: couleurInputFond,
+                      borderRadius: BorderRadius.circular(8)
                     ),
+                    child: Center(
+                      child: Text(
+                        "${UserPrefs.heureRappelGratitude.toString().padLeft(2, '0')}:${UserPrefs.minuteRappelGratitude.toString().padLeft(2, '0')}",
+                        style: TextStyle(fontWeight: FontWeight.bold, color: couleurTextePrincipal)
+                      )
+                    ),
+                  ),
+                ),
+              ],
+              const SizedBox(height: 25),
+              Divider(color: couleurSeparateur),
+              const SizedBox(height: 15),
+
+              // --- SWITCH 2 : SOUVENIRS ---
+              _buildRowWithSwitch(
+                localizations?.notifLabelTitleSouvenirs ?? "Fréquence des souvenirs tirés",
+                localizations?.notifLabelSubSouvenirs ?? "Me proposer un vieux souvenir à revoir",
+                UserPrefs.rappelSouvenirsActive, 
+                isDark: isDark,
+                (val) async {
+                  UserPrefs.rappelSouvenirsActive = val;
+                  setLocalState(() {});
+                  await NotificationService.planifierRappelSouvenirs();
+                }
+              ),
+              
+              if (UserPrefs.rappelSouvenirsActive) ...[
+                const SizedBox(height: 10),
+                Text(localizations?.notifLabelFreqSettings ?? "Réglages de la fréquence", style: const TextStyle(color: grey, fontSize: 14)),
+                const SizedBox(height: 10),
+                _buildDropdownButton<String>(
+                  // CORRECTION : Lecture directe depuis UserPrefs
+                  value: UserPrefs.frequenceSouvenirs,
+                  items: const ["Tous les jours", "Tous les 2 jours", "Toutes les semaines"],
+                  isDark: isDark,
+                  itemTranslator: _getFrequencyDisplayLabel,
+                  onChanged: (val) async {
+                    if (val != null) {
+                      // CORRECTION : Écriture directe et rafraîchissement local
+                      UserPrefs.frequenceSouvenirs = val;
+                      setLocalState(() {});
+                      await NotificationService.planifierRappelSouvenirs();
+                    }
+                  },
+                ),
+                // CORRECTION : Lecture directe depuis UserPrefs
+                if (UserPrefs.frequenceSouvenirs == "Toutes les semaines") ...[
+                  const SizedBox(height: 12),
+                  Text(
+                    localizations?.notifLabelDayOfWeek ?? "Jour de la semaine",
+                    style: TextStyle(color: isDark ? lightGrey : grey, fontSize: 14)
+                  ),
+                  const SizedBox(height: 8),
+                  _buildDropdownButton<String>(
+                    // CORRECTION : Lecture directe depuis UserPrefs
+                    value: UserPrefs.jourSemaineSouvenirs,
+                    items: const ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"],
+                    isDark: isDark,
+                    itemTranslator: _getDayDisplayLabel,
+                    onChanged: (val) async {
+                      if (val != null) {
+                        // CORRECTION : Écriture directe et rafraîchissement local
+                        UserPrefs.jourSemaineSouvenirs = val;
+                        setLocalState(() {});
+                        await NotificationService.planifierRappelSouvenirs();
+                      }
+                    },
+                  ),
+                ],
+                const SizedBox(height: 16),
+                Text(
+                  localizations?.notifLabelCategoriesIncluded ?? "Catégories incluses",
+                  style: TextStyle(color: isDark ? lightGrey : grey, fontSize: 14)
+                ),
+                const SizedBox(height: 8),
+
+                StreamBuilder<List<String>>(
+                  stream: _databaseService.getCategoriesStream(),
+                  builder: (context, snapshot) {
+                    final List<String> categoriesBDD = snapshot.data ?? _databaseService.getAllCategories();
+                    final List<String> optionsMenu = ["Toutes catégories", ...categoriesBDD];
+
+                    // On récupère la liste de SharedPreferences pour la nettoyer si besoin
+                    List<String> categoriesSelectionnees = List.from(UserPrefs.categoriesSouvenirs);
+                    categoriesSelectionnees.removeWhere((cat) => cat != "Toutes catégories" && !categoriesBDD.contains(cat));
+                    
+                    if (categoriesSelectionnees.isEmpty) {
+                      categoriesSelectionnees = ["Toutes catégories"];
+                      UserPrefs.categoriesSouvenirs = categoriesSelectionnees;
+                    }
+
+                    return _buildMultiSelectDropdownButton(
+                      // CORRECTION : Utilisation de la liste synchronisée avec UserPrefs
+                      selectedValues: categoriesSelectionnees,
+                      items: optionsMenu,
+                      isDark: isDark,
+                      itemTranslator: _getCategoryDisplayLabel,
+                      menuMaxHeight: 240.0,
+                      onChanged: (List<String> nouvellesValeurs) async {
+                        // CORRECTION : Sauvegarde et reconstruction immédiate du StatefulBuilder
+                        UserPrefs.categoriesSouvenirs = nouvellesValeurs;
+                        setLocalState(() {});
+                        await NotificationService.planifierRappelSouvenirs();
+                      },
+                    );
+                  },
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  },
+),
 
                     // 2. AUTORISATIONS
                     _buildMenuRow(
@@ -1106,14 +1091,17 @@ class _ScreenProfilState extends State<ScreenProfil> {
     final vraiesCategories = items.where((cat) => cat != "Toutes catégories").toList();
     final Map<String, StateSetter> menuStates = {};
 
-    final bool toutEstCoche = selectedValues.contains("Toutes catégories") || 
-        (selectedValues.length == vraiesCategories.length && selectedValues.isNotEmpty);
+    // CORRECTION : On travaille sur une copie locale pour isoler les changements graphiques instantanés
+    final List<String> valeursLocales = List.from(selectedValues);
+
+    final bool toutEstCoche = valeursLocales.contains("Toutes catégories") || 
+        (valeursLocales.length == vraiesCategories.length && valeursLocales.isNotEmpty);
 
     final String texteBandeau = toutEstCoche
         ? itemTranslator("Toutes catégories")
-        : selectedValues.isEmpty
+        : valeursLocales.isEmpty
             ? "Aucune catégorie"
-            : selectedValues.map((e) => itemTranslator(e)).join(', ');
+            : valeursLocales.map((e) => itemTranslator(e)).join(', ');
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
@@ -1147,48 +1135,52 @@ class _ScreenProfilState extends State<ScreenProfil> {
                   menuStates[item] = menuSetState;
 
                   final bool isChecked = item == "Toutes catégories"
-                      ? selectedValues.contains("Toutes catégories") || (selectedValues.length == vraiesCategories.length && selectedValues.isNotEmpty)
-                      : (selectedValues.contains(item) || selectedValues.contains("Toutes catégories"));
+                      ? valeursLocales.contains("Toutes catégories") || (valeursLocales.length == vraiesCategories.length && valeursLocales.isNotEmpty)
+                      : (valeursLocales.contains(item) || valeursLocales.contains("Toutes catégories"));
 
                   void gererLogiqueSelection(bool cocher) {
                     if (item == "Toutes catégories") {
                       if (cocher) {
-                        selectedValues.clear();
-                        selectedValues.add("Toutes catégories");
+                        valeursLocales.clear();
+                        valeursLocales.add("Toutes catégories");
                       } else {
-                        selectedValues.clear();
+                        valeursLocales.clear();
                       }
                     } else {
-                      if (selectedValues.contains("Toutes catégories")) {
-                        selectedValues.clear();
-                        selectedValues.addAll(vraiesCategories);
+                      if (valeursLocales.contains("Toutes catégories")) {
+                        valeursLocales.clear();
+                        valeursLocales.addAll(vraiesCategories);
                       }
                       
                       if (cocher) {
-                        selectedValues.add(item);
-                        if (selectedValues.length == vraiesCategories.length) {
-                          selectedValues.clear();
-                          selectedValues.add("Toutes catégories");
+                        valeursLocales.add(item);
+                        if (valeursLocales.length == vraiesCategories.length) {
+                          valeursLocales.clear();
+                          valeursLocales.add("Toutes catégories");
                         }
                       } else {
-                        selectedValues.remove("Toutes catégories");
-                        selectedValues.remove(item);
+                        valeursLocales.remove("Toutes catégories");
+                        valeursLocales.remove(item);
                       }
                     }
 
+                    // Rafraîchit l'item cliqué
                     menuSetState(() {});
                     
+                    // Rafraîchit l'item "Toutes catégories" si on clique sur une autre
                     if (item != "Toutes catégories" && menuStates.containsKey("Toutes catégories")) {
                       menuStates["Toutes catégories"]!(() {});
                     }
                     
+                    // Rafraîchit toute la liste si on clique sur "Toutes catégories"
                     if (item == "Toutes catégories") {
                       for (var setter in menuStates.values) {
                         setter(() {});
                       }
                     }
                     
-                    onChanged(selectedValues);
+                    // CORRECTION : Renvoie la nouvelle liste propre vers UserPrefs via le callback parent
+                    onChanged(valeursLocales);
                   }
 
                   return InkWell(

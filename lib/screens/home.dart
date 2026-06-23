@@ -7,7 +7,6 @@ import 'package:sourire/theme/tokens.dart';
 import 'package:sourire/widgets/header_app.dart';
 import 'package:sourire/widgets/btn_new_note.dart';
 import 'package:sourire/widgets/btn_new_picture.dart';
-import 'package:drop_shadow/drop_shadow.dart';
 import 'package:wechat_assets_picker/wechat_assets_picker.dart';
 import 'package:sourire/screens/screen_categorisation_photo.dart';
 import 'package:sourire/screens/screen_new_note.dart';
@@ -339,7 +338,6 @@ Future<void> _traiterSouvenirsEnCache() async {
       final DatabaseService databaseService = DatabaseService();
 
       // 1. On récupère toutes les notes existantes
-      // CORRECTION SQLITE : Remplacement par la version Async
       final toutesLesNotes = await databaseService.getAllNotesAsync();
       
       // 2. On compte précisément le nombre de PHOTOS
@@ -347,23 +345,22 @@ Future<void> _traiterSouvenirsEnCache() async {
 
       const int limiteMaximaleGratuite = 10;
 
-      // 3. Blocage ou calcul de quota uniquement si l'utilisateur N'EST PAS premium
-      if (!ThemeService.estUtilisateurPremium && nombrePhotosActuelles >= limiteMaximaleGratuite) {
+      // 3. CORRECTION : Blocage ou calcul de quota basé sur la persistance de UserPrefs
+      if (!UserPrefs.isPremium && nombrePhotosActuelles >= limiteMaximaleGratuite) {
         if (!context.mounted) return;
         _ouvrirAlerteAchat(context, estPourPhotos: true);
         return;
       }
 
       // 4. On calcule le Quota restant pour le sélecteur d'assets
-      // Si Premium : pas de limite globale, on autorise directement l'import de 10 photos max d'un coup.
-      final int photosAutoriseesRestantes = ThemeService.estUtilisateurPremium 
+      // CORRECTION : Utilisation de UserPrefs.isPremium ici aussi
+      final int photosAutoriseesRestantes = UserPrefs.isPremium 
           ? 10 
           : (limiteMaximaleGratuite - nombrePhotosActuelles);
 
       final List<AssetEntity>? result = await AssetPicker.pickAssets(
         context,
         pickerConfig: AssetPickerConfig(
-          // Si le quota restant gratuit est supérieur à 10, ou si l'utilisateur est premium, on cap à 10.
           maxAssets: photosAutoriseesRestantes > 10 ? 10 : photosAutoriseesRestantes,
           requestType: RequestType.image,
           textDelegate: const FrenchAssetPickerTextDelegate(),
@@ -636,17 +633,6 @@ Positioned.fill(
                       : null,
                 );
 
-                if (themeActuel.homeIconShadows != null && themeActuel.homeIconShadows!.isNotEmpty) {
-                  final shadow = themeActuel.homeIconShadows!.first;
-                  iconCore = DropShadow(
-                    blurRadius: shadow.blurRadius,
-                    offset: shadow.offset,
-                    color: shadow.color,
-                    opacity: shadow.color.opacity,
-                    child: iconCore,
-                  );
-                }
-
                 // S'ASSURER QUE LA ROTATION EST APPLIQUÉE
                 // Remplace 'iconConfig.angle' ou 'iconConfig.rotation' par le nom exact de ta propriété.
                 // Si elle est stockée en degrés, utilise : iconConfig.rotation * math.pi / 180
@@ -783,41 +769,43 @@ Positioned.fill(
                                   }
                                 },
                               ),
+                              
                               const SizedBox(width: 40),
-                              BtnNewNote(
-                                key: _cleBoutonNote, 
-                                onTap: () async {
-                                  final int nombreNotesPures = await DatabaseService().getTextNotesCount();
+BtnNewNote(
+  key: _cleBoutonNote, 
+  onTap: () async {
+    final int nombreNotesPures = await DatabaseService().getTextNotesCount();
 
-                                  if (!ThemeService.estUtilisateurPremium && nombreNotesPures >= 5) {
-                                    if (!context.mounted) return;
-                                    _ouvrirAlerteAchat(context, estPourPhotos: false);
-                                  } else {
-                                    List<SourireTheme> couleursDisponibles = List.from(SourireTheme.tousLesThemes);
+    // CORRECTION : Détection automatique et persistante du premium via UserPrefs
+    if (!UserPrefs.isPremium && nombreNotesPures >= 5) {
+      if (!context.mounted) return;
+      _ouvrirAlerteAchat(context, estPourPhotos: false);
+    } else {
+      List<SourireTheme> couleursDisponibles = List.from(SourireTheme.tousLesThemes);
 
-                                    if (couleursDisponibles.length > 1 && _derniereCouleurNote != null) {
-                                      couleursDisponibles.removeWhere((theme) => theme.label == _derniereCouleurNote!.label);
-                                    }
+      if (couleursDisponibles.length > 1 && _derniereCouleurNote != null) {
+        couleursDisponibles.removeWhere((theme) => theme.label == _derniereCouleurNote!.label);
+      }
 
-                                    couleursDisponibles.shuffle();
-                                    final SourireTheme couleurChoisie = couleursDisponibles.first;
-                                    _derniereCouleurNote = couleurChoisie;
+      couleursDisponibles.shuffle();
+      final SourireTheme couleurChoisie = couleursDisponibles.first;
+      _derniereCouleurNote = couleurChoisie;
 
-                                    final ThemeApp themeVisuelSelectionne = ThemeService.themeVisuelNotifier.value;
+      final ThemeApp themeVisuelSelectionne = ThemeService.themeVisuelNotifier.value;
 
-                                    if (!context.mounted) return;
-                                    Navigator.push(
-                                      context, 
-                                      MaterialPageRoute(
-                                        builder: (context) => ScreenNewNote(
-                                          couleur: couleurChoisie,
-                                          themeVisuel: themeVisuelSelectionne,
-                                        ),
-                                      ),
-                                    );
-                                  }
-                                },
-                              ),
+      if (!context.mounted) return;
+      Navigator.push(
+        context, 
+        MaterialPageRoute(
+          builder: (context) => ScreenNewNote(
+            couleur: couleurChoisie,
+            themeVisuel: themeVisuelSelectionne,
+          ),
+        ),
+      );
+    }
+  },
+),
                             ],
                           ),
                         ),

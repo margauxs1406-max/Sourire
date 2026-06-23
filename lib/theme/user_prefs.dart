@@ -58,7 +58,7 @@ class UserPrefs {
   static String get jourSemaineSouvenirs => _prefs?.getString('jourSemaineSouvenirs') ?? "Lundi";
   static set jourSemaineSouvenirs(String value) => _prefs?.setString('jourSemaineSouvenirs', value);
 
-  static int get heureRappelSouvenirs => _prefs?.getInt('heureRappelSouvenirs') ?? 9;
+  static int get heureRappelSouvenirs => _prefs?.getInt('heureRappelSouvenirs') ?? 10;
   static set heureRappelSouvenirs(int value) => _prefs?.setInt('heureRappelSouvenirs', value);
 
   static int get minuteRappelSouvenirs => _prefs?.getInt('minuteRappelSouvenirs') ?? 00;
@@ -70,4 +70,8 @@ class UserPrefs {
   // --- PERSISTANCE DU THÈME VISUEL ---
   static String get themeId => _prefs?.getString('themeId') ?? "classique";
   static set themeId(String value) => _prefs?.setString('themeId', value);
+
+  // --- PERSISTANCE DU STATUT PREMIUM ---
+  static bool get isPremium => _prefs?.getBool('isPremium') ?? false;
+  static set isPremium(bool value) => _prefs?.setBool('isPremium', value);
 }

@@ -20,6 +20,11 @@ class ScreenTemplateReglages extends StatelessWidget {
     // Si isDarkMode est fourni on l'utilise, sinon on interroge le système
     final bool isDark = isDarkMode ?? (Theme.of(context).brightness == Brightness.dark);
 
+    // Calcul de la taille de police responsive basée sur la largeur de l'écran
+    // 18 est la taille de référence sur un écran classique (ex: largeur ~390-400dp)
+    final double screenWidth = MediaQuery.of(context).size.width;
+    final double responsiveFontSize = (screenWidth * 18) / 390;
+
     return Scaffold(
       backgroundColor: isDark ? darkBg : white, // <--- Fond adaptatif (via token)
       body: SafeArea(
@@ -54,7 +59,7 @@ class ScreenTemplateReglages extends StatelessWidget {
                     Text(
                       titre,
                       style: TextStyle(
-                        fontSize: 18,
+                        fontSize: responsiveFontSize, // <--- Police responsive appliquée ici
                         fontWeight: FontWeight.bold,
                         color: isDark ? white : black, // <--- Couleur du titre adaptative
                       ),

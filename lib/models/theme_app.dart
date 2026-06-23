@@ -36,7 +36,6 @@ class BackgroundIconConfig {
     required double baseHeight,
     Color? color,
     double opacity = 1.0,
-    List<BoxShadow>? shadows,
   }) {
     final double targetWidth = getWidth(baseWidth);
     final double targetHeight = getHeight(baseHeight);
@@ -69,37 +68,6 @@ class BackgroundIconConfig {
       imageWidget = Opacity(opacity: opacity, child: imageWidget);
     }
 
-    // 3. Application des ombres portées si définies
-    if (shadows != null && shadows.isNotEmpty) {
-      imageWidget = Stack(
-        children: [
-          ...shadows.map((shadow) => Positioned.fill(
-            top: shadow.offset.dy,
-            left: shadow.offset.dx,
-            child: Opacity(
-              opacity: opacity,
-              child: isSvg 
-                  ? SvgPicture.asset(
-                      assetPath,
-                      width: targetWidth,
-                      height: targetHeight,
-                      fit: BoxFit.contain,
-                      colorFilter: ColorFilter.mode(shadow.color, BlendMode.srcIn),
-                    )
-                  : Image.asset(
-                      assetPath,
-                      width: targetWidth,
-                      height: targetHeight,
-                      fit: BoxFit.contain,
-                      color: shadow.color,
-                    ),
-            ),
-          )),
-          imageWidget,
-        ],
-      );
-    }
-
     // 4. CAPSULE DE ROTATION CRITIQUE : Convertit les degrés en radians et force le pivot
     if (rotation != 0.0) {
       imageWidget = Transform.rotate(
@@ -122,7 +90,6 @@ class ThemeApp {
   final List<BackgroundIconConfig> homeIcons;
   final Color? homeIconColor;
   final double homeIconOpacity;
-  final List<BoxShadow>? homeIconShadows;
 
   // Configuration Note
   final List<BackgroundIconConfig> noteIcons;
@@ -135,7 +102,6 @@ class ThemeApp {
     this.homeIcons = const [],
     this.homeIconColor,
     this.homeIconOpacity = 1.0,
-    this.homeIconShadows,
     this.noteIcons = const [],
     this.noteIconOpacity = 1.0,
   });
@@ -174,13 +140,7 @@ class ThemeRepository {
     
     homeIconColor: Colors.white,
     homeIconOpacity: 0.50,
-    homeIconShadows: [
-      BoxShadow(
-        color: Colors.black.withOpacity(0.12),
-        offset: const Offset(4, 4),
-        blurRadius: 4,
-      ),
-    ],
+     
 
     homeIcons: [
       BackgroundIconConfig(
@@ -188,21 +148,21 @@ class ThemeRepository {
         widthRatio: 32 / _homeBaseWidth,
         heightRatio: 32 / _homeBaseHeight,
         xRatio: 316 / _homeBaseWidth,
-        yRatio: 168 / _homeBaseHeight,
+        yRatio: 158 / _homeBaseHeight,
       ),
       BackgroundIconConfig(
         assetPath: 'assets/themes/montagne/flocon2.svg',
         widthRatio: 40 / _homeBaseWidth,
         heightRatio: 40 / _homeBaseHeight,
         xRatio: 334 / _homeBaseWidth,
-        yRatio: 216 / _homeBaseHeight,
+        yRatio: 206 / _homeBaseHeight,
       ),
       BackgroundIconConfig(
         assetPath: 'assets/themes/montagne/montagnes.svg',
-        widthRatio: 260 / _homeBaseWidth,
-        heightRatio: 260 / _homeBaseHeight,
+         widthRatio: 250 / _homeBaseWidth,
+        heightRatio: 250 / _homeBaseHeight,
         xRatio: -56 / _homeBaseWidth,
-        yRatio: 255 / _homeBaseHeight,
+         yRatio: 265 / _homeBaseHeight,
       ),
       BackgroundIconConfig(
         assetPath: 'assets/themes/montagne/bonnet.svg',
@@ -272,20 +232,14 @@ class ThemeRepository {
     isPremium: true,
     homeIconColor: Colors.white,
     homeIconOpacity: 0.50,
-    homeIconShadows: [
-      BoxShadow(
-        color: Colors.black.withOpacity(0.12),
-        offset: const Offset(4, 4),
-        blurRadius: 4,
-      ),
-    ],
+     
     homeIcons: [
       BackgroundIconConfig(
         assetPath: 'assets/themes/mer/coquillage.svg',
         widthRatio: 32 / _homeBaseWidth,
         heightRatio: 32 / _homeBaseHeight,
         xRatio: 316 / _homeBaseWidth,
-        yRatio: 168 / _homeBaseHeight,
+        yRatio: 158 / _homeBaseHeight,
         rotation: -12,
       ),
       BackgroundIconConfig(
@@ -293,14 +247,14 @@ class ThemeRepository {
         widthRatio: 40 / _homeBaseWidth,
         heightRatio: 40 / _homeBaseHeight,
         xRatio: 334 / _homeBaseWidth,
-        yRatio: 216 / _homeBaseHeight,
+        yRatio: 206 / _homeBaseHeight,
       ),
       BackgroundIconConfig(
         assetPath: 'assets/themes/mer/vague.svg',
-        widthRatio: 260 / _homeBaseWidth,
-        heightRatio: 260 / _homeBaseHeight,
+         widthRatio: 250 / _homeBaseWidth,
+        heightRatio: 250 / _homeBaseHeight,
         xRatio: -56 / _homeBaseWidth,
-        yRatio: 255 / _homeBaseHeight,
+         yRatio: 265 / _homeBaseHeight,
       ),
       BackgroundIconConfig(
         assetPath: 'assets/themes/mer/claquettes.svg',
@@ -369,32 +323,26 @@ class ThemeRepository {
     isPremium: true,
     homeIconColor: Colors.white,
     homeIconOpacity: 0.50,
-    homeIconShadows: [
-      BoxShadow(
-        color: Colors.black.withOpacity(0.12),
-        offset: const Offset(4, 4),
-        blurRadius: 4,
-      ),
-    ],
+     
     homeIcons: [
       BackgroundIconConfig(
         assetPath: 'assets/themes/abstrait/noeud.svg',
         widthRatio: 32 / _homeBaseWidth,
         heightRatio: 32 / _homeBaseHeight,
         xRatio: 316 / _homeBaseWidth,
-        yRatio: 168 / _homeBaseHeight,
+        yRatio: 158 / _homeBaseHeight,
       ),
       BackgroundIconConfig(
         assetPath: 'assets/themes/abstrait/cercle.svg',
         widthRatio: 40 / _homeBaseWidth,
         heightRatio: 40 / _homeBaseHeight,
         xRatio: 334 / _homeBaseWidth,
-        yRatio: 216 / _homeBaseHeight,
+        yRatio: 206 / _homeBaseHeight,
       ),
       BackgroundIconConfig(
         assetPath: 'assets/themes/abstrait/tableau.svg',
-        widthRatio: 260 / _homeBaseWidth,
-        heightRatio: 260 / _homeBaseHeight,
+         widthRatio: 250 / _homeBaseWidth,
+        heightRatio: 250 / _homeBaseHeight,
         xRatio: -56 / _homeBaseWidth,
         yRatio: 265 / _homeBaseHeight,
       ),
@@ -464,27 +412,21 @@ class ThemeRepository {
     isPremium: true,
     homeIconColor: Colors.white,
     homeIconOpacity: 0.50,
-    homeIconShadows: [
-      BoxShadow(
-        color: Colors.black.withOpacity(0.12),
-        offset: const Offset(4, 4),
-        blurRadius: 4,
-      ),
-    ],
+     
     homeIcons: [
       BackgroundIconConfig(
         assetPath: 'assets/themes/sport/foot.svg',
         widthRatio: 32 / _homeBaseWidth,
         heightRatio: 32 / _homeBaseHeight,
         xRatio: 316 / _homeBaseWidth,
-        yRatio: 168 / _homeBaseHeight,
+        yRatio: 158 / _homeBaseHeight,
       ),
       BackgroundIconConfig(
         assetPath: 'assets/themes/sport/course.svg',
         widthRatio: 40 / _homeBaseWidth,
         heightRatio: 40 / _homeBaseHeight,
         xRatio: 334 / _homeBaseWidth,
-        yRatio: 216 / _homeBaseHeight,
+        yRatio: 206 / _homeBaseHeight,
       ),
       BackgroundIconConfig(
         assetPath: 'assets/themes/sport/rugby.svg',
@@ -559,27 +501,21 @@ class ThemeRepository {
     isPremium: true,
     homeIconColor: Colors.white,
     homeIconOpacity: 0.50,
-    homeIconShadows: [
-      BoxShadow(
-        color: Colors.black.withOpacity(0.12),
-        offset: const Offset(4, 4),
-        blurRadius: 4,
-      ),
-    ],
+     
     homeIcons: [
       BackgroundIconConfig(
         assetPath: 'assets/themes/musique/notes_vides.svg',
         widthRatio: 32 / _homeBaseWidth,
         heightRatio: 32 / _homeBaseHeight,
         xRatio: 316 / _homeBaseWidth,
-        yRatio: 168 / _homeBaseHeight,
+        yRatio: 158 / _homeBaseHeight,
       ),
       BackgroundIconConfig(
         assetPath: 'assets/themes/musique/notes_pleines.svg',
         widthRatio: 40 / _homeBaseWidth,
         heightRatio: 40 / _homeBaseHeight,
         xRatio: 334 / _homeBaseWidth,
-        yRatio: 216 / _homeBaseHeight,
+        yRatio: 206 / _homeBaseHeight,
       ),
       BackgroundIconConfig(
         assetPath: 'assets/themes/musique/disque.svg',
@@ -654,34 +590,28 @@ class ThemeRepository {
     isPremium: true,
     homeIconColor: Colors.white,
     homeIconOpacity: 0.50,
-    homeIconShadows: [
-      BoxShadow(
-        color: Colors.black.withOpacity(0.12),
-        offset: const Offset(4, 4),
-        blurRadius: 4,
-      ),
-    ],
+     
     homeIcons: [
       BackgroundIconConfig(
         assetPath: 'assets/themes/cinema/billet.svg',
         widthRatio: 32 / _homeBaseWidth,
         heightRatio: 32 / _homeBaseHeight,
         xRatio: 316 / _homeBaseWidth,
-        yRatio: 168 / _homeBaseHeight,
+        yRatio: 158 / _homeBaseHeight,
       ),
       BackgroundIconConfig(
         assetPath: 'assets/themes/cinema/burger.svg',
         widthRatio: 40 / _homeBaseWidth,
         heightRatio: 40 / _homeBaseHeight,
         xRatio: 334 / _homeBaseWidth,
-        yRatio: 216 / _homeBaseHeight,
+        yRatio: 206 / _homeBaseHeight,
       ),
       BackgroundIconConfig(
         assetPath: 'assets/themes/cinema/clap.svg',
-        widthRatio: 260 / _homeBaseWidth,
-        heightRatio: 260 / _homeBaseHeight,
+         widthRatio: 250 / _homeBaseWidth,
+        heightRatio: 250 / _homeBaseHeight,
         xRatio: -56 / _homeBaseWidth,
-        yRatio: 255 / _homeBaseHeight,
+         yRatio: 265 / _homeBaseHeight,
       ),
       BackgroundIconConfig(
         assetPath: 'assets/themes/cinema/pop-corn.svg',
@@ -749,34 +679,28 @@ class ThemeRepository {
     isPremium: true,
     homeIconColor: Colors.white,
     homeIconOpacity: 0.50,
-    homeIconShadows: [
-      BoxShadow(
-        color: Colors.black.withOpacity(0.12),
-        offset: const Offset(4, 4),
-        blurRadius: 4,
-      ),
-    ],
+     
     homeIcons: [
       BackgroundIconConfig(
         assetPath: 'assets/themes/animaux_marins/dauphin.svg',
         widthRatio: 32 / _homeBaseWidth,
         heightRatio: 32 / _homeBaseHeight,
         xRatio: 316 / _homeBaseWidth,
-        yRatio: 168 / _homeBaseHeight,
+        yRatio: 158 / _homeBaseHeight,
       ),
       BackgroundIconConfig(
         assetPath: 'assets/themes/animaux_marins/baleine.svg',
         widthRatio: 40 / _homeBaseWidth,
         heightRatio: 40 / _homeBaseHeight,
         xRatio: 344 / _homeBaseWidth,
-        yRatio: 216 / _homeBaseHeight,
+        yRatio: 206 / _homeBaseHeight,
       ),
       BackgroundIconConfig(
         assetPath: 'assets/themes/animaux_marins/tortue.svg',
-        widthRatio: 260 / _homeBaseWidth,
-        heightRatio: 260 / _homeBaseHeight,
+         widthRatio: 250 / _homeBaseWidth,
+        heightRatio: 250 / _homeBaseHeight,
         xRatio: -75 / _homeBaseWidth,
-        yRatio: 255 / _homeBaseHeight,
+         yRatio: 265 / _homeBaseHeight,
       ),
       BackgroundIconConfig(
         assetPath: 'assets/themes/animaux_marins/poulpe.svg',
@@ -844,35 +768,29 @@ class ThemeRepository {
     isPremium: true,
     homeIconColor: Colors.white,
     homeIconOpacity: 0.50,
-    homeIconShadows: [
-      BoxShadow(
-        color: Colors.black.withOpacity(0.12),
-        offset: const Offset(4, 4),
-        blurRadius: 4,
-      ),
-    ],
+     
     homeIcons: [
       BackgroundIconConfig(
         assetPath: 'assets/themes/floral/lotus.svg',
         widthRatio: 32 / _homeBaseWidth,
         heightRatio: 32 / _homeBaseHeight,
         xRatio: 316 / _homeBaseWidth,
-        yRatio: 168 / _homeBaseHeight,
+        yRatio: 158 / _homeBaseHeight,
       ),
       BackgroundIconConfig(
         assetPath: 'assets/themes/floral/marguerite.svg',
         widthRatio: 40 / _homeBaseWidth,
         heightRatio: 40 / _homeBaseHeight,
         xRatio: 334 / _homeBaseWidth,
-        yRatio: 216 / _homeBaseHeight,
+        yRatio: 206 / _homeBaseHeight,
       ),
       BackgroundIconConfig(
         assetPath: 'assets/themes/floral/cerisier.svg',
-        widthRatio: 260 / _homeBaseWidth,
-        heightRatio: 260 / _homeBaseHeight,
+         widthRatio: 250 / _homeBaseWidth,
+        heightRatio: 250 / _homeBaseHeight,
         xRatio: -56 / _homeBaseWidth,
-        yRatio: 255 / _homeBaseHeight,
-        rotation: -4,
+        yRatio: 275 / _homeBaseHeight,
+        rotation: 11,
       ),
       BackgroundIconConfig(
         assetPath: 'assets/themes/floral/monstera.svg',
@@ -941,20 +859,14 @@ class ThemeRepository {
     isPremium: true,
     homeIconColor: Colors.white,
     homeIconOpacity: 0.50,
-    homeIconShadows: [
-      BoxShadow(
-        color: Colors.black.withOpacity(0.12),
-        offset: const Offset(4, 4),
-        blurRadius: 4,
-      ),
-    ],
+     
     homeIcons: [
       BackgroundIconConfig(
         assetPath: 'assets/themes/kawaii/sushi.svg',
         widthRatio: 32 / _homeBaseWidth,
         heightRatio: 32 / _homeBaseHeight,
         xRatio: 316 / _homeBaseWidth,
-        yRatio: 168 / _homeBaseHeight,
+        yRatio: 158 / _homeBaseHeight,
         rotation: -12,
       ),
       BackgroundIconConfig(
@@ -962,16 +874,16 @@ class ThemeRepository {
         widthRatio: 40 / _homeBaseWidth,
         heightRatio: 40 / _homeBaseHeight,
         xRatio: 334 / _homeBaseWidth,
-        yRatio: 216 / _homeBaseHeight,
+        yRatio: 206 / _homeBaseHeight,
         rotation: 12,
       ),
       BackgroundIconConfig(
         assetPath: 'assets/themes/kawaii/soleil.svg',
-        widthRatio: 260 / _homeBaseWidth,
-        heightRatio: 260 / _homeBaseHeight,
+         widthRatio: 250 / _homeBaseWidth,
+        heightRatio: 250 / _homeBaseHeight,
         xRatio: -56 / _homeBaseWidth,
-        yRatio: 255 / _homeBaseHeight,
-        rotation: 4,
+         yRatio: 275 / _homeBaseHeight,
+        rotation: 13,
       ),
       BackgroundIconConfig(
         assetPath: 'assets/themes/kawaii/sundae.svg',
