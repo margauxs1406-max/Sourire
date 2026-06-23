@@ -266,18 +266,18 @@ class DatabaseService {
   }
 
   // 6. Supprimer plusieurs notes
-  void deleteMultipleNotes(List<NoteSourire> notesASupprimer) async {
-    final db = await database;
-    final batch = db.batch();
+  Future<void> deleteMultipleNotes(List<NoteSourire> notesASupprimer) async {
+  final db = await database;
+  final batch = db.batch();
 
-    for (var note in notesASupprimer) {
-      batch.delete('notes', where: 'id = ?', whereArgs: [note.id]);
-    }
-
-    await batch.commit(noResult: true);
-    print("--- BDD SQL : ${notesASupprimer.length} élément(s) supprimé(s) ---");
-    _notifierChangement();
+  for (var note in notesASupprimer) {
+    batch.delete('notes', where: 'id = ?', whereArgs: [note.id]);
   }
+
+  await batch.commit(noResult: true);
+  print("--- BDD SQL : ${notesASupprimer.length} élément(s) supprimé(s) ---");
+  _notifierChangement();
+}
 
   // 7. Mettre à jour une note
   void updateNote(NoteSourire noteModifiee) async {

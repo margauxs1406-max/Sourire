@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart'; 
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:device_preview/device_preview.dart'; // <--- Importation du package Device Preview
+// import 'package:device_preview/device_preview.dart'; // <--- Désactivé
 import 'package:sourire/l10n/app_localizations.dart';
 import 'package:sourire/models/theme_app.dart';
 import 'package:sourire/screens/home.dart';
@@ -59,13 +59,17 @@ void main() async {
   await NotificationService.planifierRappelGratitude();
   await NotificationService.planifierRappelSouvenirs();
   
-  // Enveloppement de l'application dans DevicePreview
+  // Lancement direct de l'application (DevicePreview désactivé)
+  runApp(const MyApp());
+  
+  /* --- ANCIEN BLOC DEVICE PREVIEW ---
   runApp(
     DevicePreview(
-      enabled: !kReleaseMode, // Activé uniquement en mode développement / debug
+      enabled: !kReleaseMode, 
       builder: (context) => const MyApp(),
     ),
   );
+  ------------------------------------ */
 }
 
 class MyApp extends StatefulWidget {
@@ -179,7 +183,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
             }
           });
         }
-        _timeWhenPaused = null;
+          _timeWhenPaused = null;
       }
     }
   }
@@ -197,11 +201,14 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
               title: 'Sourire',
               debugShowCheckedModeBanner: false,
 
-              // --- PARAMÈTRES REQUIS POUR DEVICE PREVIEW ---
-              useInheritedMediaQuery: true, 
-              locale: DevicePreview.locale(context), 
-              builder: DevicePreview.appBuilder, 
-              // ----------------------------------------------
+              // --- PARAMÈTRES REQUIS POUR DEVICE PREVIEW COMMENTÉS ---
+              // useInheritedMediaQuery: true, 
+              // locale: DevicePreview.locale(context), 
+              // builder: DevicePreview.appBuilder, 
+              // --------------------------------------------------------
+              
+              // On réinjecte la locale classique contrôlée par ton notifier
+              locale: currentLocale,
 
               themeMode: currentMode,
               theme: ThemeData(

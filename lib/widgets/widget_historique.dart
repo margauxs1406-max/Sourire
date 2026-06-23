@@ -425,18 +425,27 @@ class _WidgetHistoriqueState extends State<WidgetHistorique> {
                                         child: Row(
                                           children: [
                                             Expanded(
-                                              child: BtnCategorisation(
-                                                text: localizations.btnDeleteSelection,
-                                                isSecondary: true,
-                                                onTap: () {
-                                                  databaseService.deleteMultipleNotes(_souvenirsSelectionnes);
-                                                  setState(() {
-                                                    _souvenirsSelectionnes.clear();
-                                                    _modeSelection = false;
-                                                  });
-                                                },
-                                              ),
-                                            ),
+  child: BtnCategorisation(
+    text: localizations.btnDeleteSelection,
+    isSecondary: true,
+    onTap: () async { // 1. On marque la fonction comme asynchrone
+      if (_souvenirsSelectionnes.isEmpty) return;
+
+      // 2. On attend (await) impérativement que SQLite termine la suppression en BDD
+      // Note : Comme la méthode d'origine renvoie 'void async', l'envelopper dans un 
+      // Future.sync ou attendre sa promesse garantit le blocage du thread jusqu'à la fin du batch.
+      await Future.sync(() => databaseService.deleteMultipleNotes(_souvenirsSelectionnes));
+
+      // 3. Une fois l'opération BDD terminée avec succès, on nettoie notre état local
+      if (mounted) {
+        setState(() {
+          _souvenirsSelectionnes.clear();
+          _modeSelection = false;
+        });
+      }
+    },
+  ),
+),
                                             const SizedBox(width: 16),
                                             Expanded(
                                               child: BtnCategorisation(

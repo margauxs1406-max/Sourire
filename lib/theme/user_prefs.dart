@@ -58,7 +58,7 @@ class UserPrefs {
   static String get jourSemaineSouvenirs => _prefs?.getString('jourSemaineSouvenirs') ?? "Lundi";
   static set jourSemaineSouvenirs(String value) => _prefs?.setString('jourSemaineSouvenirs', value);
 
-  static int get heureRappelSouvenirs => _prefs?.getInt('heureRappelSouvenirs') ?? 10;
+  static int get heureRappelSouvenirs => _prefs?.getInt('heureRappelSouvenirs') ?? 6;
   static set heureRappelSouvenirs(int value) => _prefs?.setInt('heureRappelSouvenirs', value);
 
   static int get minuteRappelSouvenirs => _prefs?.getInt('minuteRappelSouvenirs') ?? 00;

@@ -37,9 +37,6 @@ class _ScreenProfilState extends State<ScreenProfil> {
   bool _obscurePassword = true;
   late bool _biometrieActive; // Initialisé dans le initState
   // --- ÉTATS DES NOTIFICATIONS ---
-  String _frequenceSouvenirs = "Tous les jours"; // Stocke la clé interne brute ou la valeur par défaut
-  String _jourSemaineSouvenirs = "Lundi"; // Stocke la clé interne brute ou la valeur par défaut
-  List<String> _categoriesSouvenirs = ["Toutes catégories"]; // Mutation en liste pour la multi-sélection
   String _taillePhotos = "Calcul...";
   String _tailleNotes = "Calcul...";
   // Instance pour la récupération dynamique des catégories
