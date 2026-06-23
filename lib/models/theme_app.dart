@@ -872,7 +872,7 @@ class ThemeRepository {
         heightRatio: 260 / _homeBaseHeight,
         xRatio: -56 / _homeBaseWidth,
         yRatio: 255 / _homeBaseHeight,
-        rotation: -6,
+        rotation: -4,
       ),
       BackgroundIconConfig(
         assetPath: 'assets/themes/floral/monstera.svg',
@@ -971,7 +971,7 @@ class ThemeRepository {
         heightRatio: 260 / _homeBaseHeight,
         xRatio: -56 / _homeBaseWidth,
         yRatio: 255 / _homeBaseHeight,
-        rotation: 6,
+        rotation: 4,
       ),
       BackgroundIconConfig(
         assetPath: 'assets/themes/kawaii/sundae.svg',

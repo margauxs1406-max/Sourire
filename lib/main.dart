@@ -70,8 +70,7 @@ class MyApp extends StatefulWidget {
   );
 
   static ThemeMode _initialiseThemeInitial() {
-    final int hour = DateTime.now().hour;
-    return (hour >= 18 || hour < 6) ? ThemeMode.dark : ThemeMode.light;
+    return ThemeMode.system; // Défini par défaut sur les réglages système du téléphone
   }
 
   @override
@@ -146,6 +145,13 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
+    // Si l'utilisateur quitte l'application ou la met en arrière-plan
+    if (state == AppLifecycleState.paused || state == AppLifecycleState.detached) {
+      MyApp.themeNotifier.value = ThemeMode.system; // Le mode par défaut système reprend la main
+      // En option, réinitialiser la variable de session si présente :
+      // ScreenProfil.isDarkMode = null; 
+    }
+
     if (!UserPrefs.biomatrieActive && UserPrefs.password.isEmpty) return;
 
     if (state == AppLifecycleState.paused) {

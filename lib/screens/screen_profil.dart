@@ -695,6 +695,7 @@ class _ScreenProfilState extends State<ScreenProfil> {
                         );
                       },
                     ),
+                    
                     // 4. APPARENCE
                     _buildMenuRow(
                       icon: Icons.accessibility_new_outlined,
@@ -708,7 +709,10 @@ class _ScreenProfilState extends State<ScreenProfil> {
                               return ValueListenableBuilder<ThemeMode>(
                                 valueListenable: MyApp.themeNotifier,
                                 builder: (context, currentMode, _) {
-                                  final bool localIsDark = currentMode == ThemeMode.dark;
+                                  // Si aucun forçage temporaire n'est configuré (ThemeMode.system), on regarde la luminosité du système
+                                  final bool localIsDark = currentMode == ThemeMode.system
+                                      ? (MediaQuery.of(context).platformBrightness == Brightness.dark)
+                                      : (currentMode == ThemeMode.dark);
                                   
                                   return ScreenTemplateReglages(
                                     isDarkMode: localIsDark,
@@ -722,7 +726,7 @@ class _ScreenProfilState extends State<ScreenProfil> {
                                         isDark: localIsDark,
                                         (val) {
                                           setState(() {
-                                            // Force l'état d'enregistrement explicite
+                                            // Conserve l'état d'enregistrement explicite de session
                                             ScreenProfil.isDarkMode = val;
                                           });
                                           MyApp.themeNotifier.value = val ? ThemeMode.dark : ThemeMode.light;
@@ -768,7 +772,7 @@ class _ScreenProfilState extends State<ScreenProfil> {
                                                     AppLocalizations.of(context)!.themesTitle,
                                                     style: TextStyle(
                                                       fontSize: 16,
-                                                      fontWeight: FontWeight.w600, // Identique à _buildRowWithSwitch
+                                                      fontWeight: FontWeight.w600,
                                                       color: localIsDark ? white : black,
                                                     ),
                                                   ),
@@ -776,15 +780,15 @@ class _ScreenProfilState extends State<ScreenProfil> {
                                                   Text(
                                                     AppLocalizations.of(context)!.themesDescription,
                                                     style: TextStyle(
-                                                      fontSize: 13, // Identique à _buildRowWithSwitch
+                                                      fontSize: 13,
                                                       color: localIsDark ? lightGrey : grey,
-                                                      height: 1.3, // Identique à _buildRowWithSwitch
+                                                      height: 1.3,
                                                     ),
                                                   ),
                                                 ],
                                               ),
                                             ),
-                                            const SizedBox(width: 24), // Même espacement qu'avec le switch
+                                            const SizedBox(width: 24),
                                             BtnChevronDroite(
                                               onTap: () {
                                                 Navigator.push(
