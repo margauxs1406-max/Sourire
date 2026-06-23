@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:sourire/l10n/app_localizations.dart';
+import 'package:flutter_svg/flutter_svg.dart'; // Requis pour le rendu automatique des SVG sécurisés
+import 'dart:math' as math;
 
 /// Représente les données de positionnement responsive d'une icône de fond
 class BackgroundIconConfig {
@@ -26,6 +28,88 @@ class BackgroundIconConfig {
   /// Calcule la position finale relative
   double getX(double currentWidth) => currentWidth * xRatio;
   double getY(double currentHeight) => currentHeight * yRatio;
+
+  /// GARANTIE TECHNIQUE : Génère le widget d'affichage de l'icône en encapsulant 
+  /// obligatoirement sa rotation convertie en radians, peu importe le layout parent.
+  Widget buildIconWidget({
+    required double baseWidth,
+    required double baseHeight,
+    Color? color,
+    double opacity = 1.0,
+    List<BoxShadow>? shadows,
+  }) {
+    final double targetWidth = getWidth(baseWidth);
+    final double targetHeight = getHeight(baseHeight);
+    final bool isSvg = assetPath.toLowerCase().endsWith('.svg');
+
+    // 1. Construction du chargeur d'image brut (SVG ou Bitmap)
+    Widget imageWidget;
+    if (isSvg) {
+      imageWidget = SvgPicture.asset(
+        assetPath,
+        width: targetWidth,
+        height: targetHeight,
+        fit: BoxFit.contain,
+        colorFilter: color != null 
+            ? ColorFilter.mode(color.withOpacity(opacity), BlendMode.srcIn) 
+            : null,
+      );
+    } else {
+      imageWidget = Image.asset(
+        assetPath,
+        width: targetWidth,
+        height: targetHeight,
+        fit: BoxFit.contain,
+        color: color?.withOpacity(opacity),
+      );
+    }
+
+    // 2. Application de l'opacité globale si l'image n'est pas colorisée dynamiquement
+    if (color == null && opacity < 1.0) {
+      imageWidget = Opacity(opacity: opacity, child: imageWidget);
+    }
+
+    // 3. Application des ombres portées si définies
+    if (shadows != null && shadows.isNotEmpty) {
+      imageWidget = Stack(
+        children: [
+          ...shadows.map((shadow) => Positioned.fill(
+            top: shadow.offset.dy,
+            left: shadow.offset.dx,
+            child: Opacity(
+              opacity: opacity,
+              child: isSvg 
+                  ? SvgPicture.asset(
+                      assetPath,
+                      width: targetWidth,
+                      height: targetHeight,
+                      fit: BoxFit.contain,
+                      colorFilter: ColorFilter.mode(shadow.color, BlendMode.srcIn),
+                    )
+                  : Image.asset(
+                      assetPath,
+                      width: targetWidth,
+                      height: targetHeight,
+                      fit: BoxFit.contain,
+                      color: shadow.color,
+                    ),
+            ),
+          )),
+          imageWidget,
+        ],
+      );
+    }
+
+    // 4. CAPSULE DE ROTATION CRITIQUE : Convertit les degrés en radians et force le pivot
+    if (rotation != 0.0) {
+      imageWidget = Transform.rotate(
+        angle: rotation * (math.pi / 180),
+        child: imageWidget,
+      );
+    }
+
+    return imageWidget;
+  }
 }
 
 /// Classe principale définissant les thèmes de l'application
@@ -70,11 +154,11 @@ class ThemeRepository {
   static const double _noteBaseSize = 300.0; 
 
   // ==========================================
-  // 1/ THÈME PAR DÉFAUT (Correction de l'id en 'classique')
+  // 1/ THÈME PAR DÉFAUT
   // ==========================================
   static final ThemeApp themeClassique = ThemeApp(
-    id: 'classique', // Correspond maintenant à theme_classique.png
-   label: (context) => AppLocalizations.of(context)!.themeClassique,
+    id: 'classique', 
+    label: (context) => AppLocalizations.of(context)!.themeClassique,
     isPremium: false,
     homeIcons: const [],
     noteIcons: const [],
@@ -84,11 +168,10 @@ class ThemeRepository {
   // 2/ THÈME MONTAGNE
   // ==========================================
   static final ThemeApp themeMontagne = ThemeApp(
-    id: 'montagne', // Correspond à theme_montagne.png
+    id: 'montagne', 
     label: (context) => AppLocalizations.of(context)!.themeMontagne,
     isPremium: true,
     
-    // Propriétés communes Home
     homeIconColor: Colors.white,
     homeIconOpacity: 0.50,
     homeIconShadows: [
@@ -99,7 +182,6 @@ class ThemeRepository {
       ),
     ],
 
-    // Configuration des icônes de la Home
     homeIcons: [
       BackgroundIconConfig(
         assetPath: 'assets/themes/montagne/flocon3.svg',
@@ -131,10 +213,8 @@ class ThemeRepository {
       ),
     ],
 
-    // Propriétés communes Note
     noteIconOpacity: 0.50,
 
-    // Configuration des icônes de la Note
     noteIcons: [
       BackgroundIconConfig(
         assetPath: 'assets/themes/montagne/bonnet.svg',
@@ -183,7 +263,7 @@ class ThemeRepository {
     ],
   );
 
-// ==========================================
+  // ==========================================
   // 3/ THÈME MER
   // ==========================================
   static final ThemeApp themeMer = ThemeApp(
@@ -228,6 +308,7 @@ class ThemeRepository {
         heightRatio: 124 / _homeBaseHeight,
         xRatio: 300 / _homeBaseWidth,
         yRatio: 630 / _homeBaseHeight,
+        rotation: 12,
       ),
     ],
     noteIconOpacity: 0.50,
@@ -505,7 +586,7 @@ class ThemeRepository {
         widthRatio: 240 / _homeBaseWidth,
         heightRatio: 240 / _homeBaseHeight,
         xRatio: -56 / _homeBaseWidth,
-        yRatio: 255 / _homeBaseHeight,
+        yRatio: 265 / _homeBaseHeight,
       ),
       BackgroundIconConfig(
         assetPath: 'assets/themes/musique/micro.svg',
@@ -791,7 +872,7 @@ class ThemeRepository {
         heightRatio: 260 / _homeBaseHeight,
         xRatio: -56 / _homeBaseWidth,
         yRatio: 255 / _homeBaseHeight,
-        rotation: 30,
+        rotation: -6,
       ),
       BackgroundIconConfig(
         assetPath: 'assets/themes/floral/monstera.svg',
@@ -799,7 +880,7 @@ class ThemeRepository {
         heightRatio: 124 / _homeBaseHeight,
         xRatio: 313 / _homeBaseWidth,
         yRatio: 630 / _homeBaseHeight,
-        rotation: -30,
+        rotation: 12,
       ),
     ],
     noteIconOpacity: 0.50,
@@ -890,6 +971,7 @@ class ThemeRepository {
         heightRatio: 260 / _homeBaseHeight,
         xRatio: -56 / _homeBaseWidth,
         yRatio: 255 / _homeBaseHeight,
+        rotation: 6,
       ),
       BackgroundIconConfig(
         assetPath: 'assets/themes/kawaii/sundae.svg',

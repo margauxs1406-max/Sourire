@@ -605,61 +605,71 @@ Widget build(BuildContext context) {
       body: Stack( 
         children: [
           // 1. RENDU DYNAMIQUE DES ICÔNES DE FOND
-          Positioned.fill(
-            child: SafeArea(
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  final double width = constraints.maxWidth;
-                  final double height = constraints.maxHeight;
+Positioned.fill(
+  child: SafeArea(
+    child: LayoutBuilder(
+      builder: (context, constraints) {
+        final double width = constraints.maxWidth;
+        final double height = constraints.maxHeight;
 
-                  return ValueListenableBuilder<ThemeApp>(
-                    valueListenable: ThemeService.themeVisuelNotifier,
-                    builder: (context, themeActuel, child) {
-                      if (themeActuel.homeIcons.isEmpty) {
-                        return const SizedBox.shrink();
-                      }
+        return ValueListenableBuilder<ThemeApp>(
+          valueListenable: ThemeService.themeVisuelNotifier,
+          builder: (context, themeActuel, child) {
+            if (themeActuel.homeIcons.isEmpty) {
+              return const SizedBox.shrink();
+            }
 
-                      return Stack(
-                        children: themeActuel.homeIcons.map((iconConfig) {
-                          final double iconWidth = iconConfig.getWidth(width);
-                          final double iconHeight = iconConfig.getHeight(height);
+            return Stack(
+              children: themeActuel.homeIcons.map((iconConfig) {
+                final double iconWidth = iconConfig.getWidth(width);
+                final double iconHeight = iconConfig.getHeight(height);
 
-                          Widget iconCore = SvgPicture.asset(
-                            iconConfig.assetPath,
-                            width: iconWidth,
-                            height: iconHeight,
-                            colorFilter: themeActuel.homeIconColor != null
-                                ? ColorFilter.mode(
-                                    themeActuel.homeIconColor!.withOpacity(themeActuel.homeIconOpacity),
-                                    BlendMode.srcIn,
-                                  )
-                                : null,
-                          );
+                Widget iconCore = SvgPicture.asset(
+                  iconConfig.assetPath,
+                  width: iconWidth,
+                  height: iconHeight,
+                  colorFilter: themeActuel.homeIconColor != null
+                      ? ColorFilter.mode(
+                          themeActuel.homeIconColor!.withOpacity(themeActuel.homeIconOpacity),
+                          BlendMode.srcIn,
+                        )
+                      : null,
+                );
 
-                          if (themeActuel.homeIconShadows != null && themeActuel.homeIconShadows!.isNotEmpty) {
-                            final shadow = themeActuel.homeIconShadows!.first;
-                            iconCore = DropShadow(
-                              blurRadius: shadow.blurRadius,
-                              offset: shadow.offset,
-                              color: shadow.color,
-                              opacity: shadow.color.opacity,
-                              child: iconCore,
-                            );
-                          }
-
-                          return Positioned(
-                            left: iconConfig.getX(width),
-                            top: iconConfig.getY(height),
-                            child: iconCore,
-                          );
-                        }).toList(),
-                      );
-                    },
+                if (themeActuel.homeIconShadows != null && themeActuel.homeIconShadows!.isNotEmpty) {
+                  final shadow = themeActuel.homeIconShadows!.first;
+                  iconCore = DropShadow(
+                    blurRadius: shadow.blurRadius,
+                    offset: shadow.offset,
+                    color: shadow.color,
+                    opacity: shadow.color.opacity,
+                    child: iconCore,
                   );
-                },
-              ),
-            ),
-          ),
+                }
+
+                // S'ASSURER QUE LA ROTATION EST APPLIQUÉE
+                // Remplace 'iconConfig.angle' ou 'iconConfig.rotation' par le nom exact de ta propriété.
+                // Si elle est stockée en degrés, utilise : iconConfig.rotation * math.pi / 180
+                if (iconConfig.rotation != 0) {
+                  iconCore = Transform.rotate(
+                    angle: iconConfig.rotation, // attend des radians
+                    child: iconCore,
+                  );
+                }
+
+                return Positioned(
+                  left: iconConfig.getX(width),
+                  top: iconConfig.getY(height),
+                  child: iconCore,
+                );
+              }).toList(),
+            );
+          },
+        );
+      },
+    ),
+  ),
+),
 
           // 2. LE BLOC HOME CONTENU
           Positioned.fill(
