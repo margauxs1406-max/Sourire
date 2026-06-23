@@ -1133,7 +1133,7 @@ class _ScreenProfilState extends State<ScreenProfil> {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
-          value: null, 
+          initialValue: null, 
           items: items.map((String item) {
             return DropdownMenuItem<String>(
               value: item,

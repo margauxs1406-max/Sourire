@@ -177,10 +177,10 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   Widget build(BuildContext context) {
     return ValueListenableBuilder<ThemeMode>(
       valueListenable: MyApp.themeNotifier,
-      builder: (_, ThemeMode currentMode, __) {
+      builder: (_, ThemeMode currentMode, _) {
         return ValueListenableBuilder<Locale>(
           valueListenable: MyApp.localeNotifier,
-          builder: (context, Locale currentLocale, __) { 
+          builder: (context, Locale currentLocale, _) { 
             return MaterialApp(
               navigatorKey: _navigatorKey,
               title: 'Sourire',

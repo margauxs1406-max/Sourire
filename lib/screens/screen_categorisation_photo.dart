@@ -88,7 +88,6 @@ class _ScreenCategorisationPhotoState extends State<ScreenCategorisationPhoto> {
 
   void _validerOuSuivant() async {
     final String? localPath = await _sauvegarderFichierEnLocal(widget.photos[widget.currentIndex]);
-    
     if (localPath != null) {
       final nouvellePhoto = NoteSourire(
         text: null,
@@ -98,10 +97,8 @@ class _ScreenCategorisationPhotoState extends State<ScreenCategorisationPhoto> {
         categories: _selectedCategories.isEmpty ? ["sans_categorie"] : List<String>.from(_selectedCategories),
         date: DateTime.now(), 
       );
-      
       _databaseService.insertNote(nouvellePhoto);
       
-      // RECALCULE LA NOTIFICATION DÈS QU'UNE PHOTO EST ENREGISTRÉE
       await NotificationService.planifierRappelSouvenirs();
     }
 
@@ -139,9 +136,7 @@ class _ScreenCategorisationPhotoState extends State<ScreenCategorisationPhoto> {
       }
     }
 
-    // ON PLANIFIE UNE SEULE FOIS APRÈS AVOIR TOUT IMPORTÉ
     await NotificationService.planifierRappelSouvenirs();
-
     if (mounted) Navigator.of(context).popUntil((route) => route.isFirst);
   }
 
@@ -161,7 +156,6 @@ class _ScreenCategorisationPhotoState extends State<ScreenCategorisationPhoto> {
 
   void _ouvrirModaleSuppression(BuildContext context, bool isDarkMode) {
     final localizations = AppLocalizations.of(context)!;
-
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -236,11 +230,10 @@ class _ScreenCategorisationPhotoState extends State<ScreenCategorisationPhoto> {
     final String labelNouvelleCategorie = localizations.btnNewCategory;
 
     const double topBarHeight = 60.0; 
-    const double titleHeight = 90.0; 
+    const double titleHeight = 90.0;
     const double bottomBarHeight = 110.0; 
 
     final bool isValidateActive = _selectedCategories.isNotEmpty;
-
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: () {
@@ -292,7 +285,7 @@ class _ScreenCategorisationPhotoState extends State<ScreenCategorisationPhoto> {
                           ),
                         ),
 
-                        // 1b. TITRE ET APERÇU PHOTO (FIXE ET ASSEZ HAUT)
+                        // 1b. TITRE ET APERÇU PHOTO
                         Positioned(
                           top: topBarHeight,
                           left: 0,
@@ -308,8 +301,8 @@ class _ScreenCategorisationPhotoState extends State<ScreenCategorisationPhoto> {
                                   child: Text(
                                     localizations.categoryQuestion,
                                     style: styleNoteLarge.copyWith(
-                                      color: isDarkMode ? Colors.white : orange, 
-                                      fontSize: screenWidth < 360 ? 18 : 22, 
+                                      color: isDarkMode ? Colors.white : orange,
+                                      fontSize: screenWidth < 360 ? 18 : 22,
                                       height: 1.2,
                                     ),
                                   ),
@@ -319,7 +312,7 @@ class _ScreenCategorisationPhotoState extends State<ScreenCategorisationPhoto> {
                                   borderRadius: BorderRadius.circular(10),
                                   child: AssetEntityImage(
                                     widget.photos[widget.currentIndex],
-                                    width: 65, 
+                                    width: 65,
                                     height: 65,
                                     fit: BoxFit.cover,
                                   ),
@@ -339,15 +332,13 @@ class _ScreenCategorisationPhotoState extends State<ScreenCategorisationPhoto> {
                             stream: _databaseService.getCategoriesStream(),
                             builder: (context, snapshot) {
                               final categoriesList = snapshot.data ?? _databaseService.getAllCategories();
-
                               double screenWidth = MediaQuery.of(context).size.width;
-                              double adaptiveFontSize = (screenWidth * 0.048).clamp(14.0, 22.0);
+                              double adaptiveFontSize = (screenWidth * 0.045).clamp(14.0, 22.0);
 
                               return ListView.builder(
                                 padding: const EdgeInsets.only(top: 5, bottom: 10),
                                 itemCount: categoriesList.length + 2,
                                 itemBuilder: (context, index) {
-                                  
                                   if (index == categoriesList.length) {
                                     if (_isAddingNew) {
                                       return Padding(
@@ -355,8 +346,9 @@ class _ScreenCategorisationPhotoState extends State<ScreenCategorisationPhoto> {
                                         child: TextField(
                                           controller: _newCategoryController,
                                           autofocus: true,
+                                          cursorColor: orange,
                                           style: TextStyle(
-                                            color: isDarkMode ? Colors.white : Colors.black,
+                                            color: isDarkMode ? Colors.white : Colors.grey[600],
                                             fontSize: adaptiveFontSize,
                                           ),
                                           decoration: InputDecoration(
@@ -366,16 +358,16 @@ class _ScreenCategorisationPhotoState extends State<ScreenCategorisationPhoto> {
                                               fontSize: adaptiveFontSize,
                                             ),
                                             suffixIcon: IconButton(
-                                              icon: const Icon(Icons.check, color: orange),
+                                              icon: Icon(Icons.check, color: orange),
                                               onPressed: _soumettreNouvelleCategorie,
                                             ),
                                             border: OutlineInputBorder(
                                               borderRadius: BorderRadius.circular(15),
-                                              borderSide: const BorderSide(color: orange),
+                                              borderSide: BorderSide(color: orange),
                                             ),
                                             focusedBorder: OutlineInputBorder(
                                               borderRadius: BorderRadius.circular(15),
-                                              borderSide: const BorderSide(color: orange, width: 2),
+                                              borderSide: BorderSide(color: orange, width: 2),
                                             ),
                                           ),
                                           onSubmitted: (_) => _soumettreNouvelleCategorie(),
@@ -396,7 +388,6 @@ class _ScreenCategorisationPhotoState extends State<ScreenCategorisationPhoto> {
                                       },
                                     );
                                   }
-
                                   if (index == categoriesList.length + 1) {
                                     return BoutonActionCategorie(
                                       label: localizations.btnDeleteCategories,
@@ -408,17 +399,15 @@ class _ScreenCategorisationPhotoState extends State<ScreenCategorisationPhoto> {
                                       onTap: () => _ouvrirModaleSuppression(context, isDarkMode),
                                     );
                                   }
-
                                   final categoryKey = categoriesList[index];
                                   return ItemCategorie(
                                     label: _getCategoryDisplayLabel(categoryKey, context),
                                     isSelected: _selectedCategories.contains(categoryKey),
-                                    color: orange, 
-                                    isDarkMode: isDarkMode, 
+                                    color: orange,
+                                    isDarkMode: isDarkMode,
                                     onSelectionChanged: (val) {
                                       setState(() {
-                                        val ? _selectedCategories.add(categoryKey) 
-                                            : _selectedCategories.remove(categoryKey);
+                                        val ? _selectedCategories.add(categoryKey) : _selectedCategories.remove(categoryKey);
                                       });
                                     },
                                   );
@@ -435,7 +424,7 @@ class _ScreenCategorisationPhotoState extends State<ScreenCategorisationPhoto> {
                           bottom: 0,
                           height: bottomBarHeight,
                           child: Container(
-                            color: isDarkMode ? darkBg : white, 
+                            color: isDarkMode ? darkBg : white,
                             alignment: Alignment.center,
                             child: Row(
                               mainAxisSize: MainAxisSize.max,

@@ -39,7 +39,7 @@ class _HomeState extends State<Home> {
   final GlobalKey _cleBocal = GlobalKey(); 
   final GlobalKey _cleBurger = GlobalKey(); 
 
-  List<TargetFocus> _targets = [];
+  final List<TargetFocus> _targets = [];
   int _tentativesCalculTaille = 0; // Sécurité anti-boucle pour le tutoriel
 
   dynamic _dernierIdTire; // AJOUT : Stocke l'ID du dernier souvenir affiché

@@ -50,7 +50,7 @@ class _EcranFiltrerState extends State<EcranFiltrer> {
     // Définition de la hauteur de l'overlay (ici 75% de l'écran)
     double overlayHeight = MediaQuery.of(context).size.height * 0.75;
 
-    String _getTranslatedCategoryLabel(String key) {
+    String getTranslatedCategoryLabel(String key) {
       switch (key) {
         case "self_love": return localizations.catSelfLove;
         case "friendship": return localizations.catFriendship;
@@ -139,7 +139,7 @@ class _EcranFiltrerState extends State<EcranFiltrer> {
                           final bool estCochee = _categoriesTemporaires.contains(categoryKey);
 
                           return ItemCategorie(
-                            label: _getTranslatedCategoryLabel(categoryKey),
+                            label: getTranslatedCategoryLabel(categoryKey),
                             isSelected: estCochee,
                             isDarkMode: isDarkMode, 
                             onSelectionChanged: (bool value) {
