@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart'; 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart'; // <--- AJOUTÉ : Requis pour contrôler l'orientation
 import 'package:flutter_localizations/flutter_localizations.dart';
 // import 'package:device_preview/device_preview.dart'; // <--- Désactivé
 import 'package:sourire/l10n/app_localizations.dart';
@@ -25,9 +26,16 @@ bool bocalVideEnCacheGlobal = false; // Cache pour le bocal vide
 final ValueNotifier<bool> isAppLockedNotifier = ValueNotifier<bool>(true);
 
 void main() async {
+  // Garantit que les liaisons Flutter sont prêtes avant d'exécuter du code asynchrone
   WidgetsFlutterBinding.ensureInitialized();
 
-  // 1. INITIALISATION DES PRÉFÉRENCES DISQUE ET TIMEZONES
+  // 1. FORCER LE MODE PORTRAIT EXCLUSIVEMENT
+  await SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
+  ]);
+
+  // 2. INITIALISATION DES PRÉFÉRENCES DISQUE ET TIMEZONES
   await UserPrefs.init(); 
   tz.initializeTimeZones();
   tz.setLocalLocation(tz.getLocation('Pacific/Noumea'));
@@ -61,15 +69,6 @@ void main() async {
   
   // Lancement direct de l'application (DevicePreview désactivé)
   runApp(const MyApp());
-  
-  /* --- ANCIEN BLOC DEVICE PREVIEW ---
-  runApp(
-    DevicePreview(
-      enabled: !kReleaseMode, 
-      builder: (context) => const MyApp(),
-    ),
-  );
-  ------------------------------------ */
 }
 
 class MyApp extends StatefulWidget {
@@ -183,7 +182,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
             }
           });
         }
-          _timeWhenPaused = null;
+        _timeWhenPaused = null;
       }
     }
   }
@@ -200,16 +199,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
               navigatorKey: _navigatorKey,
               title: 'Sourire',
               debugShowCheckedModeBanner: false,
-
-              // --- PARAMÈTRES REQUIS POUR DEVICE PREVIEW COMMENTÉS ---
-              // useInheritedMediaQuery: true, 
-              // locale: DevicePreview.locale(context), 
-              // builder: DevicePreview.appBuilder, 
-              // --------------------------------------------------------
-              
-              // On réinjecte la locale classique contrôlée par ton notifier
               locale: currentLocale,
-
               themeMode: currentMode,
               theme: ThemeData(
                 brightness: Brightness.light,

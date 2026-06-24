@@ -538,7 +538,10 @@ Future<void> _traiterSouvenirsEnCache() async {
                     onPressed: () {
                       Navigator.of(context).pop(); // Ferme la boîte de dialogue d'alerte
                       
-                      // Active l'ensemble des droits premium de l'application
+                      // 1. CORRECTION : Sauvegarde locale persistante pour valider l'achat sur le disque
+                      UserPrefs.isPremium = true; 
+
+                      // 2. Active l'ensemble des droits premium de l'application en mémoire vive
                       ThemeService.deverrouillerPremium();
                       
                       // Feedback visuel sur la Home

@@ -23,7 +23,6 @@ class ScreenProfil extends StatefulWidget {
   static bool accesGalerieActive = true;
   
   // Déclaration tri-état : null = auto (suit _estLaNuit), true = sombre forcé, false = clair forcé
-  static bool? isDarkMode;
   static bool animationsDoucesActive = false;
   @override
   State<ScreenProfil> createState() => _ScreenProfilState();
@@ -174,6 +173,8 @@ class _ScreenProfilState extends State<ScreenProfil> {
         return localizations.catLeisure;
       case "work":
         return localizations.catWork;
+      case "unclassified": 
+        return localizations.catUnclassified;
       default:
         return key;
     }
@@ -220,23 +221,24 @@ class _ScreenProfilState extends State<ScreenProfil> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    final localizations = AppLocalizations.of(context);
+Widget build(BuildContext context) {
+  final localizations = AppLocalizations.of(context);
+  // On branche l'écran complet sur le notifier global du thème
+  return ValueListenableBuilder<ThemeMode>(
+    valueListenable: MyApp.themeNotifier,
+    builder: (context, currentMode, _) {
+      // LOGIQUE CORRIGÉE : Si on est en "system", on regarde le téléphone, sinon on suit le choix forcé (clair ou sombre)
+      final bool isDark = currentMode == ThemeMode.system
+          ? (MediaQuery.of(context).platformBrightness == Brightness.dark)
+          : (currentMode == ThemeMode.dark);
+      
+      final Color couleurFond = isDark ? const Color(0xFF121212) : white;
+      final Color couleurHeaderEtConteneur = isDark ? const Color(0xFF1E1E1E) : white;
+      final Color couleurTextePrincipal = isDark ? white : black;
+      final Color couleurInputFond = isDark ? const Color(0xFF2A2A2A) : const Color(0xFFF5F5F5);
+      final Color couleurSeparateur = isDark ? const Color(0xFF2D2D2D) : const Color(0xFFEEEEEE);
 
-    // On branche l'écran complet sur le notifier global du thème
-    return ValueListenableBuilder<ThemeMode>(
-      valueListenable: MyApp.themeNotifier,
-      builder: (context, currentMode, _) {
-        // Détermination finale et dynamique de l'affichage du mode sombre
-        final bool isDark = ScreenProfil.isDarkMode ?? _estLaNuit();
-        
-        final Color couleurFond = isDark ? const Color(0xFF121212) : white;
-        final Color couleurHeaderEtConteneur = isDark ? const Color(0xFF1E1E1E) : white;
-        final Color couleurTextePrincipal = isDark ? white : black;
-        final Color couleurInputFond = isDark ? const Color(0xFF2A2A2A) : const Color(0xFFF5F5F5);
-        final Color couleurSeparateur = isDark ? const Color(0xFF2D2D2D) : const Color(0xFFEEEEEE);
-
-        return Scaffold(
+      return Scaffold(
           backgroundColor: couleurFond,
           body: SafeArea(
             child: Column(
@@ -535,36 +537,42 @@ _buildMenuRow(
                 const SizedBox(height: 8),
 
                 StreamBuilder<List<String>>(
-                  stream: _databaseService.getCategoriesStream(),
-                  builder: (context, snapshot) {
-                    final List<String> categoriesBDD = snapshot.data ?? _databaseService.getAllCategories();
-                    final List<String> optionsMenu = ["Toutes catégories", ...categoriesBDD];
+  stream: _databaseService.getCategoriesStream(),
+  builder: (context, snapshot) {
+    final List<String> categoriesBDD = snapshot.data ?? _databaseService.getAllCategories();
+    
+    // CORRECTION : On injecte "unclassified" dans la liste des options disponibles
+    final List<String> optionsMenu = ["Toutes catégories", "unclassified", ...categoriesBDD];
 
-                    // On récupère la liste de SharedPreferences pour la nettoyer si besoin
-                    List<String> categoriesSelectionnees = List.from(UserPrefs.categoriesSouvenirs);
-                    categoriesSelectionnees.removeWhere((cat) => cat != "Toutes catégories" && !categoriesBDD.contains(cat));
-                    
-                    if (categoriesSelectionnees.isEmpty) {
-                      categoriesSelectionnees = ["Toutes catégories"];
-                      UserPrefs.categoriesSouvenirs = categoriesSelectionnees;
-                    }
+    // On récupère la liste de SharedPreferences pour la nettoyer si besoin
+    List<String> categoriesSelectionnees = List.from(UserPrefs.categoriesSouvenirs);
+    
+    // CORRECTION : On protège "unclassified" et "Toutes catégories" du nettoyage automatique
+    categoriesSelectionnees.removeWhere((cat) => 
+      cat != "Toutes catégories" && 
+      cat != "unclassified" && 
+      !categoriesBDD.contains(cat)
+    );
+    
+    if (categoriesSelectionnees.isEmpty) {
+      categoriesSelectionnees = ["Toutes catégories"];
+      UserPrefs.categoriesSouvenirs = categoriesSelectionnees;
+    }
 
-                    return _buildMultiSelectDropdownButton(
-                      // CORRECTION : Utilisation de la liste synchronisée avec UserPrefs
-                      selectedValues: categoriesSelectionnees,
-                      items: optionsMenu,
-                      isDark: isDark,
-                      itemTranslator: _getCategoryDisplayLabel,
-                      menuMaxHeight: 240.0,
-                      onChanged: (List<String> nouvellesValeurs) async {
-                        // CORRECTION : Sauvegarde et reconstruction immédiate du StatefulBuilder
-                        UserPrefs.categoriesSouvenirs = nouvellesValeurs;
-                        setLocalState(() {});
-                        await NotificationService.planifierRappelSouvenirs();
-                      },
-                    );
-                  },
-                ),
+    return _buildMultiSelectDropdownButton(
+      selectedValues: categoriesSelectionnees,
+      items: optionsMenu,
+      isDark: isDark,
+      itemTranslator: _getCategoryDisplayLabel, // Géré à l'étape suivante
+      menuMaxHeight: 240.0,
+      onChanged: (List<String> nouvellesValeurs) async {
+        UserPrefs.categoriesSouvenirs = nouvellesValeurs;
+        setLocalState(() {});
+        await NotificationService.planifierRappelSouvenirs();
+      },
+    );
+  },
+),
               ],
             ],
           ),
@@ -700,18 +708,18 @@ _buildMenuRow(
                                     isDarkMode: localIsDark,
                                     titre: localizations?.accessibility ?? "Accessibilité",
                                     content: [
-                                      // MODE SOMBRE
+                                      // MODE SOMBRE (Version session temporaire)
                                       _buildRowWithSwitch(
                                         localizations?.darkMode ?? "Mode sombre",
                                         localizations?.darkModeSubtitle ?? "Bascule l'interface dans des tons sombres pour reposer tes yeux le soir.",
                                         localIsDark,
                                         isDark: localIsDark,
                                         (val) {
-                                          setState(() {
-                                            // Conserve l'état d'enregistrement explicite de session
-                                            ScreenProfil.isDarkMode = val;
-                                          });
+                                          // On met directement à jour le notificateur global du MaterialApp
                                           MyApp.themeNotifier.value = val ? ThemeMode.dark : ThemeMode.light;
+                                          
+                                          // On force la page actuelle à se redessiner avec la nouvelle valeur de localIsDark
+                                          setState(() {});
                                         }
                                       ),
                                       const SizedBox(height: 24),
@@ -1012,49 +1020,48 @@ _buildMenuRow(
     );
   }
 
-  Widget _buildRowWithSwitch(
-    String title, 
-    String description, 
-    bool value, 
-    ValueChanged<bool> onChanged, {
-    bool? isDark,
-  }) {
-    final bool effectiveIsDark = isDark ?? (ScreenProfil.isDarkMode ?? _estLaNuit());
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: TextStyle(
-                  fontSize: 16, 
-                  fontWeight: FontWeight.w600, 
-                  color: effectiveIsDark ? white : black,
-                ),
+ Widget _buildRowWithSwitch(
+  String title, 
+  String description, 
+  bool value, 
+  ValueChanged<bool> onChanged, {
+  required bool isDark, // On le passe en requis pour s'assurer de ne jamais utiliser de valeur obsolète
+}) {
+  return Row(
+    crossAxisAlignment: CrossAxisAlignment.center,
+    children: [
+      Expanded(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              style: TextStyle(
+                fontSize: 16, 
+                fontWeight: FontWeight.w600, 
+                color: isDark ? white : black, // Utilisation directe
               ),
-              const SizedBox(height: 4),
-              Text(
-                description,
-                style: TextStyle(
-                  fontSize: 13, 
-                  color: effectiveIsDark ? lightGrey : grey,
-                  height: 1.3,
-                ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              description,
+              style: TextStyle(
+                fontSize: 13, 
+                color: isDark ? lightGrey : grey, // Utilisation directe
+                height: 1.3,
               ),
-            ],
-          ),
+            ),
+          ],
         ),
-        const SizedBox(width: 24),
-        WidgetSwitch(
-          value: value,
-          onChanged: onChanged,
-        ),
-      ],
-    );
-  }
+      ),
+      const SizedBox(width: 24),
+      WidgetSwitch(
+        value: value,
+        onChanged: onChanged,
+      ),
+    ],
+  );
+}
 
   Widget _buildFAQItem(String question, String reponse, bool isDark) {
     final Color couleurTexte = isDark ? white : black;
