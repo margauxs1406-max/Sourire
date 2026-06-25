@@ -69,7 +69,7 @@ class UserPrefs {
   static int get heureRappelSouvenirs => _prefs?.getInt('heureRappelSouvenirs') ?? 10; 
   static set heureRappelSouvenirs(int value) => _prefs?.setInt('heureRappelSouvenirs', value);
 
-  static int get minuteRappelSouvenirs => _prefs?.getInt('minuteRappelSouvenirs') ?? 30;
+  static int get minuteRappelSouvenirs => _prefs?.getInt('minuteRappelSouvenirs') ?? 45;
   static set minuteRappelSouvenirs(int value) => _prefs?.setInt('minuteRappelSouvenirs', value);
 
   static List<String> get categoriesSouvenirs => _prefs?.getStringList('categoriesSouvenirs') ?? ["Toutes catégories"];

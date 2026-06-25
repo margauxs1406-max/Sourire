@@ -44,20 +44,19 @@ class _ScreenBootState extends State<ScreenBoot> {
           builder: (context) => ScreenLock(
             onAuthenticated: () {
               isAppLockedNotifier.value = false;
-              Navigator.of(context).pushAndRemoveUntil(
-                MaterialPageRoute(builder: (context) => const Home()),
-                (route) => false,
-              );
+              
+              // SÉCURITÉ TIMING IOS : On laisse un infime répit au plugin pour inscrire l'ID en cache global
+              Future.delayed(const Duration(milliseconds: 250), () {
+                if (context.mounted) {
+                  Navigator.of(context).pushAndRemoveUntil(
+                    MaterialPageRoute(builder: (context) => const Home()),
+                    (route) => false,
+                  );
+                }
+              });
             },
           ),
         ),
-        (route) => false,
-      );
-    } 
-    // 3. Cas normal sans sécurité
-    else {
-      Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(builder: (context) => const Home()),
         (route) => false,
       );
     }

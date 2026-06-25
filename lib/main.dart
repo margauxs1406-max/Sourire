@@ -129,13 +129,25 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
     }
 
     // On ne force la navigation vers la Home que si l'app n'est pas verrouillée
-    if (!isAppLockedNotifier.value) {
-      _navigatorKey.currentState?.pushAndRemoveUntil(
-        MaterialPageRoute(builder: (context) => const Home()),
-        (route) => false,
-      );
-    }
+  if (!isAppLockedNotifier.value) {
+    _navigatorKey.currentState?.pushAndRemoveUntil(
+      MaterialPageRoute(builder: (context) => const Home()),
+      (route) => false,
+    );
+  } else {
+    // IOS CAS CRITIQUE : Si l'app est en train de se déverrouiller, on attend un tout petit peu
+    // pour s'assurer que l'écran Home est prêt à recevoir l'appel.
+    Future.delayed(const Duration(milliseconds: 500), () {
+      if (!isAppLockedNotifier.value && idSouvenirEnCacheGlobal != null) {
+        // Si le FaceID est passé entre temps, on force la Home à traiter le cache
+        _navigatorKey.currentState?.pushAndRemoveUntil(
+          MaterialPageRoute(builder: (context) => const Home()),
+          (route) => false,
+        );
+      }
+    });
   }
+}
 
   void _traiterRappelSansSouvenir() {
     if (!isAppLockedNotifier.value) {
