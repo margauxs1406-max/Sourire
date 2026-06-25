@@ -39,6 +39,7 @@ void main() async {
   await UserPrefs.init(); 
   tz.initializeTimeZones();
   tz.setLocalLocation(tz.getLocation('Pacific/Noumea'));
+  ThemeService.chargerThemeSauvegarde();
 
   // SÉCURITÉ AU DÉMARRAGE
   if (!UserPrefs.biomatrieActive && UserPrefs.password.isEmpty) {
