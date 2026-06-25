@@ -261,6 +261,7 @@ class NotificationService {
       ),
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
       uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
+      matchDateTimeComponents: DateTimeComponents.time, // <--- AJOUTÉ : Force la récurrence quotidienne/périodique à l'heure dite
       payload: payloadData,
     );
   }

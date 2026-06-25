@@ -85,18 +85,18 @@ Future<void> _traiterSouvenirsEnCache() async {
     final int idTarget = idSouvenirEnCacheGlobal!;
     idSouvenirEnCacheGlobal = null; 
 
-    // CORRECTION SQLITE : Lecture asynchrone en BDD
-    final toutesLesNotes = await DatabaseService().getAllNotesAsync();
-    final souvenir = toutesLesNotes.firstWhere(
-      (note) => note.id == idTarget,
-      orElse: () => NoteSourire(id: -1, text: '', themeLabel: 'orange', colorLabel: 'orange', categories: [], date: DateTime.now()),
-    );
+    try {
+      // CORRECTION OPTIMISÉE : On ne charge qu'une seule ligne au lieu de toute la BDD
+      final souvenir = await DatabaseService().getNoteById(idTarget);
 
-    if (souvenir.id != -1 && mounted) {
-      afficherSouvenirBocal(context, souvenir);
+      if (souvenir != null && mounted) {
+        afficherSouvenirBocal(context, souvenir);
+      }
+    } catch (e) {
+      debugPrint("Erreur lors de la récupération du souvenir ciblé : $e");
     }
   } else {
-    // Gestion classique par arguments
+    // Gestion classique par arguments ou variable de secours (inchangée)
     final args = ModalRoute.of(context)?.settings.arguments;
     if (args != null && args is NoteSourire) {
       afficherSouvenirBocal(context, args);
