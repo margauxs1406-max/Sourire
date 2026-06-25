@@ -35,8 +35,8 @@ class BtnCategorisationDynamique extends StatelessWidget {
         Color couleurFond;
         Color couleurBordure;
 
-        // On utilise ici 'themeColor' (la couleur dynamique) au lieu de l'orange fixe
-        final Color couleurActive = isActive ? themeColor : themeColor.withOpacity(0.5);
+        // Si isActive est faux, on applique une opacité pour signifier le blocage
+        final Color couleurActive = isActive ? themeColor : themeColor.withOpacity(0.35);
 
         if (!isSecondary) {
           couleurContenu = Colors.white;
@@ -49,6 +49,7 @@ class BtnCategorisationDynamique extends StatelessWidget {
         }
 
         return GestureDetector(
+          // Si isActive est faux, on ignore complètement le clic
           onTap: isActive ? onTap : null,
           child: Container(
             width: double.infinity,

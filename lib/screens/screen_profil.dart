@@ -41,11 +41,6 @@ class _ScreenProfilState extends State<ScreenProfil> {
   // Instance pour la récupération dynamique des catégories
   final DatabaseService _databaseService = DatabaseService();
 
-  // Simule ou récupère l'état de la nuit automatique
-  bool _estLaNuit() {
-    final hour = DateTime.now().hour;
-    return hour < 6 || hour >= 22;
-  }
 
   @override
   void initState() {
@@ -539,31 +534,43 @@ _buildMenuRow(
                 StreamBuilder<List<String>>(
   stream: _databaseService.getCategoriesStream(),
   builder: (context, snapshot) {
-    final List<String> categoriesBDD = snapshot.data ?? _databaseService.getAllCategories();
+    // Si le Stream n'a pas encore émis ses données, on attend ou on utilise le cache actuel
+    // sans écraser les UserPrefs
+    final List<String> categoriesBDD = snapshot.data ?? [];
     
-    // CORRECTION : On injecte "unclassified" dans la liste des options disponibles
     final List<String> optionsMenu = ["Toutes catégories", "unclassified", ...categoriesBDD];
 
-    // On récupère la liste de SharedPreferences pour la nettoyer si besoin
+    // On lit les catégories sauvegardées
     List<String> categoriesSelectionnees = List.from(UserPrefs.categoriesSouvenirs);
     
-    // CORRECTION : On protège "unclassified" et "Toutes catégories" du nettoyage automatique
-    categoriesSelectionnees.removeWhere((cat) => 
-      cat != "Toutes catégories" && 
-      cat != "unclassified" && 
-      !categoriesBDD.contains(cat)
-    );
-    
-    if (categoriesSelectionnees.isEmpty) {
-      categoriesSelectionnees = ["Toutes catégories"];
-      UserPrefs.categoriesSouvenirs = categoriesSelectionnees;
+    // CORRECTION : On applique le nettoyage UNIQUEMENT si le Stream a bien renvoyé des données réelles,
+    // pour éviter les faux-positifs de liste vide au démarrage de l'écran.
+    if (snapshot.hasData) {
+      categoriesSelectionnees.removeWhere((cat) => 
+        cat != "Toutes catégories" && 
+        cat != "unclassified" && 
+        !categoriesBDD.contains(cat)
+      );
+      
+      if (categoriesSelectionnees.isEmpty) {
+        categoriesSelectionnees = ["Toutes catégories"];
+        UserPrefs.categoriesSouvenirs = categoriesSelectionnees;
+      }
+    }
+
+    // Sécurité au cas où le premier chargement affiche une valeur non encore présente dans optionsMenu
+    // (empêche le Dropdown de crash)
+    for (var cat in categoriesSelectionnees) {
+      if (!optionsMenu.contains(cat)) {
+        optionsMenu.add(cat);
+      }
     }
 
     return _buildMultiSelectDropdownButton(
       selectedValues: categoriesSelectionnees,
       items: optionsMenu,
       isDark: isDark,
-      itemTranslator: _getCategoryDisplayLabel, // Géré à l'étape suivante
+      itemTranslator: _getCategoryDisplayLabel,
       menuMaxHeight: 240.0,
       onChanged: (List<String> nouvellesValeurs) async {
         UserPrefs.categoriesSouvenirs = nouvellesValeurs;

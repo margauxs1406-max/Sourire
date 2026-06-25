@@ -33,6 +33,9 @@ class _ScreenCategorisationNoteState extends State<ScreenCategorisationNote> {
   final List<String> _selectedCategories = [];
   final TextEditingController _newCategoryController = TextEditingController();
   bool _isAddingNew = false;
+  
+  // MODIFICATION : Sécurité anti-double clic
+  bool _isSaving = false;
 
   @override
   void dispose() {
@@ -53,39 +56,65 @@ class _ScreenCategorisationNoteState extends State<ScreenCategorisationNote> {
     }
   }
 
-  void _validerNote() async { // <-- Rendu asynchrone pour la planification
-    final nouvelleNote = NoteSourire(
-      text: widget.note,
-      themeLabel: widget.themeVisuel.id, 
-      colorLabel: widget.theme.label,   
-      categories: _selectedCategories,
-      date: DateTime.now(),
-    );
-    _databaseService.insertNote(nouvelleNote);
-    
-    // RECALCULE LA PROCHAINE NOTIFICATION AVEC LE NOUVEAU SOUVENIR DISPONIBLE
-    await NotificationService.planifierRappelSouvenirs();
-    
-    if (mounted) {
-      Navigator.of(context).popUntil((route) => route.isFirst);
+  void _validerNote() async {
+    if (_isSaving) return; // Sécurité supplémentaire
+
+    setState(() {
+      _isSaving = true; // Bloque immédiatement l'accès
+    });
+
+    try {
+      final nouvelleNote = NoteSourire(
+        text: widget.note,
+        themeLabel: widget.themeVisuel.id, 
+        colorLabel: widget.theme.label,   
+        categories: _selectedCategories,
+        date: DateTime.now(),
+      );
+      _databaseService.insertNote(nouvelleNote);
+      
+      // RECALCULE LA PROCHAINE NOTIFICATION AVEC LE NOUVEAU SOUVENIR DISPONIBLE
+      await NotificationService.planifierRappelSouvenirs();
+      
+      if (mounted) {
+        Navigator.of(context).popUntil((route) => route.isFirst);
+      }
+    } catch (e) {
+      // En cas d'erreur BDD, on débloque l'UI
+      setState(() {
+        _isSaving = false;
+      });
     }
   }
 
-  void _passerCategorisation() async { // <-- Rendu asynchrone pour la planification
-    final nouvelleNote = NoteSourire(
-      text: widget.note,
-      themeLabel: widget.themeVisuel.id, 
-      colorLabel: widget.theme.label,   
-      categories: ["sans_categorie"],
-      date: DateTime.now(),
-    );
-    _databaseService.insertNote(nouvelleNote);
-    
-    // RECALCULE LA PROCHAINE NOTIFICATION AVEC LE NOUVEAU SOUVENIR DISPONIBLE
-    await NotificationService.planifierRappelSouvenirs();
-    
-    if (mounted) {
-      Navigator.of(context).popUntil((route) => route.isFirst);
+  void _passerCategorisation() async {
+    if (_isSaving) return; // Sécurité supplémentaire
+
+    setState(() {
+      _isSaving = true; // Bloque immédiatement l'accès
+    });
+
+    try {
+      final nouvelleNote = NoteSourire(
+        text: widget.note,
+        themeLabel: widget.themeVisuel.id, 
+        colorLabel: widget.theme.label,   
+        categories: ["sans_categorie"],
+        date: DateTime.now(),
+      );
+      _databaseService.insertNote(nouvelleNote);
+      
+      // RECALCULE LA PROCHAINE NOTIFICATION AVEC LE NOUVEAU SOUVENIR DISPONIBLE
+      await NotificationService.planifierRappelSouvenirs();
+      
+      if (mounted) {
+        Navigator.of(context).popUntil((route) => route.isFirst);
+      }
+    } catch (e) {
+      // En cas d'erreur BDD, on débloque l'UI
+      setState(() {
+        _isSaving = false;
+      });
     }
   }
 
@@ -356,8 +385,8 @@ class _ScreenCategorisationNoteState extends State<ScreenCategorisationNote> {
                             },
                           ),
                         ),
-                                                
-                        // 3. BANDEAU BAS (BOUTONS REMPLACÉS PAR BTNCATEGORISATION AVEC THÈME DYNAMIQUE)
+                                                    
+                        // 3. BANDEAU BAS (BOUTONS AVEC SÉCURITÉ ANTI-DOUBLE TAP)
                         Positioned(
                           left: 0,
                           right: 0,
@@ -371,36 +400,42 @@ class _ScreenCategorisationNoteState extends State<ScreenCategorisationNote> {
                               crossAxisAlignment: CrossAxisAlignment.center,
                               children: [
                                 // BOUTON PASSER
-                                Expanded(
-                                  child: BtnCategorisationDynamique(
-                                    text: localizations.btnSkip,
-                                    isSecondary: true,
-                                    themeColor: widget.theme.main, // Couleur dynamique appliquée
-                                    onTap: _passerCategorisation,
-                                  ),
-                                ),
-                                const SizedBox(width: 20),
-                                // BOUTON VALIDER
-                                Expanded(
-                                  child: isValidateActive 
-                                    ? BtnCategorisationDynamique(
-                                        text: localizations.btnValidate,
-                                        isSecondary: false,
-                                        themeColor: widget.theme.main, // Couleur dynamique appliquée
-                                        onTap: _validerNote,
-                                      )
-                                    : Opacity(
-                                        opacity: 0.5,
-                                        child: AbsorbPointer(
-                                          child: BtnCategorisationDynamique(
-                                            text: localizations.btnValidate,
-                                            isSecondary: false,
-                                            themeColor: widget.theme.main,
-                                            onTap: () {},
-                                          ),
-                                        ),
-                                      ),
-                                ),
+Expanded(
+  child: BtnCategorisationDynamique(
+    text: localizations.btnSkip,
+    isSecondary: true,
+    themeColor: widget.theme.main,
+    isActive: !_isSaving, // Devient opaque/inactif si un enregistrement est en cours
+    onTap: () {
+      if (!_isSaving) _passerCategorisation();
+    },
+  ),
+),
+const SizedBox(width: 20),
+// BOUTON VALIDER
+Expanded(
+  child: isValidateActive 
+    ? BtnCategorisationDynamique(
+        text: localizations.btnValidate,
+        isSecondary: false,
+        themeColor: widget.theme.main,
+        isActive: !_isSaving, // Devient opaque/inactif si un enregistrement est en cours
+        onTap: () {
+          if (!_isSaving) _validerNote();
+        },
+      )
+    : Opacity(
+        opacity: 0.5,
+        child: AbsorbPointer(
+          child: BtnCategorisationDynamique(
+            text: localizations.btnValidate,
+            isSecondary: false,
+            themeColor: widget.theme.main,
+            onTap: () {},
+          ),
+        ),
+      ),
+),
                               ],
                             ),
                           ),

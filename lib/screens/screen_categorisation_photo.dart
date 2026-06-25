@@ -34,6 +34,8 @@ class _ScreenCategorisationPhotoState extends State<ScreenCategorisationPhoto> {
   final List<String> _selectedCategories = [];
   final TextEditingController _newCategoryController = TextEditingController();
   bool _isAddingNew = false;
+  // Sécurité anti-double tap / état de chargement
+  bool _isSaving = false;
 
   bool get isLast => widget.currentIndex == widget.photos.length - 1;
   bool get isMultiple => widget.photos.length > 1;
@@ -87,6 +89,9 @@ class _ScreenCategorisationPhotoState extends State<ScreenCategorisationPhoto> {
   }
 
   void _validerOuSuivant() async {
+    if (_isSaving) return;
+    setState(() => _isSaving = true);
+
     final String? localPath = await _sauvegarderFichierEnLocal(widget.photos[widget.currentIndex]);
     if (localPath != null) {
       final nouvellePhoto = NoteSourire(
@@ -114,12 +119,18 @@ class _ScreenCategorisationPhotoState extends State<ScreenCategorisationPhoto> {
               currentIndex: widget.currentIndex + 1,
             ),
           ),
-        );
+        ).then((_) {
+          // Permet de restaurer l'état du bouton si l'utilisateur fait un retour arrière
+          if (mounted) setState(() => _isSaving = false);
+        });
       }
     }
   }
 
   void _passerTouteLaCategorisation() async {
+    if (_isSaving) return;
+    setState(() => _isSaving = true);
+
     for (int i = widget.currentIndex; i < widget.photos.length; i++) {
       final String? localPath = await _sauvegarderFichierEnLocal(widget.photos[i]);
       
@@ -233,7 +244,9 @@ class _ScreenCategorisationPhotoState extends State<ScreenCategorisationPhoto> {
     const double titleHeight = 90.0;
     const double bottomBarHeight = 110.0; 
 
-    final bool isValidateActive = _selectedCategories.isNotEmpty;
+    // Un bouton Valider est cliquable s'il y a des catégories ET qu'aucun enregistrement n'est en cours.
+    final bool isValidateActive = _selectedCategories.isNotEmpty && !_isSaving;
+    
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: () {
@@ -356,16 +369,16 @@ class _ScreenCategorisationPhotoState extends State<ScreenCategorisationPhoto> {
                                               fontSize: adaptiveFontSize,
                                             ),
                                             suffixIcon: IconButton(
-                                              icon: Icon(Icons.check, color: orange),
+                                              icon: const Icon(Icons.check, color: orange),
                                               onPressed: _soumettreNouvelleCategorie,
                                             ),
                                             border: OutlineInputBorder(
                                               borderRadius: BorderRadius.circular(15),
-                                              borderSide: BorderSide(color: orange),
+                                              borderSide: const BorderSide(color: orange),
                                             ),
                                             focusedBorder: OutlineInputBorder(
                                               borderRadius: BorderRadius.circular(15),
-                                              borderSide: BorderSide(color: orange, width: 2),
+                                              borderSide: const BorderSide(color: orange, width: 2),
                                             ),
                                           ),
                                           onSubmitted: (_) => _soumettreNouvelleCategorie(),
@@ -415,6 +428,7 @@ class _ScreenCategorisationPhotoState extends State<ScreenCategorisationPhoto> {
                           ),
                         ),
 
+                        // ZONE 3. BANDEAU BAS AVEC SÉCURITÉ ANTI DOUBLE-TAP
                         Positioned(
                           left: 0,
                           right: 0,
@@ -427,14 +441,19 @@ class _ScreenCategorisationPhotoState extends State<ScreenCategorisationPhoto> {
                               mainAxisSize: MainAxisSize.max,
                               crossAxisAlignment: CrossAxisAlignment.center,
                               children: [
+                                // BOUTON PASSER
                                 Expanded(
                                   child: BtnCategorisation(
                                     text: localizations.btnSkip,
                                     isSecondary: true,
-                                    onTap: _passerTouteLaCategorisation,
+                                    isActive: !_isSaving, // Se grise et bloque les clics si en cours d'enregistrement
+                                    onTap: () {
+                                      if (!_isSaving) _passerTouteLaCategorisation();
+                                    },
                                   ),
                                 ),
                                 const SizedBox(width: 20),
+                                // BOUTON VALIDER / SUIVANT
                                 Expanded(
                                   child: BtnCategorisation(
                                     text: isLast 
@@ -442,7 +461,9 @@ class _ScreenCategorisationPhotoState extends State<ScreenCategorisationPhoto> {
                                         : (localizations.localeName == 'fr' ? "Suivant" : "Next"),
                                     isActive: isValidateActive,
                                     isSecondary: false,
-                                    onTap: _validerOuSuivant,
+                                    onTap: () {
+                                      if (!_isSaving && isValidateActive) _validerOuSuivant();
+                                    },
                                   ),
                                 ),
                               ],

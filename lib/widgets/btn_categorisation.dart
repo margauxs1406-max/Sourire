@@ -8,7 +8,7 @@ class BtnCategorisation extends StatelessWidget {
   final VoidCallback onTap;
   final bool isSecondary; 
   final double? fontSize;
-  final double? widthFactor; // Permet de définir une largeur proportionnelle (ex: 0.8 pour 80% de l'écran)
+  final double? widthFactor; 
 
   const BtnCategorisation({
     required this.text,
@@ -16,20 +16,14 @@ class BtnCategorisation extends StatelessWidget {
     this.isActive = true,
     this.isSecondary = false, 
     this.fontSize,
-    this.widthFactor, // Si null, prendra toute la largeur disponible
-    super.key, // L'intrus 'required Color color' a été supprimé d'ici
+    this.widthFactor, 
+    super.key, 
   });
 
   @override
   Widget build(BuildContext context) {
-    // Récupération des dimensions de l'écran
     final Size screenSize = MediaQuery.of(context).size;
-    
-    // Calcul d'une hauteur proportionnelle (ex: ~5.5% de la hauteur de l'écran)
-    // avec des limites (min 45, max 65) pour éviter que ce soit trop petit ou trop grand
     final double hauteurDynamique = (screenSize.height * 0.065).clamp(45.0, 65.0);
-
-    // Taille de police adaptative basée sur la largeur de l'écran si non spécifiée
     final double tailleTexteDynamique = fontSize ?? (screenSize.width * 0.04).clamp(14.0, 18.0);
 
     return ValueListenableBuilder<ThemeMode>(
@@ -43,10 +37,11 @@ class BtnCategorisation extends StatelessWidget {
 
         if (!isSecondary) {
           couleurContenu = Colors.white;
-          couleurFond = isActive ? orange : orange.withOpacity(0.5);
+          couleurFond = isActive ? orange : orange.withOpacity(0.35); // Réduit pour un meilleur feedback inactif
           couleurBordure = Colors.transparent;
         } else {
-          final Color orangeActuel = isActive ? orange : orange.withOpacity(0.5);
+          // Gère maintenant proprement l'opacité du bouton secondaire quand il est désactivé
+          final Color orangeActuel = isActive ? orange : orange.withOpacity(0.35);
           couleurContenu = orangeActuel;
           couleurBordure = orangeActuel;
           couleurFond = isDarkMode ? Colors.transparent : white;
@@ -55,13 +50,12 @@ class BtnCategorisation extends StatelessWidget {
         return GestureDetector(
           onTap: isActive ? onTap : null,
           child: Container(
-            // Gestion de la largeur proportionnelle ou occupation totale de l'espace parent
             width: widthFactor != null ? screenSize.width * widthFactor! : double.infinity,
             height: hauteurDynamique,
-            padding: EdgeInsets.symmetric(horizontal: screenSize.width * 0.04), // Padding interne adaptatif
+            padding: EdgeInsets.symmetric(horizontal: screenSize.width * 0.04), 
             decoration: BoxDecoration(
               color: couleurFond,
-              borderRadius: BorderRadius.circular(hauteurDynamique / 2), // Reste parfaitement arrondi peu importe la hauteur
+              borderRadius: BorderRadius.circular(hauteurDynamique / 2), 
               border: isSecondary 
                   ? Border.all(color: couleurBordure, width: 2) 
                   : null,
