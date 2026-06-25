@@ -3,11 +3,17 @@ import 'dart:math' as math;
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:path/path.dart' as p;
 import 'package:sourire/theme/tokens.dart';
 import 'package:sourire/models/note_model.dart';
 import 'package:sourire/screens/screen_profil.dart';
 import 'package:sourire/models/theme_app.dart'; 
 
+/// Cache global temporaire pour éviter le clignotement lors des rebuilds répétitifs
+final Map<String, Uint8List> _globalImageCache = {};
+
+/// Résolution des thèmes de couleur de l'application
 SourireTheme _getThemeFromColorLabel(String? colorLabel) {
   switch (colorLabel) {
     case 'vert':
@@ -34,11 +40,56 @@ class WidgetSouvenirTirage extends StatefulWidget {
 class _WidgetSouvenirTirageState extends State<WidgetSouvenirTirage> {
   ScrollController? _scrollController;
   Size? _lastCalculatedSize;
+  Uint8List? _imageBytes;
+  bool _isLoaded = false;
 
   @override
   void initState() {
     super.initState();
     _scrollController = ScrollController();
+    _chargerImageBytes();
+  }
+
+  /// Résolution et lecture du fichier image avec gestion du cache
+  Future<void> _chargerImageBytes() async {
+    final bool isPhoto = widget.souvenir.photoPath != null && widget.souvenir.photoPath!.trim().isNotEmpty;
+    if (!isPhoto) {
+      if (mounted) setState(() { _isLoaded = true; });
+      return;
+    }
+
+    final String pathKey = widget.souvenir.photoPath!.trim();
+
+    // Si l'image est déjà en cache, on l'utilise immédiatement sans re-synchro disque (évite le flash noir)
+    if (_globalImageCache.containsKey(pathKey)) {
+      _imageBytes = _globalImageCache[pathKey];
+      if (mounted) setState(() { _isLoaded = true; });
+      return;
+    }
+
+    try {
+      final cleanPath = pathKey.replaceAll('file://', '');
+      File file;
+
+      if (Platform.isIOS) {
+        final String fileName = p.basename(cleanPath);
+        final Directory appDocDir = await getApplicationDocumentsDirectory();
+        file = File(p.join(appDocDir.path, fileName));
+      } else {
+        file = File(cleanPath);
+      }
+
+      if (file.existsSync()) {
+        _imageBytes = file.readAsBytesSync();
+        _globalImageCache[pathKey] = _imageBytes!; // Mise en cache
+      }
+    } catch (e) {
+      debugPrint("Erreur lecture photo tirage : $e");
+    }
+
+    if (mounted) {
+      setState(() { _isLoaded = true; });
+    }
   }
 
   @override
@@ -47,7 +98,6 @@ class _WidgetSouvenirTirageState extends State<WidgetSouvenirTirage> {
     super.dispose();
   }
 
-  // Force le positionnement au centre exact après le calcul du layout
   void _centrerLeScroll(Size imageSize, double bocalSize) {
     if (_lastCalculatedSize == imageSize) return;
     _lastCalculatedSize = imageSize;
@@ -82,19 +132,11 @@ class _WidgetSouvenirTirageState extends State<WidgetSouvenirTirage> {
       orElse: () => ThemeRepository.themeClassique,
     );
 
-    debugPrint("ID recherché: '${widget.souvenir.themeLabel}' -> Trouvé dans le Repo: '${themeGraphique.id}'");
-
-    Uint8List? imageBytes;
-    if (isPhoto) {
-      try {
-        final cleanPath = widget.souvenir.photoPath!.replaceAll('file://', '').trim();
-        final file = File(cleanPath);
-        if (file.existsSync()) {
-          imageBytes = file.readAsBytesSync();
-        }
-      } catch (e) {
-        debugPrint("Erreur lecture photo : $e");
-      }
+    // Si l'image n'est pas encore chargée mais qu'on a déjà les données en cache, on évite le loader
+    if (!_isLoaded && _imageBytes == null) {
+      return const Center(
+        child: CircularProgressIndicator(),
+      );
     }
 
     return LayoutBuilder(
@@ -112,9 +154,6 @@ class _WidgetSouvenirTirageState extends State<WidgetSouvenirTirage> {
             borderRadius: BorderRadius.circular(20),
             child: Stack(
               children: [
-                // ==========================================
-                // COUCHE 1 : LES ICÔNES EN ARRIÈRE-PLAN
-                // ==========================================
                 if (!isPhoto && themeGraphique.noteIcons.isNotEmpty)
                   ...themeGraphique.noteIcons.map((iconConfig) {
                     return Positioned(
@@ -137,25 +176,19 @@ class _WidgetSouvenirTirageState extends State<WidgetSouvenirTirage> {
                       ),
                     );
                   }),
-
-                // ==========================================
-                // COUCHE 2 : LE CONTENU (TEXTE OU PHOTO INTEGRALE SCROLLABLE ET CENTREE)
-                // ==========================================
                 Positioned.fill(
                   child: isPhoto
-                      ? (imageBytes != null && imageBytes.isNotEmpty
+                      ? (_imageBytes != null && _imageBytes!.isNotEmpty
                           ? FutureBuilder<Size>(
-                              future: _getImageSize(imageBytes),
+                              future: _getImageSize(_imageBytes!),
                               builder: (context, snapshot) {
                                 if (!snapshot.hasData) return const SizedBox.shrink();
                                 
                                 final imageSize = snapshot.data!;
                                 final bool isPaysage = imageSize.width > imageSize.height;
 
-                                // Déclenche le repositionnement au centre exact
                                 _centrerLeScroll(imageSize, size);
 
-                                // Calcul précis des dimensions réelles de l'image
                                 final double? imageWidth = isPaysage ? null : size;
                                 final double? imageHeight = isPaysage ? size : null;
 
@@ -167,10 +200,11 @@ class _WidgetSouvenirTirageState extends State<WidgetSouvenirTirage> {
                                     width: isPaysage ? (imageSize.width * size) / imageSize.height : size,
                                     height: isPaysage ? size : (imageSize.height * size) / imageSize.width,
                                     child: Image.memory(
-                                      imageBytes!,
+                                      _imageBytes!,
                                       width: imageWidth,
                                       height: imageHeight,
                                       fit: BoxFit.cover,
+                                      gaplessPlayback: true, // Évite les flashs blancs/noirs lors du rafraîchissement
                                     ),
                                   ),
                                 );
@@ -178,7 +212,9 @@ class _WidgetSouvenirTirageState extends State<WidgetSouvenirTirage> {
                             )
                           : SizedBox(
                               height: size,
-                              child: const Center(child: Icon(Icons.broken_image, color: Colors.grey, size: 40)),
+                              child: const Center(
+                                child: Icon(Icons.broken_image, color: Colors.grey, size: 40),
+                              ),
                             ))
                       : SingleChildScrollView(
                           physics: const BouncingScrollPhysics(),
@@ -211,6 +247,7 @@ class _WidgetSouvenirTirageState extends State<WidgetSouvenirTirage> {
   }
 }
 
+/// Affiche l'overlay dialog contenant le widget du souvenir pioché
 void afficherSouvenirBocal(BuildContext context, NoteSourire souvenir) {
   final int dureeAnimation = ScreenProfil.animationsDoucesActive ? 400 : 800;
 
@@ -258,8 +295,9 @@ void afficherSouvenirBocal(BuildContext context, NoteSourire souvenir) {
           child: child,
         );
       } else {
+        // RESTAURATION DE L'EFFET TORNADE : Suppression du multiplicateur de conversion en radians parasite
         return Transform.rotate(
-          angle: (1 - anim1.value) * 12.5,
+          angle: (1 - anim1.value) * 12.5, 
           child: Transform.scale(
             scale: anim1.value,
             child: Opacity(

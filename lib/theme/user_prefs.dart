@@ -33,7 +33,15 @@ class UserPrefs {
   static bool get modeDemoAffiche => _prefs?.getBool('modeDemoAffiche') ?? false;
   static set modeDemoAffiche(bool value) => _prefs?.setBool('modeDemoAffiche', value);
 
-  static String get accordHeureux => (genre == "Une femme") ? "heureuse" : "heureux";
+  // Remplace l'ancienne ligne par celle-ci :
+  static String get accordHeureux {
+    final g = (genre).trim().toLowerCase();
+    // On vérifie toutes les valeurs possibles pour le genre féminin (Français et Anglais)
+    if (g == "une femme" || g == "a woman") {
+      return "heureuse";
+    }
+    return "heureux";
+  }
 
   static Future<void> setLangue(String value) async {
     langue = value;

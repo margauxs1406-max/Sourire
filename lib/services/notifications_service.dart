@@ -104,6 +104,20 @@ class NotificationService {
     }
 
     final localizations = _obtenirTraductions();
+    
+    // MISE À JOUR DYNAMIQUE DU CANAL ANDROID AVEC LA BONNE LANGUE
+    final androidPlugin = _plugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+    if (androidPlugin != null) {
+      await androidPlugin.createNotificationChannel(AndroidNotificationChannel(
+        'rappel_gratitude_id',
+        localizations.notifGratitudeChannelName,
+        description: localizations.notifGratitudeChannelDesc,
+        importance: Importance.max,
+        playSound: true,
+        enableVibration: true,
+      ));
+    }
+
     final maintenant = tz.TZDateTime.now(tz.local);
     
     var instantPlanifie = tz.TZDateTime(
@@ -121,8 +135,8 @@ class NotificationService {
 
     await _plugin.zonedSchedule(
       notifId,
-      localizations.notifGratitudeTitle,
-      localizations.notifGratitudeBody,
+      localizations.notifGratitudeTitle, // Récupéré dynamiquement depuis la bonne langue
+      localizations.notifGratitudeBody,  // Récupéré dynamiquement depuis la bonne langue
       instantPlanifie,
       NotificationDetails(
         android: AndroidNotificationDetails(
@@ -151,7 +165,20 @@ class NotificationService {
     }
 
     final localizations = _obtenirTraductions();
-    // CORRECTION : Ajout de "await" ici car la méthode accède à SQLite et renvoie un Future
+
+    // MISE À JOUR DYNAMIQUE DU CANAL ANDROID AVEC LA BONNE LANGUE
+    final androidPlugin = _plugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+    if (androidPlugin != null) {
+      await androidPlugin.createNotificationChannel(AndroidNotificationChannel(
+        'rappel_souvenirs_id',
+        localizations.notifSouvenirsChannelName,
+        description: localizations.notifSouvenirsChannelDesc,
+        importance: Importance.max,
+        playSound: true,
+        enableVibration: true,
+      ));
+    }
+
     final NoteSourire? souvenirAleatoire = await DatabaseService().getRandomNote(
       categoriesCibles: UserPrefs.categoriesSouvenirs,
     );

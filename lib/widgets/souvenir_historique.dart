@@ -1,38 +1,93 @@
 import 'dart:io';
 import 'dart:math' as math;
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:path/path.dart' as p;
 import 'package:sourire/theme/tokens.dart';
 import 'package:sourire/models/note_model.dart';
 import 'package:sourire/models/theme_app.dart';
 
-class WidgetSouvenirHistorique extends StatelessWidget {
+// Déclaration du cache partagé pour éliminer les accès asynchrones répétitifs au stockage
+final Map<String, Uint8List> _historiqueImageCache = {};
+
+class WidgetSouvenirHistorique extends StatefulWidget {
   final NoteSourire souvenir;
 
   const WidgetSouvenirHistorique({required this.souvenir, super.key});
 
   @override
+  State<WidgetSouvenirHistorique> createState() => _WidgetSouvenirHistoriqueState();
+}
+
+class _WidgetSouvenirHistoriqueState extends State<WidgetSouvenirHistorique> {
+  Uint8List? _cachedBytes;
+  bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _verifierEtChargerImage();
+  }
+
+  // Intercepte le cache de manière synchrone avant le rendu pour éviter les flashs/clignotements
+  void _verifierEtChargerImage() {
+  if (widget.souvenir.photoPath == null || widget.souvenir.photoPath!.trim().isEmpty) return;
+  
+  final String pathKey = widget.souvenir.photoPath!.trim();
+  
+  // Si on est en train d'importer (nouvelle image), on contourne le cache mémoire pour forcer la lecture disque
+  if (_historiqueImageCache.containsKey(pathKey) && _historiqueImageCache[pathKey]!.isNotEmpty) {
+    _cachedBytes = _historiqueImageCache[pathKey];
+  } else {
+    _chargerImageAsynchrone(pathKey);
+  }
+}
+
+  Future<void> _chargerImageAsynchrone(String pathKey) async {
+    if (!mounted) return;
+    setState(() { _isLoading = true; });
+
+    try {
+      final cleanPath = pathKey.replaceAll('file://', '');
+      File file;
+
+      if (Platform.isIOS) {
+        final String fileName = p.basename(cleanPath);
+        final Directory appDocDir = await getApplicationDocumentsDirectory();
+        file = File(p.join(appDocDir.path, fileName));
+      } else {
+        file = File(cleanPath);
+      }
+
+      if (file.existsSync()) {
+        final bytes = file.readAsBytesSync();
+        _historiqueImageCache[pathKey] = bytes;
+        if (mounted) {
+          setState(() {
+            _cachedBytes = bytes;
+            _isLoading = false;
+          });
+        }
+      } else {
+        if (mounted) setState(() { _isLoading = false; });
+      }
+    } catch (e) {
+      debugPrint("Erreur accès photo historique : $e");
+      if (mounted) setState(() { _isLoading = false; });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final themeCouleur = SourireTheme.fromLabel(souvenir.colorLabel);
-    final bool isPhoto = souvenir.photoPath != null && souvenir.photoPath!.trim().isNotEmpty;
+    final themeCouleur = SourireTheme.fromLabel(widget.souvenir.colorLabel);
+    final bool isPhoto = widget.souvenir.photoPath != null && widget.souvenir.photoPath!.trim().isNotEmpty;
 
     final ThemeApp themeGraphique = ThemeRepository.tousLesThemes.firstWhere(
-      (t) => t.id.toLowerCase() == souvenir.themeLabel.toLowerCase(),
+      (t) => t.id.toLowerCase() == widget.souvenir.themeLabel.toLowerCase(),
       orElse: () => ThemeRepository.themeClassique,
     );
-
-    File? imageFile;
-    if (isPhoto) {
-      try {
-        final cleanPath = souvenir.photoPath!.replaceAll('file://', '').trim();
-        final file = File(cleanPath);
-        if (file.existsSync()) {
-          imageFile = file;
-        }
-      } catch (e) {
-        debugPrint("Erreur accès photo historique : $e");
-      }
-    }
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -44,7 +99,6 @@ class WidgetSouvenirHistorique extends StatelessWidget {
           decoration: BoxDecoration(
             color: isPhoto ? const Color(0xFF1E1E1E) : themeCouleur.light,
             borderRadius: BorderRadius.circular(6), 
-            // Le contour s'applique uniquement si ce n'est PAS une photo
             border: isPhoto 
                 ? null 
                 : Border.all(
@@ -56,9 +110,6 @@ class WidgetSouvenirHistorique extends StatelessWidget {
             borderRadius: BorderRadius.circular(4),
             child: Stack(
               children: [
-                // ——————————————
-                // COUCHE 1 : LES ICÔNES DE THÈME (Uniquement si pas de photo)
-                // ——————————————
                 if (!isPhoto && themeGraphique.noteIcons.isNotEmpty)
                   ...themeGraphique.noteIcons.map((iconConfig) {
                     return Positioned(
@@ -82,32 +133,38 @@ class WidgetSouvenirHistorique extends StatelessWidget {
                     );
                   }),
 
-                // ——————————————
-                // COUCHE 2 : LE CONTENU
-                // ——————————————
                 Positioned.fill(
                   child: isPhoto
-                      ? (imageFile != null
-                          ? Image.file(
-                              imageFile,
+                      ? (_cachedBytes != null
+                          ? Image.memory(
+                              _cachedBytes!,
                               width: size,
                               height: size,
                               fit: BoxFit.cover,
-                              cacheWidth: 150, 
+                              gaplessPlayback: true, // Évite les sauts visuels lors du recyclage
                               errorBuilder: (context, error, stackTrace) {
                                 return const Center(
                                   child: Icon(Icons.broken_image, color: Colors.white, size: 24),
                                 );
                               },
                             )
-                          : const Center(
-                              child: Icon(Icons.broken_image, color: Colors.white, size: 24),
+                          : Container(
+                              color: const Color(0xFF1E1E1E),
+                              child: Center(
+                                child: _isLoading 
+                                    ? const SizedBox(
+                                        width: 16,
+                                        height: 16,
+                                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white70),
+                                      )
+                                    : const Icon(Icons.broken_image, color: Colors.white54, size: 24),
+                               ),
                             ))
                       : Container(
                           padding: EdgeInsets.all(size * 0.1),
                           alignment: Alignment.center,
                           child: Text(
-                            souvenir.text ?? "",
+                            widget.souvenir.text ?? "",
                             textAlign: TextAlign.center,
                             maxLines: 4,
                             overflow: TextOverflow.ellipsis,

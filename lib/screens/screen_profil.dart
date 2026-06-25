@@ -810,53 +810,61 @@ _buildMenuRow(
                     ),
 
                     // 5. LANGUES
-                    _buildMenuRow(
-                      icon: Icons.chat_bubble_outline_rounded,
-                      title: localizations?.langues ?? "Langues",
-                      couleurTextePrincipal: couleurTextePrincipal,
-                      onTap: () {
-                        String langueSelectionnee = UserPrefs.langue;
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => ValueListenableBuilder<Locale>(
-                              valueListenable: MyApp.localeNotifier,
-                              builder: (context, currentLocale, _) {
-                                final localLocalizations = AppLocalizations.of(context);
-                                
-                                return ScreenTemplateReglages(
-                                  isDarkMode: isDark,
-                                  titre: localLocalizations?.langues ?? "Langues",
-                                  content: [
-                                    WidgetRadioLangue(
-                                      label: localLocalizations?.francais ?? "Français",
-                                      isSelected: langueSelectionnee == "fr",
-                                      onTap: () async {
-                                        langueSelectionnee = "fr";
-                                        await UserPrefs.setLangue("fr");
-                                        MyApp.localeNotifier.value = const Locale('fr', 'FR');
-                                      },
-                                    ),
-                                    const SizedBox(height: 12),
-                                    WidgetRadioLangue(
-                                      label: localLocalizations?.anglais ?? "English",
-                                      isSelected: langueSelectionnee == "en",
-                                      onTap: () async {
-                                        langueSelectionnee = "en";
-                                        await UserPrefs.setLangue("en");
-                                        MyApp.localeNotifier.value = const Locale('en', 'US');
-                                      },
-                                    ),
-                                  ],
-                                );
-                              },
-                            ),
-                          ),
-                        ).then((_) {
-                          setState(() {});
-                        });
-                      },
-                    ),
+_buildMenuRow(
+  icon: Icons.chat_bubble_outline_rounded,
+  title: localizations?.langues ?? "Langues",
+  couleurTextePrincipal: couleurTextePrincipal,
+  onTap: () {
+    String langueSelectionnee = UserPrefs.langue;
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ValueListenableBuilder<Locale>(
+          valueListenable: MyApp.localeNotifier,
+          builder: (context, currentLocale, _) {
+            final localLocalizations = AppLocalizations.of(context);
+            
+            return ScreenTemplateReglages(
+              isDarkMode: isDark,
+              titre: localLocalizations?.langues ?? "Langues",
+              content: [
+                WidgetRadioLangue(
+                  label: localLocalizations?.francais ?? "Français",
+                  isSelected: langueSelectionnee == "fr",
+                  onTap: () async {
+                    langueSelectionnee = "fr";
+                    await UserPrefs.setLangue("fr");
+                    MyApp.localeNotifier.value = const Locale('fr', 'FR');
+
+                    // --- AJOUT : Force l'OS à reprogrammer les pushs en Français ---
+                    await NotificationService.planifierRappelGratitude();
+                    await NotificationService.planifierRappelSouvenirs();
+                  },
+                ),
+                const SizedBox(height: 12),
+                WidgetRadioLangue(
+                  label: localLocalizations?.anglais ?? "English",
+                  isSelected: langueSelectionnee == "en",
+                  onTap: () async {
+                    langueSelectionnee = "en";
+                    await UserPrefs.setLangue("en");
+                    MyApp.localeNotifier.value = const Locale('en', 'US');
+
+                    // --- AJOUT : Force l'OS à reprogrammer les pushs en Anglais ---
+                    await NotificationService.planifierRappelGratitude();
+                    await NotificationService.planifierRappelSouvenirs();
+                  },
+                ),
+              ],
+            );
+          },
+        ),
+      ),
+    ).then((_) {
+      setState(() {});
+    });
+  },
+),
 
                     // 6. AIDE
                     _buildMenuRow(

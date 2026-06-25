@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 import 'dart:math';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
@@ -237,7 +238,7 @@ class DatabaseService {
     return notesFiltrees[randomIndex];
   }
 
-  // 5. Insérer plusieurs photos
+  // 5. Insérer plusieurs photos (Sécurisé pour le changement d'UUID iOS)
   void insertMultiplePhotos({
     required List<String> photoPaths,
     required List<String> categories,
@@ -246,13 +247,18 @@ class DatabaseService {
     final List<String> categoriesFinales = categories.isEmpty ? ["sans_categorie"] : categories;
     final db = await database;
 
-    // Utilisation d'un Batch pour exécuter toutes les insertions ultra rapidement d'un coup
     final batch = db.batch();
 
     for (String path in photoPaths) {
+      // CORRECTION CONTRE LES IMAGES NOIRES : 
+      // On extrait uniquement le nom du fichier ("image.jpg") pour éviter de stocker l'arborescence instable d'iOS.
+      // On applique p.basename(path) uniquement si on est sur iOS, ou globalement si on veut uniformiser.
+      final String cleanPath = path.replaceAll('file://', '').trim();
+      final String pathEnregistrer = Platform.isIOS ? basename(cleanPath) : cleanPath;
+
       batch.insert('notes', {
         'text': null,
-        'photoPath': path,
+        'photoPath': pathEnregistrer,
         'themeLabel': themeLabel,
         'colorLabel': 'orange',
         'categories': categoriesFinales.join(','),
@@ -261,7 +267,7 @@ class DatabaseService {
     }
 
     await batch.commit(noResult: true);
-    print("--- BDD SQL : ${photoPaths.length} photo(s) sauvegardée(s) ---");
+    print("--- BDD SQL : ${photoPaths.length} photo(s) sauvegardée(s) de manière résiliente ---");
     _notifierChangement();
   }
 

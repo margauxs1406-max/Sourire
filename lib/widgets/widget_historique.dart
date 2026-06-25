@@ -115,10 +115,15 @@ class _WidgetHistoriqueState extends State<WidgetHistorique> {
   Map<String, List<NoteSourire>> _grouperParDate(List<NoteSourire> liste, BuildContext context) {
     final localizations = AppLocalizations.of(context)!;
     final Map<String, List<NoteSourire>> groupes = {};
+    
+    // Normalisation des dates (on ne garde que l'année, le mois et le jour pour comparer)
     final maintenant = DateTime.now();
-    final hier = DateTime.now().subtract(const Duration(days: 1));
+    final dateAujourdhui = DateTime(maintenant.year, maintenant.month, maintenant.day);
+    final dateHier = dateAujourdhui.subtract(const Duration(days: 1));
+    
     final localeCourante = Localizations.localeOf(context).toString();
 
+    // 1. Filtrage
     final listeFiltree = liste.where((note) {
       if (_filtresActifs.isEmpty) return true;
       final categoriesDeLaNote = note.categories;
@@ -129,15 +134,22 @@ class _WidgetHistoriqueState extends State<WidgetHistorique> {
       return categoriesDeLaNote.any((cat) => _filtresActifs.contains(cat));
     }).toList();
 
+    // 2. TRIS EXPLICITE : On force le tri du plus récent au plus ancien
+    listeFiltree.sort((a, b) => b.date.compareTo(a.date));
+
+    // 3. Groupement
     for (var note in listeFiltree) {
       String cleDate;
-      if (note.date.year == maintenant.year && note.date.month == maintenant.month && note.date.day == maintenant.day) {
+      final dateNote = DateTime(note.date.year, note.date.month, note.date.day);
+
+      if (dateNote.isAtSameMomentAs(dateAujourdhui)) {
         cleDate = localizations.today;
-      } else if (note.date.year == hier.year && note.date.month == hier.month && note.date.day == hier.day) {
+      } else if (dateNote.isAtSameMomentAs(dateHier)) {
         cleDate = localizations.yesterday;
       } else {
         cleDate = DateFormat('d MMMM', localeCourante).format(note.date);
       }
+      
       if (!groupes.containsKey(cleDate)) {
         groupes[cleDate] = [];
       }
@@ -346,7 +358,10 @@ class _WidgetHistoriqueState extends State<WidgetHistorique> {
                                                   children: [
                                                     // Remplacement de l'ancien Container/Stack par ton nouveau composant propre
                                                     Positioned.fill(
-                                                      child: WidgetSouvenirHistorique(souvenir: souvenir),
+                                                      child: WidgetSouvenirHistorique(
+                                                        key: ValueKey(souvenir.photoPath ?? souvenir.id.toString()), // <- AJOUTER CETTE LIGNE
+                                                        souvenir: souvenir,
+                                                      ),
                                                     ),
                                                     
                                                     // On conserve la surcouche de sélection de l'historique ici pour ne pas polluer le widget générique
