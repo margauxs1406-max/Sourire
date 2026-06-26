@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:math' as math;
 import 'dart:typed_data';
+import 'dart:ui' as ui; // Importation essentielle pour le décodeur brut
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:path_provider/path_provider.dart';
@@ -10,8 +11,10 @@ import 'package:sourire/models/note_model.dart';
 import 'package:sourire/screens/screen_profil.dart';
 import 'package:sourire/models/theme_app.dart'; 
 
+/// Cache global temporaire pour éviter le clignotement lors des rebuilds répétitifs
 final Map<String, Uint8List> _globalImageCache = {};
 
+/// Résolution des thèmes de couleur de l'application
 SourireTheme _getThemeFromColorLabel(String? colorLabel) {
   switch (colorLabel) {
     case 'vert':
@@ -48,6 +51,7 @@ class _WidgetSouvenirTirageState extends State<WidgetSouvenirTirage> {
     _chargerImageBytes();
   }
 
+  /// Résolution et lecture du fichier image avec gestion du cache
   Future<void> _chargerImageBytes() async {
     final bool isPhoto = widget.souvenir.photoPath != null && widget.souvenir.photoPath!.trim().isNotEmpty;
     if (!isPhoto) {
@@ -184,26 +188,26 @@ class _WidgetSouvenirTirageState extends State<WidgetSouvenirTirage> {
 
                                 _centrerLeScroll(imageSize, size);
 
-                                // On calcule proprement les dimensions cibles globales
-                                final double scrollAreaWidth = isPaysage ? (imageSize.width * size) / imageSize.height : size;
-                                final double scrollAreaHeight = isPaysage ? size : (imageSize.height * size) / imageSize.width;
+                                final double? imageWidth = isPaysage ? null : size;
+                                final double? imageHeight = isPaysage ? size : null;
 
                                 return SingleChildScrollView(
                                   controller: _scrollController,
                                   scrollDirection: isPaysage ? Axis.horizontal : Axis.vertical,
                                   physics: const BouncingScrollPhysics(),
                                   child: SizedBox(
-                                    width: scrollAreaWidth,
-                                    height: scrollAreaHeight,
+                                    width: isPaysage ? (imageSize.width * size) / imageSize.height : size,
+                                    height: isPaysage ? size : (imageSize.height * size) / imageSize.width,
                                     child: Image.memory(
                                       _imageBytes!,
-                                      // CORRECTION : On force l'image à occuper TOUTE la dimension calculée du SizedBox.
-                                      // Cela oblige Flutter à afficher les zones "hors standard" (en haut et en bas)
-                                      // qui étaient coupées par le 'null' précédent.
-                                      width: scrollAreaWidth,
-                                      height: scrollAreaHeight,
-                                      fit: BoxFit.cover,
+                                      width: imageWidth,
+                                      height: imageHeight,
+                                      fit: isPaysage ? BoxFit.fitHeight : BoxFit.fitWidth,
                                       gaplessPlayback: true,
+                                      // FORCE LE MOTEUR À COUPE TOUTE LIMITATION :
+                                      // On désactive les limites de cache de Flutter pour ce rendu
+                                      cacheWidth: null,
+                                      cacheHeight: null,
                                     ),
                                   ),
                                 );
@@ -240,8 +244,76 @@ class _WidgetSouvenirTirageState extends State<WidgetSouvenirTirage> {
     );
   }
 
+  // MODIFICATION MAJEURE : Utilisation du codec de bas niveau 'ui.instantiateImageCodec'
+  // Cela force Flutter à extraire le flux d'octets original sans l'aide d'Android,
+  // garantissant la lecture des dimensions physiques réelles du fichier brut.
   Future<Size> _getImageSize(Uint8List bytes) async {
-    final image = await decodeImageFromList(bytes);
-    return Size(image.width.toDouble(), image.height.toDouble());
+    final ui.ImmutableBuffer buffer = await ui.ImmutableBuffer.fromUint8List(bytes);
+    // CORRECTION : Utilisation de 'encoded' au lieu de 'fromBytes'
+    final ui.ImageDescriptor descriptor = await ui.ImageDescriptor.encoded(buffer);
+    return Size(descriptor.width.toDouble(), descriptor.height.toDouble());
   }
+}
+
+/// Affiche l'overlay dialog contenant le widget du souvenir pioché
+void afficherSouvenirBocal(BuildContext context, NoteSourire souvenir) {
+  final int dureeAnimation = ScreenProfil.animationsDoucesActive ? 400 : 800;
+
+  showGeneralDialog(
+    context: context,
+    barrierDismissible: true,
+    barrierLabel: "Fermer",
+    barrierColor: black.withOpacity(0.25),
+    transitionDuration: Duration(milliseconds: dureeAnimation),
+    pageBuilder: (context, anim1, anim2) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 40),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final double tailleCarree = constraints.maxWidth;
+
+              return Container(
+                width: tailleCarree,
+                height: tailleCarree,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(24),
+                  boxShadow: [
+                    BoxShadow(
+                      color: black.withOpacity(0.2),
+                      blurRadius: 20,
+                      spreadRadius: 5,
+                    )
+                  ],
+                ),
+                child: Material(
+                  type: MaterialType.transparency,
+                  child: WidgetSouvenirTirage(souvenir: souvenir),
+                ),
+              );
+            },
+          ),
+        ),
+      );
+    },
+    transitionBuilder: (context, anim1, anim2, child) {
+      if (ScreenProfil.animationsDoucesActive) {
+        return Opacity(
+          opacity: anim1.value,
+          child: child,
+        );
+      } else {
+        return Transform.rotate(
+          angle: (1 - anim1.value) * 12.5, 
+          child: Transform.scale(
+            scale: anim1.value,
+            child: Opacity(
+              opacity: anim1.value,
+              child: child,
+            ),
+          ),
+        );
+      }
+    },
+  );
 }
