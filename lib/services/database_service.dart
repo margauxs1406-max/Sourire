@@ -68,21 +68,6 @@ class DatabaseService {
 
   // --- NOTIFICATEURS INCHANGÉS (Mais ils lisent maintenant la base SQL) ---
 
-  // Récupérer un souvenir spécifique par son ID
-  Future<NoteSourire?> getNoteById(int id) async {
-    final db = await database;
-    final List<Map<String, dynamic>> maps = await db.query(
-      'notes',
-      where: 'id = ?',
-      whereArgs: [id],
-    );
-
-    if (maps.isNotEmpty) {
-      return NoteSourire.fromMap(maps.first);
-    }
-    return null;
-  }
-  
   void _notifierChangement() async {
     // On s'assure que la BDD est bien initialisée avant de faire la requête
     await database; 

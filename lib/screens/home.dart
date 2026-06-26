@@ -46,18 +46,17 @@ class _HomeState extends State<Home> {
 
   // Dans le fichier de ta Home
 @override
+
 void initState() {
   super.initState();
   _appliquerStyleZoneProtegee();
-  
   debugPrint("===> HOME : Appels de initState() lancés.");
-  
   WidgetsBinding.instance.addPostFrameCallback((_) {
     if (!mounted) return;
 
     // 1. BLOCAGE CRITIQUE
     if (isAppLockedNotifier.value) {
-      return; 
+      return;
     }
 
     // 2. GESTION DU BOCAL VIDE
@@ -67,7 +66,6 @@ void initState() {
 
     // 3. TRAITEMENT DES SOUVENIRS CACHÉS (Déporté dans une méthode asynchrone)
     _traiterSouvenirsEnCache();
-
     // Mode démo
     if (!UserPrefs.modeDemoAffiche) {
       Future.delayed(const Duration(milliseconds: 1200), () {
@@ -83,30 +81,29 @@ void initState() {
 Future<void> _traiterSouvenirsEnCache() async {
   if (idSouvenirEnCacheGlobal != null) {
     final int idTarget = idSouvenirEnCacheGlobal!;
-    idSouvenirEnCacheGlobal = null; 
-
-    try {
-      // CORRECTION OPTIMISÉE : On ne charge qu'une seule ligne au lieu de toute la BDD
-      final souvenir = await DatabaseService().getNoteById(idTarget);
-
-      if (souvenir != null && mounted) {
-        afficherSouvenirBocal(context, souvenir);
-      }
-    } catch (e) {
-      debugPrint("Erreur lors de la récupération du souvenir ciblé : $e");
+    idSouvenirEnCacheGlobal = null;
+    // CORRECTION SQLITE : Lecture asynchrone en BDD
+    final toutesLesNotes = await DatabaseService().getAllNotesAsync();
+    final souvenir = toutesLesNotes.firstWhere(
+      (note) => note.id == idTarget,
+      orElse: () => NoteSourire(id: -1, text: '', themeLabel: 'orange', colorLabel: 'orange', categories: [], date: DateTime.now()),
+    );
+    if (souvenir.id != -1 && mounted) {
+      afficherSouvenirBocal(context, souvenir);
     }
   } else {
-    // Gestion classique par arguments ou variable de secours (inchangée)
+
+    // Gestion classique par arguments
     final args = ModalRoute.of(context)?.settings.arguments;
     if (args != null && args is NoteSourire) {
       afficherSouvenirBocal(context, args);
     } else if (souvenirEnAttenteGlobal != null) {
       final souvenirDeSecours = souvenirEnAttenteGlobal!;
-      souvenirEnAttenteGlobal = null; 
+      souvenirEnAttenteGlobal = null;
       afficherSouvenirBocal(context, souvenirDeSecours);
     }
   }
-}
+} 
 
   void _appliquerStyleZoneProtegee() {
     SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(

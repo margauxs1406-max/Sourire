@@ -1,8 +1,7 @@
 import 'package:flutter/foundation.dart'; 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart'; // <--- AJOUTÉ : Requis pour contrôler l'orientation
+import 'package:flutter/services.dart'; 
 import 'package:flutter_localizations/flutter_localizations.dart';
-// import 'package:device_preview/device_preview.dart'; // <--- Désactivé
 import 'package:sourire/l10n/app_localizations.dart';
 import 'package:sourire/models/theme_app.dart';
 import 'package:sourire/screens/home.dart';
@@ -20,13 +19,12 @@ import 'package:sourire/theme/theme_service.dart';
 // Variables globales
 NoteSourire? souvenirEnAttenteGlobal;
 int? idSouvenirEnCacheGlobal; 
-bool bocalVideEnCacheGlobal = false; // Cache pour le bocal vide
+bool bocalVideEnCacheGlobal = false; 
 
 // On démarre verrouillé par défaut pour laisser le ScreenBoot décider
 final ValueNotifier<bool> isAppLockedNotifier = ValueNotifier<bool>(true);
 
 void main() async {
-  // Garantit que les liaisons Flutter sont prêtes avant d'exécuter du code asynchrone
   WidgetsFlutterBinding.ensureInitialized();
 
   // 1. FORCER LE MODE PORTRAIT EXCLUSIVEMENT
@@ -68,7 +66,6 @@ void main() async {
   await NotificationService.planifierRappelGratitude();
   await NotificationService.planifierRappelSouvenirs();
   
-  // Lancement direct de l'application (DevicePreview désactivé)
   runApp(const MyApp());
 }
 
@@ -81,7 +78,7 @@ class MyApp extends StatefulWidget {
   );
 
   static ThemeMode _initialiseThemeInitial() {
-    return ThemeMode.system; // Défini par défaut sur les réglages système du téléphone
+    return ThemeMode.system; 
   }
 
   @override
@@ -97,7 +94,6 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     
-    // On attend que la structure de l'app soit stable avant d'intercepter le payload
     WidgetsBinding.instance.addPostFrameCallback((_) {
       NotificationService.configurerClic((payload) {
         _analyserPayload(payload);
@@ -115,39 +111,34 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
     if (payload == null) return;
 
     if (payload == 'rappel_gratitude') {
-      _traiterRappelSansSouvenir();
-    } else if (payload.startsWith('ouvrir_souvenir:')) {
-      final String idString = payload.split(':').last;
-      if (idString == 'aucun') {
-        bocalVideEnCacheGlobal = true; // On stocke l'information en cache
-      } else {
-        final int? idSouvenir = int.tryParse(idString);
-        if (idSouvenir != null) {
-          idSouvenirEnCacheGlobal = idSouvenir; // On stocke l'ID en cache
-        }
-      }
-    }
-
-    // On ne force la navigation vers la Home que si l'app n'est pas verrouillée
-  if (!isAppLockedNotifier.value) {
-    _navigatorKey.currentState?.pushAndRemoveUntil(
-      MaterialPageRoute(builder: (context) => const Home()),
-      (route) => false,
-    );
-  } else {
-    // IOS CAS CRITIQUE : Si l'app est en train de se déverrouiller, on attend un tout petit peu
-    // pour s'assurer que l'écran Home est prêt à recevoir l'appel.
-    Future.delayed(const Duration(milliseconds: 500), () {
-      if (!isAppLockedNotifier.value && idSouvenirEnCacheGlobal != null) {
-        // Si le FaceID est passé entre temps, on force la Home à traiter le cache
+      // Si déverrouillé, on amène à la Home, sinon le ScreenBoot s'en chargera au démarrage
+      if (!isAppLockedNotifier.value) {
         _navigatorKey.currentState?.pushAndRemoveUntil(
           MaterialPageRoute(builder: (context) => const Home()),
           (route) => false,
         );
       }
-    });
+    } else if (payload.startsWith('ouvrir_souvenir:')) {
+      final String idString = payload.split(':').last;
+      if (idString == 'aucun') {
+        bocalVideEnCacheGlobal = true; 
+      } else {
+        final int? idSouvenir = int.tryParse(idString);
+        if (idSouvenir != null) {
+          idSouvenirEnCacheGlobal = idSouvenir; 
+        }
+      }
+
+      // Si l'application est déjà ouverte et déverrouillée (traitement en arrière-plan),
+      // on force le rafraîchissement de la Home pour ouvrir le bocal.
+      if (!isAppLockedNotifier.value) {
+        _navigatorKey.currentState?.pushAndRemoveUntil(
+          MaterialPageRoute(builder: (context) => const Home()),
+          (route) => false,
+        );
+      }
+    }
   }
-}
 
   void _traiterRappelSansSouvenir() {
     if (!isAppLockedNotifier.value) {
@@ -168,9 +159,8 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    // Si l'utilisateur quitte l'application ou la met en arrière-plan
     if (state == AppLifecycleState.paused || state == AppLifecycleState.detached) {
-      MyApp.themeNotifier.value = ThemeMode.system; // Le mode par défaut système reprend la main
+      MyApp.themeNotifier.value = ThemeMode.system; 
     }
 
     if (!UserPrefs.biomatrieActive && UserPrefs.password.isEmpty) return;

@@ -36,14 +36,17 @@ class _ScreenBootState extends State<ScreenBoot> {
       return;
     }
 
-     // 2. Cas Verrouillé
- if (isAppLockedNotifier.value) {
+    // 2. Cas Verrouillé
+    if (isAppLockedNotifier.value) {
       Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(
           settings: const RouteSettings(name: 'ScreenLock'),
           builder: (context) => ScreenLock(
             onAuthenticated: () {
+              // L'ordre est crucial :
+              // 1. On lève le verrou global
               isAppLockedNotifier.value = false;
+              // 2. On instancie la Home qui va exécuter son initState et consommer le cache
               Navigator.of(context).pushAndRemoveUntil(
                 MaterialPageRoute(builder: (context) => const Home()),
                 (route) => false,
@@ -53,8 +56,7 @@ class _ScreenBootState extends State<ScreenBoot> {
         ),
         (route) => false,
       );
-    }
-    
+    } 
     // 3. Cas normal sans sécurité
     else {
       Navigator.of(context).pushAndRemoveUntil(
