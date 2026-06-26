@@ -27,21 +27,28 @@ class ScreenNewNote extends StatefulWidget {
 
 class _ScreenNewNoteState extends State<ScreenNewNote> {
   final TextEditingController _controller = TextEditingController();
-  bool _canValidate = false;
+  
+  // Utilisation d'un ValueNotifier pour éviter le setState global sur tout l'écran
+  final ValueNotifier<bool> _canValidateNotifier = ValueNotifier<bool>(false);
 
   @override
   void initState() {
     super.initState();
-    _controller.addListener(() {
-      setState(() {
-        _canValidate = _controller.text.trim().isNotEmpty;
-      });
-    });
+    _controller.addListener(_updateValidationState);
+  }
+
+  void _updateValidationState() {
+    final bool isNotEmpty = _controller.text.trim().isNotEmpty;
+    if (_canValidateNotifier.value != isNotEmpty) {
+      _canValidateNotifier.value = isNotEmpty;
+    }
   }
 
   @override
   void dispose() {
+    _controller.removeListener(_updateValidationState);
     _controller.dispose();
+    _canValidateNotifier.dispose();
     super.dispose();
   }
 
@@ -54,7 +61,6 @@ class _ScreenNewNoteState extends State<ScreenNewNote> {
     double largeurBouton = screenWidth * 0.4;
     double hauteurBouton = screenHeight * 0.065;
 
-    // Récupération de l'accord
     final String accordAffiche = UserPrefs.accordHeureux;
 
     return ValueListenableBuilder<ThemeMode>(
@@ -68,7 +74,8 @@ class _ScreenNewNoteState extends State<ScreenNewNote> {
 
         return Scaffold(
           backgroundColor: isDarkMode ? darkBg : white,
-          resizeToAvoidBottomInset: true,
+          // Empêche le resize violent du clavier qui force la reconfiguration de l'aspectRatio
+          resizeToAvoidBottomInset: false,
           body: SafeArea(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 30),
@@ -117,79 +124,75 @@ class _ScreenNewNoteState extends State<ScreenNewNote> {
                                 ),
                                 child: ClipRRect(
                                   borderRadius: BorderRadius.circular(radiusDefault),
-                                  child: Stack(
-                                    children: [
-                                      
-                                      // --- 1. LES ICÔNES DE FOND ---
-                                      ...widget.themeVisuel.noteIcons.map((config) {
-                                        final double width = config.getWidth(postItSize);
-                                        final double height = config.getHeight(postItSize);
-                                        final double left = config.getX(postItSize);
-                                        final double top = config.getY(postItSize);
+                                  // RepaintBoundary isole le rendu du Post-it des couches système
+                                  child: RepaintBoundary(
+                                    child: Stack(
+                                      children: [
+                                        
+                                        // --- 1. LES ICÔNES DE FOND (Ne bougent plus, dessinées une seule fois) ---
+                                        ...widget.themeVisuel.noteIcons.map((config) {
+                                          final double width = config.getWidth(postItSize);
+                                          final double height = config.getHeight(postItSize);
+                                          final double left = config.getX(postItSize);
+                                          final double top = config.getY(postItSize);
 
-                                        Widget iconWidget = SvgPicture.asset(
-                                          config.assetPath,
-                                          width: width,
-                                          height: height,
-                                          colorFilter: ColorFilter.mode(iconColor, BlendMode.srcIn),
-                                        );
+                                          Widget iconWidget = SvgPicture.asset(
+                                            config.assetPath,
+                                            width: width,
+                                            height: height,
+                                            colorFilter: ColorFilter.mode(iconColor, BlendMode.srcIn),
+                                          );
 
-                                        if (config.rotation != 0.0) {
-                                          iconWidget = Transform.rotate(
-                                            angle: config.rotation * (math.pi / 180),
+                                          if (config.rotation != 0.0) {
+                                            iconWidget = Transform.rotate(
+                                              angle: config.rotation * (math.pi / 180),
+                                              child: iconWidget,
+                                            );
+                                          }
+
+                                          return Positioned(
+                                            left: left,
+                                            top: top,
                                             child: iconWidget,
                                           );
-                                        }
+                                        }),
 
-                                        return Positioned(
-                                          left: left,
-                                          top: top,
-                                          child: iconWidget,
-                                        );
-                                      }),
-
-                                      // --- 2. LA ZONE DE TEXTE ---
-                                      Positioned.fill(
-                                        child: Padding(
-                                          padding: const EdgeInsets.all(paddingDefault), 
-                                          child: Center(
-                                            child: SingleChildScrollView(
-                                              physics: const BouncingScrollPhysics(),
-                                              child: TextField(
-                                                controller: _controller,
-                                                autofocus: true,
-                                                maxLines: null,
-                                                keyboardType: TextInputType.multiline,
-                                                textAlign: TextAlign.center,
-                                                
-                                                // Permet au TextField de mieux intercepter les clics uniques au lieu de laisser le scroll parent tout voler
-                                                onTap: () {
-                                                  // Optionnel : force le rafraîchissement si nécessaire, 
-                                                  // mais nativement cela repositionne le curseur au bon endroit.
-                                                },
-                                                
-                                                cursorColor: isDarkMode ? Colors.white : widget.couleur.main,
-                                                style: styleNoteLarge.copyWith(
-                                                  color: isDarkMode ? Colors.white : widget.couleur.main,
-                                                  fontSize: responsiveFontSize,
-                                                  height: 1.2,
-                                                ),
-                                                decoration: InputDecoration(
-                                                  hintText: AppLocalizations.of(context)!.writeHappyThought(accordAffiche),
-                                                  hintStyle: styleNoteLarge.copyWith(
-                                                    color: isDarkMode ? Colors.white38 : widget.couleur.main.withOpacity(0.3),
+                                        // --- 2. LA ZONE DE TEXTE ---
+                                        Positioned.fill(
+                                          child: Padding(
+                                            padding: const EdgeInsets.all(paddingDefault), 
+                                            child: Center(
+                                              child: SingleChildScrollView(
+                                                physics: const BouncingScrollPhysics(),
+                                                child: TextField(
+                                                  controller: _controller,
+                                                  autofocus: true,
+                                                  maxLines: null,
+                                                  keyboardType: TextInputType.multiline,
+                                                  textAlign: TextAlign.center,
+                                                  cursorColor: isDarkMode ? Colors.white : widget.couleur.main,
+                                                  style: styleNoteLarge.copyWith(
+                                                    color: isDarkMode ? Colors.white : widget.couleur.main,
                                                     fontSize: responsiveFontSize,
                                                     height: 1.2,
                                                   ),
-                                                  border: InputBorder.none,
-                                                  counterText: "",
+                                                  decoration: InputDecoration(
+                                                    hintText: AppLocalizations.of(context)!.writeHappyThought(accordAffiche),
+                                                    hintStyle: styleNoteLarge.copyWith(
+                                                      color: isDarkMode ? Colors.white38 : widget.couleur.main.withOpacity(0.3),
+                                                      fontSize: responsiveFontSize,
+                                                      height: 1.2,
+                                                    ),
+                                                    border: InputBorder.none,
+                                                    counterText: "",
+                                                  ),
                                                 ),
                                               ),
                                             ),
                                           ),
                                         ),
-                                      ),
-                                    ],
+                                      ],
+                                    ),
                                   ),
                                 ),
                               );
@@ -202,7 +205,7 @@ class _ScreenNewNoteState extends State<ScreenNewNote> {
 
                   // --- BOUTON VALIDER ---
                   Padding(
-                    padding: EdgeInsets.only(bottom: screenHeight * 0.02),
+                    padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom + screenHeight * 0.02),
                     child: SizedBox(
                       width: largeurBouton,
                       height: hauteurBouton,
@@ -211,22 +214,27 @@ class _ScreenNewNoteState extends State<ScreenNewNote> {
                         maxWidth: largeurBouton,
                         minHeight: hauteurBouton,
                         maxHeight: hauteurBouton,
-                        child: BtnAction(
-                          text: AppLocalizations.of(context)!.btnValidate,
-                          isActive: _canValidate,
-                          color: widget.couleur.main,
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => ScreenCategorisationNote(
-                                  note: _controller.text,
-                                  theme: widget.couleur,      
-                                  themeVisuel: widget.themeVisuel, 
-                                ),
-                              ),
+                        child: ValueListenableBuilder<bool>(
+                          valueListenable: _canValidateNotifier,
+                          builder: (context, canValidate, child) {
+                            return BtnAction(
+                              text: AppLocalizations.of(context)!.btnValidate,
+                              isActive: canValidate,
+                              color: widget.couleur.main,
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => ScreenCategorisationNote(
+                                      note: _controller.text,
+                                      theme: widget.couleur,      
+                                      themeVisuel: widget.themeVisuel, 
+                                    ),
+                                  ),
+                                );
+                              }, 
                             );
-                          }, 
+                          },
                         ),
                       ),
                     ),
