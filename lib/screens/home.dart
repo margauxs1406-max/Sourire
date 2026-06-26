@@ -585,14 +585,6 @@ Future<void> _traiterSouvenirsEnCache() async {
   @override
 Widget build(BuildContext context) {
   
-  // SÉCURITÉ DE FLUX IOS : Si un souvenir a été livré juste après l'initState, 
-  // on l'intercepte au premier affichage du layout.
-  if (idSouvenirEnCacheGlobal != null) {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) _traiterSouvenirsEnCache();
-    });
-  }
-  
   double screenWidth = MediaQuery.of(context).size.width;
   final l10n = AppLocalizations.of(context)!;
 

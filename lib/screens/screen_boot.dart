@@ -60,6 +60,13 @@ class _ScreenBootState extends State<ScreenBoot> {
         (route) => false,
       );
     }
+    // 3. Cas normal sans sécurité
+    else {
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (context) => const Home()),
+        (route) => false,
+      );
+    }
   }
 
   @override
