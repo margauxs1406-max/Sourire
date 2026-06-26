@@ -14,8 +14,6 @@ class NotificationService {
 
   /// Détermine dynamiquement la classe de traduction à utiliser selon les préférences
   static AppLocalizations _obtenirTraductions() {
-    // S'adapte à ta variable stockée dans UserPrefs (par exemple UserPrefs.langue)
-    // Renvoie le français par défaut si non défini
     final String codeLangue = UserPrefs.langue; 
     return codeLangue == 'en' ? AppLocalizationsEn() : AppLocalizationsFr();
   }
@@ -105,7 +103,6 @@ class NotificationService {
 
     final localizations = _obtenirTraductions();
     
-    // MISE À JOUR DYNAMIQUE DU CANAL ANDROID AVEC LA BONNE LANGUE
     final androidPlugin = _plugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
     if (androidPlugin != null) {
       await androidPlugin.createNotificationChannel(AndroidNotificationChannel(
@@ -135,8 +132,8 @@ class NotificationService {
 
     await _plugin.zonedSchedule(
       notifId,
-      localizations.notifGratitudeTitle, // Récupéré dynamiquement depuis la bonne langue
-      localizations.notifGratitudeBody,  // Récupéré dynamiquement depuis la bonne langue
+      localizations.notifGratitudeTitle, 
+      localizations.notifGratitudeBody,  
       instantPlanifie,
       NotificationDetails(
         android: AndroidNotificationDetails(
@@ -146,16 +143,23 @@ class NotificationService {
           importance: Importance.max,
           priority: Priority.high,
         ),
+        // CORRECTION : Ajout obligatoire des détails iOS pour réveiller le device
+        iOS: const DarwinNotificationDetails(
+          presentAlert: true,
+          presentBadge: true,
+          presentSound: true,
+        ),
       ),
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
       uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
-      matchDateTimeComponents: DateTimeComponents.time,
+      matchDateTimeComponents: DateTimeComponents.time, // Rappel quotidien régulier
       payload: 'rappel_gratitude',
     );
   }
 
   /// Planification du rappel de souvenirs aléatoires
   static Future<void> planifierRappelSouvenirs() async {
+    print("HEURE BRUTE SOUVENIRS : ${UserPrefs.heureRappelSouvenirs}h${UserPrefs.minuteRappelSouvenirs}");
     const int notifId = 2;
 
     await _plugin.cancel(notifId);
@@ -166,7 +170,6 @@ class NotificationService {
 
     final localizations = _obtenirTraductions();
 
-    // MISE À JOUR DYNAMIQUE DU CANAL ANDROID AVEC LA BONNE LANGUE
     final androidPlugin = _plugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
     if (androidPlugin != null) {
       await androidPlugin.createNotificationChannel(AndroidNotificationChannel(
@@ -213,15 +216,21 @@ class NotificationService {
       UserPrefs.minuteRappelSouvenirs,
     );
 
+    DateTimeComponents? matchComponents;
+
     if (UserPrefs.frequenceSouvenirs == "Tous les jours") {
       if (instantPlanifie.isBefore(maintenant)) {
         instantPlanifie = instantPlanifie.add(const Duration(days: 1));
       }
+      matchComponents = DateTimeComponents.time; // Répétition chaque jour à la même heure
     } 
     else if (UserPrefs.frequenceSouvenirs == "Tous les 2 jours") {
       if (instantPlanifie.isBefore(maintenant)) {
         instantPlanifie = instantPlanifie.add(const Duration(days: 2));
       }
+      // CORRECTION DU PIÈGE : On laisse à null. Dès que la notif se déclenche, 
+      // ton app devra re-planifier le coup d'après, sinon iOS écrase l'intervalle de 2 jours.
+      matchComponents = null; 
     } 
     else if (UserPrefs.frequenceSouvenirs == "Toutes les semaines") {
       final Map<String, int> joursMapping = {
@@ -243,6 +252,7 @@ class NotificationService {
           instantPlanifie = instantPlanifie.add(const Duration(days: 1));
         }
       }
+      matchComponents = DateTimeComponents.dayOfWeekAndTime; // Répétition hebdo stricte sur iOS/Android
     }
 
     await _plugin.zonedSchedule(
@@ -258,10 +268,16 @@ class NotificationService {
           importance: Importance.max,
           priority: Priority.high,
         ),
+        // CORRECTION : Ajout obligatoire des détails iOS
+        iOS: const DarwinNotificationDetails(
+          presentAlert: true,
+          presentBadge: true,
+          presentSound: true,
+        ),
       ),
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
       uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
-      matchDateTimeComponents: DateTimeComponents.time, // <--- AJOUTÉ : Force la récurrence quotidienne/périodique à l'heure dite
+      matchDateTimeComponents: matchComponents, 
       payload: payloadData,
     );
   }
