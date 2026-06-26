@@ -414,7 +414,11 @@ _buildMenuRow(
               
               if (UserPrefs.rappelGratitudeActive) ...[
                 const SizedBox(height: 10),
-                Text(localizations?.notifLabelTime ?? "Heure du rappel", style: const TextStyle(color: grey, fontSize: 14)),
+                // HARMONISATION : Suit la couleur du switch
+                Text(
+                  localizations?.notifLabelTime ?? "Heure du rappel", 
+                  style: TextStyle(color: isDark ? lightGrey : grey, fontSize: 14)
+                ),
                 const SizedBox(height: 8),
                 GestureDetector(
                   onTap: () async {
@@ -483,40 +487,95 @@ _buildMenuRow(
               
               if (UserPrefs.rappelSouvenirsActive) ...[
                 const SizedBox(height: 10),
-                Text(localizations?.notifLabelFreqSettings ?? "Réglages de la fréquence", style: const TextStyle(color: grey, fontSize: 14)),
+                // HARMONISATION : Suit la couleur du switch
+                Text(
+                  localizations?.notifLabelTime ?? "Heure du rappel", 
+                  style: TextStyle(color: isDark ? lightGrey : grey, fontSize: 14)
+                ),
+                const SizedBox(height: 8),
+                GestureDetector(
+                  onTap: () async {
+                    TimeOfDay? picked = await showTimePicker(
+                      context: context,
+                      initialTime: TimeOfDay(
+                        hour: UserPrefs.heureRappelSouvenirs, 
+                        minute: UserPrefs.minuteRappelSouvenirs
+                      ),
+                      builder: (BuildContext context, Widget? child) {
+                        return Theme(
+                          data: Theme.of(context).copyWith(
+                            colorScheme: ColorScheme.light(
+                              primary: orange,
+                              onPrimary: white,
+                              surface: isDark ? const Color(0xFF1E1E1E) : white,
+                              onSurface: isDark ? white : black,
+                            ),
+                            textButtonTheme: TextButtonThemeData(
+                              style: TextButton.styleFrom(foregroundColor: orange),
+                            ),
+                          ),
+                          child: child!,
+                        );
+                      },
+                    );
+                    if (picked != null) {
+                      UserPrefs.heureRappelSouvenirs = picked.hour;
+                      UserPrefs.minuteRappelSouvenirs = picked.minute;
+                      setLocalState(() {});
+                      await NotificationService.planifierRappelSouvenirs();
+                    }
+                  },
+                  child: Container(
+                    width: 100,
+                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                    decoration: BoxDecoration(
+                      color: couleurInputFond,
+                      borderRadius: BorderRadius.circular(8)
+                    ),
+                    child: Center(
+                      child: Text(
+                        "${UserPrefs.heureRappelSouvenirs.toString().padLeft(2, '0')}:${UserPrefs.minuteRappelSouvenirs.toString().padLeft(2, '0')}",
+                        style: TextStyle(fontWeight: FontWeight.bold, color: couleurTextePrincipal)
+                      )
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 16),
+                // HARMONISATION : Suit la couleur du switch
+                Text(
+                  localizations?.notifLabelFreqSettings ?? "Réglages de la fréquence", 
+                  style: TextStyle(color: isDark ? lightGrey : grey, fontSize: 14)
+                ),
                 const SizedBox(height: 10),
                 _buildDropdownButton<String>(
-                  // CORRECTION : Lecture directe depuis UserPrefs
                   value: UserPrefs.frequenceSouvenirs,
                   items: const ["Tous les jours", "Tous les 2 jours", "Toutes les semaines"],
                   isDark: isDark,
                   itemTranslator: _getFrequencyDisplayLabel,
                   onChanged: (val) async {
                     if (val != null) {
-                      // CORRECTION : Écriture directe et rafraîchissement local
                       UserPrefs.frequenceSouvenirs = val;
                       setLocalState(() {});
                       await NotificationService.planifierRappelSouvenirs();
                     }
                   },
                 ),
-                // CORRECTION : Lecture directe depuis UserPrefs
                 if (UserPrefs.frequenceSouvenirs == "Toutes les semaines") ...[
                   const SizedBox(height: 12),
+                  // HARMONISATION : Suit la couleur du switch
                   Text(
                     localizations?.notifLabelDayOfWeek ?? "Jour de la semaine",
                     style: TextStyle(color: isDark ? lightGrey : grey, fontSize: 14)
                   ),
                   const SizedBox(height: 8),
                   _buildDropdownButton<String>(
-                    // CORRECTION : Lecture directe depuis UserPrefs
                     value: UserPrefs.jourSemaineSouvenirs,
                     items: const ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"],
                     isDark: isDark,
                     itemTranslator: _getDayDisplayLabel,
                     onChanged: (val) async {
                       if (val != null) {
-                        // CORRECTION : Écriture directe et rafraîchissement local
                         UserPrefs.jourSemaineSouvenirs = val;
                         setLocalState(() {});
                         await NotificationService.planifierRappelSouvenirs();
@@ -525,6 +584,7 @@ _buildMenuRow(
                   ),
                 ],
                 const SizedBox(height: 16),
+                // HARMONISATION : Suit la couleur du switch
                 Text(
                   localizations?.notifLabelCategoriesIncluded ?? "Catégories incluses",
                   style: TextStyle(color: isDark ? lightGrey : grey, fontSize: 14)
@@ -532,54 +592,45 @@ _buildMenuRow(
                 const SizedBox(height: 8),
 
                 StreamBuilder<List<String>>(
-  stream: _databaseService.getCategoriesStream(),
-  builder: (context, snapshot) {
-    // Si le Stream n'a pas encore émis ses données, on attend ou on utilise le cache actuel
-    // sans écraser les UserPrefs
-    final List<String> categoriesBDD = snapshot.data ?? [];
-    
-    final List<String> optionsMenu = ["Toutes catégories", "unclassified", ...categoriesBDD];
+                  stream: _databaseService.getCategoriesStream(),
+                  builder: (context, snapshot) {
+                    final List<String> categoriesBDD = snapshot.data ?? [];
+                    final List<String> optionsMenu = ["Toutes catégories", "unclassified", ...categoriesBDD];
+                    List<String> categoriesSelectionnees = List.from(UserPrefs.categoriesSouvenirs);
+                    
+                    if (snapshot.hasData) {
+                      categoriesSelectionnees.removeWhere((cat) => 
+                        cat != "Toutes catégories" && 
+                        cat != "unclassified" && 
+                        !categoriesBDD.contains(cat)
+                      );
+                      
+                      if (categoriesSelectionnees.isEmpty) {
+                        categoriesSelectionnees = ["Toutes catégories"];
+                        UserPrefs.categoriesSouvenirs = categoriesSelectionnees;
+                      }
+                    }
 
-    // On lit les catégories sauvegardées
-    List<String> categoriesSelectionnees = List.from(UserPrefs.categoriesSouvenirs);
-    
-    // CORRECTION : On applique le nettoyage UNIQUEMENT si le Stream a bien renvoyé des données réelles,
-    // pour éviter les faux-positifs de liste vide au démarrage de l'écran.
-    if (snapshot.hasData) {
-      categoriesSelectionnees.removeWhere((cat) => 
-        cat != "Toutes catégories" && 
-        cat != "unclassified" && 
-        !categoriesBDD.contains(cat)
-      );
-      
-      if (categoriesSelectionnees.isEmpty) {
-        categoriesSelectionnees = ["Toutes catégories"];
-        UserPrefs.categoriesSouvenirs = categoriesSelectionnees;
-      }
-    }
+                    for (var cat in categoriesSelectionnees) {
+                      if (!optionsMenu.contains(cat)) {
+                        optionsMenu.add(cat);
+                      }
+                    }
 
-    // Sécurité au cas où le premier chargement affiche une valeur non encore présente dans optionsMenu
-    // (empêche le Dropdown de crash)
-    for (var cat in categoriesSelectionnees) {
-      if (!optionsMenu.contains(cat)) {
-        optionsMenu.add(cat);
-      }
-    }
-
-    return _buildMultiSelectDropdownButton(
-      selectedValues: categoriesSelectionnees,
-      items: optionsMenu,
-      isDark: isDark,
-      itemTranslator: _getCategoryDisplayLabel,
-      menuMaxHeight: 240.0,
-      onChanged: (List<String> nouvellesValeurs) async {
-        UserPrefs.categoriesSouvenirs = nouvellesValeurs;
-        setLocalState(() {});
-        await NotificationService.planifierRappelSouvenirs();
-      },
-    );
-  },
-),
+                    return _buildMultiSelectDropdownButton(
+                      selectedValues: categoriesSelectionnees,
+                      items: optionsMenu,
+                      isDark: isDark,
+                      itemTranslator: _getCategoryDisplayLabel,
+                      menuMaxHeight: 240.0,
+                      onChanged: (List<String> nouvellesValeurs) async {
+                        UserPrefs.categoriesSouvenirs = nouvellesValeurs;
+                        setLocalState(() {});
+                        await NotificationService.planifierRappelSouvenirs();
+                      },
+                    );
+                  },
+                ),
               ],
             ],
           ),
