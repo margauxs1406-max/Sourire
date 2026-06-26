@@ -39,6 +39,17 @@ void main() async {
   tz.setLocalLocation(tz.getLocation('Pacific/Noumea'));
   ThemeService.chargerThemeSauvegarde();
 
+  debugPrint("""
+  ==================================================
+  ===> CONFIGURATION DES RAPPELS IPHONE (DEBUG) <===
+  Langue active : ${UserPrefs.langue}
+  Rappel Gratitude Actif : ${UserPrefs.rappelGratitudeActive} à ${UserPrefs.heureRappelGratitude}h${UserPrefs.minuteRappelGratitude}
+  Rappel Souvenirs Actif : ${UserPrefs.rappelSouvenirsActive} à ${UserPrefs.heureRappelSouvenirs}h${UserPrefs.minuteRappelSouvenirs}
+  Fréquence Souvenirs : ${UserPrefs.frequenceSouvenirs}
+  Fuseau Horaire Détecté : ${tz.local.name}
+  ==================================================
+  """);
+
   // SÉCURITÉ AU DÉMARRAGE
   if (!UserPrefs.biomatrieActive && UserPrefs.password.isEmpty) {
     isAppLockedNotifier.value = false;
@@ -140,14 +151,6 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
     }
   }
 
-  void _traiterRappelSansSouvenir() {
-    if (!isAppLockedNotifier.value) {
-      _navigatorKey.currentState?.pushAndRemoveUntil(
-        MaterialPageRoute(builder: (context) => const Home()),
-        (route) => false,
-      );
-    }
-  }
 
   void _surAuthentificationReussie() {
     isAppLockedNotifier.value = false;

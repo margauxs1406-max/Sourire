@@ -199,51 +199,53 @@ class _WidgetHistoriqueState extends State<WidgetHistorique> {
                         topRight: Radius.circular(16),
                       ),
                     ),
-                    child: Column(
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                          child: SizedBox(
-                            height: 40, 
-                            child: Stack(
-                              children: [
-                                Align(
-                                  alignment: Alignment.center,
-                                  child: BtnChevronBas(
-                                    onTap: () {
-                                      widget.controller?.animateTo(
-                                        0.0,
-                                        duration: const Duration(milliseconds: 300),
-                                        curve: Curves.easeIn,
-                                      );
-                                    },
-                                  ),
-                                ),
-                                Align(
-                                  alignment: Alignment.centerRight,
-                                  child: BtnFiltrer(
-                                    nombreDeFiltres: _filtresActifs.length,
-                                    onTap: () {
-                                      showModalBottomSheet(
-                                        context: context,
-                                        isScrollControlled: true,
-                                        backgroundColor: Colors.transparent,
-                                        builder: (context) => EcranFiltrer(
-                                          categoriesSelectionneesInitiales: _filtresActifs,
-                                          onFiltrerApplique: (nouvelleSelection) {
-                                            setState(() {
-                                              _filtresActifs = nouvelleSelection;
-                                            });
-                                          },
-                                        ),
-                                      );
-                                    },
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
+                    // REMPLACE CE BLOC :
+child: Column(
+  children: [
+    Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+      child: SizedBox(
+        height: 40, 
+        child: Stack(
+          children: [
+            Align(
+              alignment: Alignment.center,
+              child: BtnChevronBas(
+                onTap: () {
+                  widget.controller?.animateTo(
+                    0.0,
+                    duration: const Duration(milliseconds: 300),
+                    curve: Curves.easeIn,
+                  );
+                },
+              ),
+            ),
+            Align(
+              alignment: Alignment.centerRight,
+              child: BtnFiltrer(
+                nombreDeFiltres: _filtresActifs.length,
+                onTap: () {
+                  showModalBottomSheet(
+                    context: context,
+                    isScrollControlled: true,
+                    backgroundColor: Colors.transparent,
+                    builder: (context) => EcranFiltrer(
+                      categoriesSelectionneesInitiales: _filtresActifs,
+                      onFiltrerApplique: (nouvelleSelection) {
+                        setState(() {
+                          _filtresActifs = nouvelleSelection;
+                        });
+                      },
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    ),
+    Divider(height: 1, color: isDarkMode ? const Color(0xFF2D2D2D) : const Color(0xFFE0E0E0)),
             
                         Divider(height: 1, color: isDarkMode ? const Color(0xFF2D2D2D) : const Color(0xFFE0E0E0)),
                           
