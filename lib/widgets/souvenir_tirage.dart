@@ -10,10 +10,8 @@ import 'package:sourire/models/note_model.dart';
 import 'package:sourire/screens/screen_profil.dart';
 import 'package:sourire/models/theme_app.dart'; 
 
-/// Cache global temporaire pour éviter le clignotement lors des rebuilds répétitifs
 final Map<String, Uint8List> _globalImageCache = {};
 
-/// Résolution des thèmes de couleur de l'application
 SourireTheme _getThemeFromColorLabel(String? colorLabel) {
   switch (colorLabel) {
     case 'vert':
@@ -50,7 +48,6 @@ class _WidgetSouvenirTirageState extends State<WidgetSouvenirTirage> {
     _chargerImageBytes();
   }
 
-  /// Résolution et lecture du fichier image avec gestion du cache
   Future<void> _chargerImageBytes() async {
     final bool isPhoto = widget.souvenir.photoPath != null && widget.souvenir.photoPath!.trim().isNotEmpty;
     if (!isPhoto) {
@@ -60,7 +57,6 @@ class _WidgetSouvenirTirageState extends State<WidgetSouvenirTirage> {
 
     final String pathKey = widget.souvenir.photoPath!.trim();
 
-    // Si l'image est déjà en cache, on l'utilise immédiatement sans re-synchro disque (évite le flash noir)
     if (_globalImageCache.containsKey(pathKey)) {
       _imageBytes = _globalImageCache[pathKey];
       if (mounted) setState(() { _isLoaded = true; });
@@ -81,7 +77,7 @@ class _WidgetSouvenirTirageState extends State<WidgetSouvenirTirage> {
 
       if (file.existsSync()) {
         _imageBytes = file.readAsBytesSync();
-        _globalImageCache[pathKey] = _imageBytes!; // Mise en cache
+        _globalImageCache[pathKey] = _imageBytes!;
       }
     } catch (e) {
       debugPrint("Erreur lecture photo tirage : $e");
@@ -132,7 +128,6 @@ class _WidgetSouvenirTirageState extends State<WidgetSouvenirTirage> {
       orElse: () => ThemeRepository.themeClassique,
     );
 
-    // Si l'image n'est pas encore chargée mais qu'on a déjà les données en cache, on évite le loader
     if (!_isLoaded && _imageBytes == null) {
       return const Center(
         child: CircularProgressIndicator(),
@@ -189,22 +184,26 @@ class _WidgetSouvenirTirageState extends State<WidgetSouvenirTirage> {
 
                                 _centrerLeScroll(imageSize, size);
 
-                                final double? imageWidth = isPaysage ? null : size;
-                                final double? imageHeight = isPaysage ? size : null;
+                                // On calcule proprement les dimensions cibles globales
+                                final double scrollAreaWidth = isPaysage ? (imageSize.width * size) / imageSize.height : size;
+                                final double scrollAreaHeight = isPaysage ? size : (imageSize.height * size) / imageSize.width;
 
                                 return SingleChildScrollView(
                                   controller: _scrollController,
                                   scrollDirection: isPaysage ? Axis.horizontal : Axis.vertical,
                                   physics: const BouncingScrollPhysics(),
                                   child: SizedBox(
-                                    width: isPaysage ? (imageSize.width * size) / imageSize.height : size,
-                                    height: isPaysage ? size : (imageSize.height * size) / imageSize.width,
+                                    width: scrollAreaWidth,
+                                    height: scrollAreaHeight,
                                     child: Image.memory(
                                       _imageBytes!,
-                                      width: imageWidth,
-                                      height: imageHeight,
+                                      // CORRECTION : On force l'image à occuper TOUTE la dimension calculée du SizedBox.
+                                      // Cela oblige Flutter à afficher les zones "hors standard" (en haut et en bas)
+                                      // qui étaient coupées par le 'null' précédent.
+                                      width: scrollAreaWidth,
+                                      height: scrollAreaHeight,
                                       fit: BoxFit.cover,
-                                      gaplessPlayback: true, // Évite les flashs blancs/noirs lors du rafraîchissement
+                                      gaplessPlayback: true,
                                     ),
                                   ),
                                 );
@@ -245,68 +244,4 @@ class _WidgetSouvenirTirageState extends State<WidgetSouvenirTirage> {
     final image = await decodeImageFromList(bytes);
     return Size(image.width.toDouble(), image.height.toDouble());
   }
-}
-
-/// Affiche l'overlay dialog contenant le widget du souvenir pioché
-void afficherSouvenirBocal(BuildContext context, NoteSourire souvenir) {
-  final int dureeAnimation = ScreenProfil.animationsDoucesActive ? 400 : 800;
-
-  showGeneralDialog(
-    context: context,
-    barrierDismissible: true,
-    barrierLabel: "Fermer",
-    barrierColor: black.withOpacity(0.25),
-    transitionDuration: Duration(milliseconds: dureeAnimation),
-    pageBuilder: (context, anim1, anim2) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 40),
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              final double tailleCarree = constraints.maxWidth;
-
-              return Container(
-                width: tailleCarree,
-                height: tailleCarree,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(24),
-                  boxShadow: [
-                    BoxShadow(
-                      color: black.withOpacity(0.2),
-                      blurRadius: 20,
-                      spreadRadius: 5,
-                    )
-                  ],
-                ),
-                child: Material(
-                  type: MaterialType.transparency,
-                  child: WidgetSouvenirTirage(souvenir: souvenir),
-                ),
-              );
-            },
-          ),
-        ),
-      );
-    },
-    transitionBuilder: (context, anim1, anim2, child) {
-      if (ScreenProfil.animationsDoucesActive) {
-        return Opacity(
-          opacity: anim1.value,
-          child: child,
-        );
-      } else {
-        // RESTAURATION DE L'EFFET TORNADE : Suppression du multiplicateur de conversion en radians parasite
-        return Transform.rotate(
-          angle: (1 - anim1.value) * 12.5, 
-          child: Transform.scale(
-            scale: anim1.value,
-            child: Opacity(
-              opacity: anim1.value,
-              child: child,
-            ),
-          ),
-        );
-      }
-    },
-  );
 }
