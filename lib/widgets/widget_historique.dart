@@ -40,11 +40,8 @@ class _WidgetHistoriqueState extends State<WidgetHistorique> {
   bool _voletEstOuvert = false;
 
   void _ouvrirSouvenirGrandEcran(BuildContext context, NoteSourire souvenir) {
-  // Les autres paramètres (isPhoto, imageBytes, etc.) ont été retirés 
-    // car WidgetSouvenirTirage les calcule tout seul en interne.
     showDialog(
       context: context,
-      // Note : Si 'isDarkMode' ou 'black' pose problème ici, vous pouvez utiliser Colors.black
       barrierColor: Colors.black.withOpacity(0.25), 
       builder: (BuildContext context) {
         return Dialog(
@@ -55,7 +52,7 @@ class _WidgetHistoriqueState extends State<WidgetHistorique> {
             child: AspectRatio(
               aspectRatio: 1.0,
               child: WidgetSouvenirTirage(
-                souvenir: souvenir, // Seul ce paramètre est requis
+                souvenir: souvenir,
               ),
             ),
           ),
@@ -116,14 +113,12 @@ class _WidgetHistoriqueState extends State<WidgetHistorique> {
     final localizations = AppLocalizations.of(context)!;
     final Map<String, List<NoteSourire>> groupes = {};
     
-    // Normalisation des dates (on ne garde que l'année, le mois et le jour pour comparer)
     final maintenant = DateTime.now();
     final dateAujourdhui = DateTime(maintenant.year, maintenant.month, maintenant.day);
     final dateHier = dateAujourdhui.subtract(const Duration(days: 1));
     
     final localeCourante = Localizations.localeOf(context).toString();
 
-    // 1. Filtrage
     final listeFiltree = liste.where((note) {
       if (_filtresActifs.isEmpty) return true;
       final categoriesDeLaNote = note.categories;
@@ -134,10 +129,8 @@ class _WidgetHistoriqueState extends State<WidgetHistorique> {
       return categoriesDeLaNote.any((cat) => _filtresActifs.contains(cat));
     }).toList();
 
-    // 2. TRIS EXPLICITE : On force le tri du plus récent au plus ancien
     listeFiltree.sort((a, b) => b.date.compareTo(a.date));
 
-    // 3. Groupement
     for (var note in listeFiltree) {
       String cleDate;
       final dateNote = DateTime(note.date.year, note.date.month, note.date.day);
@@ -167,7 +160,6 @@ class _WidgetHistoriqueState extends State<WidgetHistorique> {
 
   @override
   Widget build(BuildContext context) {
-    final localizations = AppLocalizations.of(context)!;
     final statusBarHeight = MediaQuery.of(context).padding.top;
     final bottomPadding = MediaQuery.of(context).padding.bottom;
     final double margeSuperieureCible = statusBarHeight + 70 + 16;
@@ -175,7 +167,9 @@ class _WidgetHistoriqueState extends State<WidgetHistorique> {
     return ValueListenableBuilder<ThemeMode>(
       valueListenable: MyApp.themeNotifier,
       builder: (context, currentThemeMode, child) {
-        final bool isDarkMode = currentThemeMode == ThemeMode.dark;
+        final bool isDarkMode = currentThemeMode == ThemeMode.system
+    ? (MediaQuery.of(context).platformBrightness == Brightness.dark)
+    : (currentThemeMode == ThemeMode.dark);
         final Color couleurFondVolet = isDarkMode ? black : white;
 
         return Stack(
@@ -188,309 +182,327 @@ class _WidgetHistoriqueState extends State<WidgetHistorique> {
               snap: true,
               builder: (context, scrollController) {
                 return MediaQuery.removePadding(
-  context: context,
-  removeBottom: false,
-  child: Container(
-    margin: EdgeInsets.only(top: margeSuperieureCible),
-    decoration: BoxDecoration(
-      color: couleurFondVolet,
-      borderRadius: const BorderRadius.only(
-        topLeft: Radius.circular(16),
-        topRight: Radius.circular(16),
-      ),
-    ),
-    child: StreamBuilder<List<NoteSourire>>(
-      stream: databaseService.getNotesStream(),
-      builder: (context, snapshot) {
-        final toutesLesNotes = snapshot.data ?? widget.notes;
+                  context: context,
+                  removeBottom: false,
+                  child: Container(
+                    margin: EdgeInsets.only(top: margeSuperieureCible),
+                    decoration: BoxDecoration(
+                      color: couleurFondVolet,
+                      borderRadius: const BorderRadius.only(
+                        topLeft: Radius.circular(16),
+                        topRight: Radius.circular(16),
+                      ),
+                    ),
+                    child: StreamBuilder<List<NoteSourire>>(
+                      stream: databaseService.getNotesStream(),
+                      builder: (context, snapshot) {
+                        final toutesLesNotes = snapshot.data ?? widget.notes;
 
-        if (snapshot.hasData && widget.onNotesChanged != null) {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            widget.onNotesChanged!();
-          });
-        }
+                        if (snapshot.hasData && widget.onNotesChanged != null) {
+                          WidgetsBinding.instance.addPostFrameCallback((_) {
+                            widget.onNotesChanged!();
+                          });
+                        }
 
-        final souvenirsGroupes = _grouperParDate(toutesLesNotes, context);
-        final localizations = AppLocalizations.of(context)!;
+                        final souvenirsGroupes = _grouperParDate(toutesLesNotes, context);
+                        final localizations = AppLocalizations.of(context)!;
 
-        return Stack(
-          children: [
-            CustomScrollView(
-              controller: scrollController,
-              physics: const AlwaysScrollableScrollPhysics(),
-              slivers: [
-                // 1. En-tête adaptatif (remplace l'ancienne Column fixe du haut)
-                SliverToBoxAdapter(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                        child: Stack(
-                          alignment: Alignment.center,
+                        return Stack(
                           children: [
-                            Align(
-                              alignment: Alignment.center,
-                              child: BtnChevronBas(
-                                onTap: () {
-                                  widget.controller?.animateTo(
-                                    0.0,
-                                    duration: const Duration(milliseconds: 300),
-                                    curve: Curves.easeIn,
-                                  );
-                                },
-                              ),
-                            ),
-                            Align(
-                              alignment: Alignment.centerRight,
-                              child: BtnFiltrer(
-                                nombreDeFiltres: _filtresActifs.length,
-                                onTap: () {
-                                  showModalBottomSheet(
-                                    context: context,
-                                    isScrollControlled: true,
-                                    backgroundColor: Colors.transparent,
-                                    builder: (context) => EcranFiltrer(
-                                      categoriesSelectionneesInitiales: _filtresActifs,
-                                      onFiltrerApplique: (nouvelleSelection) {
-                                        setState(() {
-                                          _filtresActifs = nouvelleSelection;
-                                        });
-                                      },
+                            // 1. Zone de défilement principale
+                            CustomScrollView(
+                              controller: scrollController,
+                              physics: const AlwaysScrollableScrollPhysics(),
+                              slivers: [
+                                // Compensation pour laisser la place au bandeau fixe du haut
+                                const SliverToBoxAdapter(
+                                  child: SizedBox(height: 60),
+                                ),
+
+                                // Affichage de l'état vide
+                                if (toutesLesNotes.isEmpty)
+                                  SliverFillRemaining(
+                                    hasScrollBody: false,
+                                    child: Center(
+                                      child: Text(
+                                        localizations.emptyHistory,
+                                        style: const TextStyle(color: Colors.grey, fontSize: 16),
+                                      ),
                                     ),
-                                  );
-                                },
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Divider(
-                        height: 1, 
-                        color: isDarkMode ? const Color(0xFF2D2D2D) : const Color(0xFFE0E0E0)
-                      ),
-                    ],
-                  ),
-                ),
-
-                // 2. Affichage de l'état vide
-                if (toutesLesNotes.isEmpty)
-                  SliverFillRemaining(
-                    hasScrollBody: false,
-                    child: Center(
-                      child: Text(
-                        localizations.emptyHistory,
-                        style: const TextStyle(color: Colors.grey, fontSize: 16),
-                      ),
-                    ),
-                  )
-                else
-                  // 3. Liste principale gérée en Slivers
-                  SliverPadding(
-                    padding: EdgeInsets.only(
-                      left: 20, 
-                      right: 20, 
-                      top: 10, 
-                      bottom: 20 + bottomPadding + (_modeSelection ? 100 : 0),
-                    ),
-                    sliver: SliverList(
-                      delegate: SliverChildBuilderDelegate(
-                        (context, index) {
-                          String dateCle = souvenirsGroupes.keys.elementAt(index);
-                          List<NoteSourire> items = souvenirsGroupes[dateCle]!;
-                          
-                          return Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Padding(
-                                padding: const EdgeInsets.only(top: 15, bottom: 12),
-                                child: Text(
-                                  dateCle,
-                                  style: TextStyle(
-                                    color: isDarkMode ? lightGrey : grey, 
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                              GridView.builder(
-                                padding: EdgeInsets.zero, 
-                                shrinkWrap: true, 
-                                physics: const NeverScrollableScrollPhysics(), 
-                                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                                  crossAxisCount: 4,
-                                  mainAxisSpacing: 12,
-                                  crossAxisSpacing: 12,
-                                  childAspectRatio: 1.0,
-                                ),
-                                itemCount: items.length,
-                                itemBuilder: (context, itemIndex) {
-                                  final souvenir = items[itemIndex];
-                                  _getThemeFromLabel(souvenir.themeLabel);
-                                  final bool estSelectionne = _souvenirsSelectionnes.any((s) => s.id == souvenir.id);
-
-                                  return GestureDetector(
-                                    onLongPress: () {
-                                      setState(() {
-                                        _modeSelection = true;
-                                        if (!estSelectionne) {
-                                          _souvenirsSelectionnes.add(souvenir);
-                                        }
-                                      });
-                                    },
-                                    onTap: () {
-                                      if (_modeSelection) {
-                                        setState(() {
-                                          if (estSelectionne) {
-                                            _souvenirsSelectionnes.removeWhere((s) => s.id == souvenir.id);
-                                            if (_souvenirsSelectionnes.isEmpty) {
-                                              _modeSelection = false;
-                                            }
-                                          } else {
-                                            _souvenirsSelectionnes.add(souvenir);
-                                          }
-                                        });
-                                      } else {
-                                        _ouvrirSouvenirGrandEcran(context, souvenir);
-                                      }
-                                    },
-                                    child: Stack(
-                                      children: [
-                                        Positioned.fill(
-                                          child: WidgetSouvenirHistorique(
-                                            key: ValueKey(souvenir.photoPath ?? souvenir.id.toString()),
-                                            souvenir: souvenir,
-                                          ),
-                                        ),
-                                        if (_modeSelection && estSelectionne)
-                                          Positioned.fill(
-                                            child: Container(
-                                              decoration: BoxDecoration(
-                                                color: orange.withOpacity(0.4),
-                                                borderRadius: BorderRadius.circular(6),
-                                              ),
-                                            ),
-                                          ),
-                                        if (_modeSelection)
-                                          Positioned(
-                                            top: 8,
-                                            right: 8,
-                                            child: Container(
-                                              width: 22,
-                                              height: 22,
-                                              decoration: BoxDecoration(
-                                                shape: BoxShape.circle,
-                                                color: estSelectionne ? orange : Colors.transparent,
-                                                border: Border.all(
-                                                  color: estSelectionne ? orange : Colors.white,
-                                                  width: 1.5,
+                                  )
+                                else
+                                  // Liste principale gérée en Slivers
+                                  SliverPadding(
+                                    padding: EdgeInsets.only(
+                                      left: 20, 
+                                      right: 20, 
+                                      top: 10, 
+                                      bottom: 20 + bottomPadding + (_modeSelection ? 100 : 0),
+                                    ),
+                                    sliver: SliverList(
+                                      delegate: SliverChildBuilderDelegate(
+                                        (context, index) {
+                                          String dateCle = souvenirsGroupes.keys.elementAt(index);
+                                          List<NoteSourire> items = souvenirsGroupes[dateCle]!;
+                                          
+                                          return Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Padding(
+                                                padding: const EdgeInsets.only(top: 15, bottom: 12),
+                                                child: Text(
+                                                  dateCle,
+                                                  style: TextStyle(
+                                                    color: isDarkMode ? lightGrey : grey, 
+                                                    fontSize: 16,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
                                                 ),
-                                                boxShadow: [
-                                                  BoxShadow(
-                                                    color: Colors.black.withOpacity(0.2),
-                                                    blurRadius: 2,
-                                                  )
-                                                ],
                                               ),
-                                              child: estSelectionne
-                                                  ? const Icon(Icons.check, color: Colors.white, size: 14)
-                                                  : null,
-                                            ),
-                                          ),
-                                      ],
+                                              GridView.builder(
+                                                padding: EdgeInsets.zero, 
+                                                shrinkWrap: true, 
+                                                physics: const NeverScrollableScrollPhysics(), 
+                                                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                                                  crossAxisCount: 4,
+                                                  mainAxisSpacing: 12,
+                                                  crossAxisSpacing: 12,
+                                                  childAspectRatio: 1.0,
+                                                ),
+                                                itemCount: items.length,
+                                                itemBuilder: (context, itemIndex) {
+                                                  final souvenir = items[itemIndex];
+                                                  _getThemeFromLabel(souvenir.themeLabel);
+                                                  final bool estSelectionne = _souvenirsSelectionnes.any((s) => s.id == souvenir.id);
+
+                                                  return GestureDetector(
+                                                    onLongPress: () {
+                                                      setState(() {
+                                                        _modeSelection = true;
+                                                        if (!estSelectionne) {
+                                                          _souvenirsSelectionnes.add(souvenir);
+                                                        }
+                                                      });
+                                                    },
+                                                    onTap: () {
+                                                      if (_modeSelection) {
+                                                        setState(() {
+                                                          if (estSelectionne) {
+                                                            _souvenirsSelectionnes.removeWhere((s) => s.id == souvenir.id);
+                                                            if (_souvenirsSelectionnes.isEmpty) {
+                                                              _modeSelection = false;
+                                                            }
+                                                          } else {
+                                                            _souvenirsSelectionnes.add(souvenir);
+                                                          }
+                                                        });
+                                                      } else {
+                                                        _ouvrirSouvenirGrandEcran(context, souvenir);
+                                                      }
+                                                    },
+                                                    child: Stack(
+                                                      children: [
+                                                        Positioned.fill(
+                                                          child: WidgetSouvenirHistorique(
+                                                            key: ValueKey(souvenir.photoPath ?? souvenir.id.toString()),
+                                                            souvenir: souvenir,
+                                                          ),
+                                                        ),
+                                                        if (_modeSelection && estSelectionne)
+                                                          Positioned.fill(
+                                                            child: Container(
+                                                              decoration: BoxDecoration(
+                                                                color: orange.withOpacity(0.4),
+                                                                borderRadius: BorderRadius.circular(6),
+                                                              ),
+                                                            ),
+                                                          ),
+                                                        if (_modeSelection)
+                                                          Positioned(
+                                                            top: 8,
+                                                            right: 8,
+                                                            child: Container(
+                                                              width: 22,
+                                                              height: 22,
+                                                              decoration: BoxDecoration(
+                                                                shape: BoxShape.circle,
+                                                                color: estSelectionne ? orange : Colors.transparent,
+                                                                border: Border.all(
+                                                                  color: estSelectionne ? orange : Colors.white,
+                                                                  width: 1.5,
+                                                                ),
+                                                                boxShadow: [
+                                                                  BoxShadow(
+                                                                    color: Colors.black.withOpacity(0.2),
+                                                                    blurRadius: 2,
+                                                                  )
+                                                                ],
+                                                              ),
+                                                              child: estSelectionne
+                                                                  ? const Icon(Icons.check, color: Colors.white, size: 14)
+                                                                  : null,
+                                                            ),
+                                                          ),
+                                                      ],
+                                                    ),
+                                                  );
+                                                },
+                                              ),
+                                              const SizedBox(height: 25),
+                                              Divider(
+                                                height: 1, 
+                                                color: isDarkMode ? const Color(0xFF2D2D2D) : const Color(0xFFEEEEEE)
+                                              ),
+                                            ],
+                                          );
+                                        },
+                                        childCount: souvenirsGroupes.keys.length,
+                                      ),
                                     ),
-                                  );
-                                },
-                              ),
-                              const SizedBox(height: 25),
-                              Divider(
-                                height: 1, 
-                                color: isDarkMode ? const Color(0xFF2D2D2D) : const Color(0xFFEEEEEE)
-                              ),
-                            ],
-                          );
-                        },
-                        childCount: souvenirsGroupes.keys.length,
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-            
-            // 4. Barre d'action basse de sélection (reste flottante et fixe au-dessus du scroll)
-            if (_modeSelection)
-              Positioned(
-                bottom: 0,
-                left: 0,
-                right: 0,
-                child: Container(
-                  padding: EdgeInsets.only(
-                    left: 20, 
-                    right: 20,
-                    top: 16,
-                    bottom: 16 + bottomPadding,
-                  ),
-                  decoration: BoxDecoration(
-                    color: isDarkMode ? darkSurface : Colors.white, 
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(isDarkMode ? 0.3 : 0.1),
-                        blurRadius: 10,
-                        offset: const Offset(0, -2),
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: BtnCategorisation(
-                          text: localizations.btnDeleteSelection,
-                          isSecondary: true,
-                          onTap: () async {
-                            if (_souvenirsSelectionnes.isEmpty) return;
-                            await Future.sync(() => databaseService.deleteMultipleNotes(_souvenirsSelectionnes));
-                            if (mounted) {
-                              setState(() {
-                                _souvenirsSelectionnes.clear();
-                                _modeSelection = false;
-                              });
-                            }
-                          },
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: BtnCategorisation(
-                          text: localizations.btnCategorizeSelection,
-                          onTap: () {
-                            if (_souvenirsSelectionnes.isNotEmpty) {
-                              Navigator.push<List<NoteSourire>>(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => ScreenRecategorisationHistorique(
-                                    souvenirs: List<NoteSourire>.from(_souvenirsSelectionnes),
+                                  ),
+                              ],
+                            ),
+
+                            // 2. BANDEAU DU HAUT ABSOLU ET FIXE (Reste au-dessus de la zone de scroll)
+                            Positioned(
+                              top: 0,
+                              left: 0,
+                              right: 0,
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: couleurFondVolet,
+                                  borderRadius: const BorderRadius.only(
+                                    topLeft: Radius.circular(16),
+                                    topRight: Radius.circular(16),
                                   ),
                                 ),
-                              ).then((souvenirsModifies) {
-                                setState(() {
-                                  _souvenirsSelectionnes.clear();
-                                  _modeSelection = false;
-                                });
-                              });
-                            }
-                          },
-                        ),
-                      ),
-                    ],
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                                      child: Stack(
+                                        alignment: Alignment.center,
+                                        children: [
+                                          Align(
+                                            alignment: Alignment.center,
+                                            child: BtnChevronBas(
+                                              onTap: () {
+                                                widget.controller?.animateTo(
+                                                  0.0,
+                                                  duration: const Duration(milliseconds: 300),
+                                                  curve: Curves.easeIn,
+                                                );
+                                              },
+                                            ),
+                                          ),
+                                          Align(
+                                            alignment: Alignment.centerRight,
+                                            child: BtnFiltrer(
+                                              nombreDeFiltres: _filtresActifs.length,
+                                              onTap: () {
+                                                showModalBottomSheet(
+                                                  context: context,
+                                                  isScrollControlled: true,
+                                                  backgroundColor: Colors.transparent,
+                                                  builder: (context) => EcranFiltrer(
+                                                    categoriesSelectionneesInitiales: _filtresActifs,
+                                                    onFiltrerApplique: (nouvelleSelection) {
+                                                      setState(() {
+                                                        _filtresActifs = nouvelleSelection;
+                                                      });
+                                                    },
+                                                  ),
+                                                );
+                                              },
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    Divider(
+                                      height: 1, 
+                                      color: isDarkMode ? const Color(0xFF2D2D2D) : const Color(0xFFE0E0E0)
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            
+                            // 3. Barre d'action basse de sélection (flottante et fixe au-dessus du scroll)
+                            if (_modeSelection)
+                              Positioned(
+                                bottom: 0,
+                                left: 0,
+                                right: 0,
+                                child: Container(
+                                  padding: EdgeInsets.only(
+                                    left: 20, 
+                                    right: 20,
+                                    top: 16,
+                                    bottom: 16 + bottomPadding,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: isDarkMode ? darkSurface : Colors.white, 
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withOpacity(isDarkMode ? 0.3 : 0.1),
+                                        blurRadius: 10,
+                                        offset: const Offset(0, -2),
+                                      ),
+                                    ],
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Expanded(
+                                        child: BtnCategorisation(
+                                          text: localizations.btnDeleteSelection,
+                                          isSecondary: true,
+                                          onTap: () async {
+                                            if (_souvenirsSelectionnes.isEmpty) return;
+                                            await Future.sync(() => databaseService.deleteMultipleNotes(_souvenirsSelectionnes));
+                                            if (mounted) {
+                                              setState(() {
+                                                _souvenirsSelectionnes.clear();
+                                                _modeSelection = false;
+                                              });
+                                            }
+                                          },
+                                        ),
+                                      ),
+                                      const SizedBox(width: 16),
+                                      Expanded(
+                                        child: BtnCategorisation(
+                                          text: localizations.btnCategorizeSelection,
+                                          onTap: () {
+                                            if (_souvenirsSelectionnes.isNotEmpty) {
+                                              Navigator.push<List<NoteSourire>>(
+                                                context,
+                                                MaterialPageRoute(
+                                                  builder: (context) => ScreenRecategorisationHistorique(
+                                                    souvenirs: List<NoteSourire>.from(_souvenirsSelectionnes),
+                                                  ),
+                                                ),
+                                              ).then((souvenirsModifies) {
+                                                setState(() {
+                                                  _souvenirsSelectionnes.clear();
+                                                  _modeSelection = false;
+                                                });
+                                              });
+                                            }
+                                          },
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                          ],
+                        );
+                      },
+                    ),
                   ),
-                ),
-              ),
-          ],
-        );
-      },
-    ),
-  ),
-);
+                );
               },
             ),
           ],

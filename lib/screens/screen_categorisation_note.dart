@@ -226,7 +226,9 @@ class _ScreenCategorisationNoteState extends State<ScreenCategorisationNote> {
       child: ValueListenableBuilder<ThemeMode>(
         valueListenable: MyApp.themeNotifier,
         builder: (context, currentThemeMode, child) {
-          final bool isDarkMode = currentThemeMode == ThemeMode.dark;
+          final bool isDarkMode = currentThemeMode == ThemeMode.system
+    ? (MediaQuery.of(context).platformBrightness == Brightness.dark)
+    : (currentThemeMode == ThemeMode.dark);
           final bool isValidateActive = _selectedCategories.isNotEmpty;
 
           return Scaffold(

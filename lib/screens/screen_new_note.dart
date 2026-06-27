@@ -66,7 +66,10 @@ class _ScreenNewNoteState extends State<ScreenNewNote> {
     return ValueListenableBuilder<ThemeMode>(
       valueListenable: MyApp.themeNotifier,
       builder: (context, currentThemeMode, child) {
-        final bool isDarkMode = currentThemeMode == ThemeMode.dark;
+        // LOGIQUE CORRIGÉE : Gère le mode dynamique en suivant le système ou le choix forcé
+        final bool isDarkMode = currentThemeMode == ThemeMode.system
+            ? (MediaQuery.of(context).platformBrightness == Brightness.dark)
+            : (currentThemeMode == ThemeMode.dark);
         
         final Color iconColor = isDarkMode 
             ? Colors.white.withOpacity(0.25) 

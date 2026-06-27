@@ -46,64 +46,76 @@ class _HomeState extends State<Home> {
 
   // Dans le fichier de ta Home
 @override
-
 void initState() {
   super.initState();
   _appliquerStyleZoneProtegee();
-  debugPrint("===> HOME : Appels de initState() lancés.");
+  debugPrint("===> HOME : Initialisation");
+  
+  isAppLockedNotifier.addListener(_verifierEtDeclencherSouvenir);
+  idSouvenirEnCacheGlobal.addListener(_verifierEtDeclencherSouvenir);
+
   WidgetsBinding.instance.addPostFrameCallback((_) {
     if (!mounted) return;
+    
+    // 1. On lance la vérification du souvenir au cas où le bocal doit s'ouvrir
+    _verifierEtDeclencherSouvenir();
 
-    // 1. BLOCAGE CRITIQUE
-    if (isAppLockedNotifier.value) {
-      return;
-    }
-
-    // 2. GESTION DU BOCAL VIDE
-    if (bocalVideEnCacheGlobal) {
-      bocalVideEnCacheGlobal = false;
-    }
-
-    // 3. TRAITEMENT DES SOUVENIRS CACHÉS (Déporté dans une méthode asynchrone)
-    _traiterSouvenirsEnCache();
-    // Mode démo
+    // 2. RÉACTIVATION DU MODE DÉMO (Le revoilà !)
     if (!UserPrefs.modeDemoAffiche) {
       Future.delayed(const Duration(milliseconds: 1200), () {
         if (mounted) {
-          _tenterLancementDemo();
+          _tenterLancementDemo(); // Appelé ici, le warning jaune disparaît !
         }
       });
     }
   });
 }
 
-// Nouvelle méthode d'assistance à ajouter sous ton initState
-Future<void> _traiterSouvenirsEnCache() async {
-  if (idSouvenirEnCacheGlobal != null) {
-    final int idTarget = idSouvenirEnCacheGlobal!;
-    idSouvenirEnCacheGlobal = null;
-    // CORRECTION SQLITE : Lecture asynchrone en BDD
+@override
+void dispose() {
+  isAppLockedNotifier.removeListener(_verifierEtDeclencherSouvenir);
+  idSouvenirEnCacheGlobal.removeListener(_verifierEtDeclencherSouvenir);
+  super.dispose();
+}
+
+/// Le cœur de la synchro : cette méthode est appelée dès que le verrou change OU dès qu'un souvenir arrive
+void _verifierEtDeclencherSouvenir() async {
+  // RÈGLE 1 : Si l'application est verrouillée graphiquement, on ne fait rien (on attend)
+  if (isAppLockedNotifier.value) {
+    debugPrint("===> HOME : Blocage, l'application est verrouillée.");
+    return;
+  }
+
+  // RÈGLE 2 : Si la Home n'est pas encore pleinement intégrée à l'arbre des widgets, on attend le prochain frame
+  if (!mounted) return;
+
+  // RÈGLE 3 : Si un ID est présent dans notre Notifier réactif
+  if (idSouvenirEnCacheGlobal.value != null) {
+    final int idTarget = idSouvenirEnCacheGlobal.value!;
+    
+    // Crucial : On vide le notifier TOUT DE SUITE pour éviter les boucles infinies au rebuild
+    idSouvenirEnCacheGlobal.value = null; 
+
+    debugPrint("===> HOME : Récupération du souvenir $idTarget depuis SQLite...");
+    
     final toutesLesNotes = await DatabaseService().getAllNotesAsync();
     final souvenir = toutesLesNotes.firstWhere(
       (note) => note.id == idTarget,
       orElse: () => NoteSourire(id: -1, text: '', themeLabel: 'orange', colorLabel: 'orange', categories: [], date: DateTime.now()),
     );
+    
     if (souvenir.id != -1 && mounted) {
-      afficherSouvenirBocal(context, souvenir);
-    }
-  } else {
-
-    // Gestion classique par arguments
-    final args = ModalRoute.of(context)?.settings.arguments;
-    if (args != null && args is NoteSourire) {
-      afficherSouvenirBocal(context, args);
-    } else if (souvenirEnAttenteGlobal != null) {
-      final souvenirDeSecours = souvenirEnAttenteGlobal!;
-      souvenirEnAttenteGlobal = null;
-      afficherSouvenirBocal(context, souvenirDeSecours);
+      debugPrint("===> HOME : Succès ! Affichage immédiat de l'overlay pour le souvenir.");
+      
+      // On attend un micro-délai pour s'assurer que les transitions d'écrans (ou le retrait du lock) sont finies
+      Future.delayed(const Duration(milliseconds: 100), () {
+        if (mounted) {
+          afficherSouvenirBocal(context, souvenir);
+        }
+      });
     }
   }
-} 
+}
 
   void _appliquerStyleZoneProtegee() {
     SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(

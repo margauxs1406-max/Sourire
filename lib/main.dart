@@ -15,10 +15,11 @@ import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;      
 import 'package:permission_handler/permission_handler.dart';
 import 'package:sourire/theme/theme_service.dart'; 
+import 'package:sourire/services/database_service.dart';
 
 // Variables globales
 NoteSourire? souvenirEnAttenteGlobal;
-int? idSouvenirEnCacheGlobal; 
+final ValueNotifier<int?> idSouvenirEnCacheGlobal = ValueNotifier<int?>(null);
 bool bocalVideEnCacheGlobal = false; 
 
 // On démarre verrouillé par défaut pour laisser le ScreenBoot décider
@@ -118,33 +119,47 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
     super.dispose();
   }
 
-  void _analyserPayload(String? payload) {
+  void _analyserPayload(String? payload) async {
     if (payload == null) return;
 
+    debugPrint("=== NOTIFICATION PAYLOAD REÇU : $payload ===");
+
     if (payload == 'rappel_gratitude') {
-      // Si déverrouillé, on amène à la Home, sinon le ScreenBoot s'en chargera au démarrage
       if (!isAppLockedNotifier.value) {
         _navigatorKey.currentState?.pushAndRemoveUntil(
           MaterialPageRoute(builder: (context) => const Home()),
           (route) => false,
         );
       }
-    } else if (payload.startsWith('ouvrir_souvenir:')) {
-      final String idString = payload.split(':').last;
-      if (idString == 'aucun') {
-        bocalVideEnCacheGlobal = true; 
-      } else {
-        final int? idSouvenir = int.tryParse(idString);
-        if (idSouvenir != null) {
-          idSouvenirEnCacheGlobal = idSouvenir; 
+    } 
+    else if (payload == "action:tirer_souvenir_aleatoire") {
+      try {
+        final NoteSourire? souvenirAleatoire = await DatabaseService().getRandomNote(
+          categoriesCibles: UserPrefs.categoriesSouvenirs,
+        );
+
+        if (souvenirAleatoire == null) {
+          bocalVideEnCacheGlobal = true;
+          idSouvenirEnCacheGlobal.value = null; // Mise à jour ici
+        } else {
+          bocalVideEnCacheGlobal = false;
+          // On injecte l'ID, ce qui va réveiller instantanément les écouteurs actifs
+          idSouvenirEnCacheGlobal.value = souvenirAleatoire.id; 
+          debugPrint("=== NOTIF === ID stocké dans le notifier : ${souvenirAleatoire.id}");
         }
+      } catch (e) {
+        debugPrint("Erreur récupération souvenir au clic : $e");
+        bocalVideEnCacheGlobal = true;
+        idSouvenirEnCacheGlobal.value = null;
       }
 
-      // Si l'application est déjà ouverte et déverrouillée (traitement en arrière-plan),
-      // on force le rafraîchissement de la Home pour ouvrir le bocal.
+      // Redirection native vers la Home
       if (!isAppLockedNotifier.value) {
         _navigatorKey.currentState?.pushAndRemoveUntil(
-          MaterialPageRoute(builder: (context) => const Home()),
+          MaterialPageRoute(
+            builder: (context) => const Home(),
+            settings: const RouteSettings(name: 'HomeFromNotification'),
+          ),
           (route) => false,
         );
       }

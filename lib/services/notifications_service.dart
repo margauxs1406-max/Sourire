@@ -157,9 +157,8 @@ class NotificationService {
     );
   }
 
-  /// Planification du rappel de souvenirs aléatoires
+  /// Planification du rappel de souvenirs (Pérenne & Léger)
   static Future<void> planifierRappelSouvenirs() async {
-    print("HEURE BRUTE SOUVENIRS : ${UserPrefs.heureRappelSouvenirs}h${UserPrefs.minuteRappelSouvenirs}");
     const int notifId = 2;
 
     await _plugin.cancel(notifId);
@@ -182,28 +181,12 @@ class NotificationService {
       ));
     }
 
-    final NoteSourire? souvenirAleatoire = await DatabaseService().getRandomNote(
-      categoriesCibles: UserPrefs.categoriesSouvenirs,
-    );
-    
+    // PLUS DE REQUÊTE SQLICI ! Le texte devient générique et invitant.
     String notifTitle = localizations.notifSouvenirsDefaultTitle;
-    String notifBody = "";
-    String payloadData = "";
-
-    if (souvenirAleatoire == null) {
-      notifTitle = localizations.notifSouvenirsEmptyTitle;
-      notifBody = localizations.notifSouvenirsEmptyBody;
-      payloadData = "ouvrir_souvenir:aucun";
-    } else {
-      final bool isPhoto = souvenirAleatoire.photoPath != null && souvenirAleatoire.photoPath!.trim().isNotEmpty;
-      if (isPhoto) {
-        notifBody = localizations.notifSouvenirsPhotoBody;
-      } else {
-        final texteBrut = souvenirAleatoire.text ?? "";
-        notifBody = texteBrut.length > 60 ? "${texteBrut.substring(0, 57)}..." : texteBrut;
-      }
-      payloadData = "ouvrir_souvenir:${souvenirAleatoire.id}";
-    }
+    String notifBody = localizations.notifSouvenirsPhotoBody; // Ex: "Ouvrez votre bocal pour redécouvrir un moment heureux !"
+    
+    // Le payload devient une action universelle
+    String payloadData = "action:tirer_souvenir_aleatoire";
 
     final maintenant = tz.TZDateTime.now(tz.local);
     
@@ -222,14 +205,12 @@ class NotificationService {
       if (instantPlanifie.isBefore(maintenant)) {
         instantPlanifie = instantPlanifie.add(const Duration(days: 1));
       }
-      matchComponents = DateTimeComponents.time; // Répétition chaque jour à la même heure
+      matchComponents = DateTimeComponents.time;
     } 
     else if (UserPrefs.frequenceSouvenirs == "Tous les 2 jours") {
       if (instantPlanifie.isBefore(maintenant)) {
         instantPlanifie = instantPlanifie.add(const Duration(days: 2));
       }
-      // CORRECTION DU PIÈGE : On laisse à null. Dès que la notif se déclenche, 
-      // ton app devra re-planifier le coup d'après, sinon iOS écrase l'intervalle de 2 jours.
       matchComponents = null; 
     } 
     else if (UserPrefs.frequenceSouvenirs == "Toutes les semaines") {
@@ -252,7 +233,7 @@ class NotificationService {
           instantPlanifie = instantPlanifie.add(const Duration(days: 1));
         }
       }
-      matchComponents = DateTimeComponents.dayOfWeekAndTime; // Répétition hebdo stricte sur iOS/Android
+      matchComponents = DateTimeComponents.dayOfWeekAndTime;
     }
 
     await _plugin.zonedSchedule(
@@ -268,7 +249,6 @@ class NotificationService {
           importance: Importance.max,
           priority: Priority.high,
         ),
-        // CORRECTION : Ajout obligatoire des détails iOS
         iOS: const DarwinNotificationDetails(
           presentAlert: true,
           presentBadge: true,

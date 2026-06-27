@@ -204,7 +204,9 @@ class _ScreenRecategorisationHistoriqueState extends State<ScreenRecategorisatio
       child: ValueListenableBuilder<ThemeMode>(
         valueListenable: MyApp.themeNotifier,
         builder: (context, currentThemeMode, child) {
-          final bool isDarkMode = currentThemeMode == ThemeMode.dark;
+          final bool isDarkMode = currentThemeMode == ThemeMode.system
+    ? (MediaQuery.of(context).platformBrightness == Brightness.dark)
+    : (currentThemeMode == ThemeMode.dark);
 
           return Scaffold(
             backgroundColor: isDarkMode ? darkBg : white,

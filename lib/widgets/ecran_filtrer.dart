@@ -67,7 +67,9 @@ class _EcranFiltrerState extends State<EcranFiltrer> {
     return ValueListenableBuilder<ThemeMode>(
       valueListenable: MyApp.themeNotifier,
       builder: (context, currentThemeMode, child) {
-        final bool isDarkMode = currentThemeMode == ThemeMode.dark;
+        final bool isDarkMode = currentThemeMode == ThemeMode.system
+    ? (MediaQuery.of(context).platformBrightness == Brightness.dark)
+    : (currentThemeMode == ThemeMode.dark);
 
         return Container(
           height: overlayHeight,
