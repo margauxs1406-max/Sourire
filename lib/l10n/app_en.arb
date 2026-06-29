@@ -230,8 +230,7 @@
   "notifSouvenirsDefaultTitle": "Psst, look what just popped up...",
   "notifSouvenirsEmptyTitle": "Your happiness jar is empty...",
   "notifSouvenirsEmptyBody": "Add your first happy memories to be able to see them!",
-  "notifSouvenirsPhotoBody": "Take a look at this photo!"
-  "notifSouvenirsNoteBody": "You have written this someday..."
+  "notifSouvenirsAllBody": "Take a look at this souvenir..."
 }
 
   "themeClassique": "Classic",

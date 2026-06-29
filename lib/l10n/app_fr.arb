@@ -239,12 +239,11 @@
   "notifSouvenirsChannelName": "Souvenir heureux",
   "notifSouvenirsChannelDesc": "Psst, regarde ce qui vient de remonter...",
   "notifGratitudeTitle": "Rappel de gratitude",
-  "notifGratitudeBody": "Que s'est-il passé de positif dans ta journée ? ☀️ ",
+  "notifGratitudeBody": "Que s'est-il passé de positif dans ta journée ? ",
   "notifSouvenirsDefaultTitle": "Psst, regarde ce qui vient de remonter...",
   "notifSouvenirsEmptyTitle": "Ton bocal à bonheur est vide...",
   "notifSouvenirsEmptyBody": "Ajoute tes premiers souvenirs heureux pour pouvoir les revoir ! ",
-  "notifSouvenirsPhotoBody": "📸 Jette un oeil à cette photo !"
-  "notifSouvenirsNoteBody": "Tu as écrit ça un jour..."
+  "notifSouvenirsAllBody": "Jette un oeil à ce souvenir..."
 }
 
 {

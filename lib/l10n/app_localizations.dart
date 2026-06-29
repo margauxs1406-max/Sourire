@@ -215,8 +215,7 @@ abstract class AppLocalizations {
   String get notifSouvenirsDefaultTitle;
   String get notifSouvenirsEmptyTitle;
   String get notifSouvenirsEmptyBody;
-  String get notifSouvenirsPhotoBody;
-  String get notifSouvenirsNoteBody;
+  String get notifSouvenirsAllBody;
   String premiumSuccessSnackBar(String themeLabel);
   String get btnPasserPremium;
   String get btnAppliquer;

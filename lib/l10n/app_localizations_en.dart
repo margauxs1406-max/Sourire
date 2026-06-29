@@ -516,10 +516,7 @@ String get notifBocalVideBody => 'No memories to display in the selected categor
   String get notifSouvenirsEmptyBody => 'Add your first happy memories to be able to see them!';
 
   @override
-  String get notifSouvenirsPhotoBody => 'Take a look at this photo!';
-
-  @override
-  String get notifSouvenirsNoteBody => 'You have written this someday...';
+  String get notifSouvenirsAllBody => 'Take a look at this souvenir...';
 
   @override
   String get btnPasserPremium => 'Go Premium';

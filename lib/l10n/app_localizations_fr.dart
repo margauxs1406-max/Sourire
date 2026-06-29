@@ -516,10 +516,7 @@ String get notifBocalVideBody => 'Aucun souvenir à afficher dans les catégorie
   String get notifSouvenirsEmptyBody => 'Ajoute tes premiers souvenirs heureux pour pouvoir les revoir ! ';
 
   @override
-  String get notifSouvenirsPhotoBody => 'Jette un oeil à cette photo !';
-
-  @override
-  String get notifSouvenirsNoteBody => 'Tu as écrit ça un jour...';
+  String get notifSouvenirsAllBody => 'Jette un oeil à ce souvenir...';
 
   @override
   String get btnPasserPremium => 'Passer Premium';
