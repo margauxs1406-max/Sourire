@@ -8,29 +8,6 @@ import 'package:sourire/l10n/app_localizations.dart';
 import 'package:sourire/l10n/app_localizations_en.dart';
 import 'package:sourire/l10n/app_localizations_fr.dart';
 
-// 🌟 AJOUT INDISPENSABLE POUR IPHONE EN ARRIÈRE-PLAN :
-// Cette fonction doit obligatoirement être globale (top-level), en dehors de toute classe.
-@pragma('vm:entry-point')
-void onNotificationTapBackground(NotificationResponse notificationResponse) async {
-  final payload = notificationResponse.payload;
-  if (payload == "action:tirer_souvenir_aleatoire") {
-    debugPrint("=== 🍏 iOS NATIVE BACKGROUND CLICK DETECTED ===");
-    try {
-      // On force la récupération immédiate du souvenir pendant qu'iOS réveille l'application
-      final souvenirAleatoire = await DatabaseService().getRandomNote(
-        categoriesCibles: UserPrefs.categoriesSouvenirs,
-      );
-      if (souvenirAleatoire != null) {
-        // On l'écrit directement en mémoire. Les UserPrefs seront prêts au moment du déverrouillage !
-        await UserPrefs.setSouvenirNotificationId(souvenirAleatoire.id!);
-        debugPrint("=== 🍏 iOS BACKGROUND : ID écrit en cache avec succès (${souvenirAleatoire.id}) ===");
-      }
-    } catch (e) {
-      debugPrint("Erreur récupération souvenir background iOS : $e");
-    }
-  }
-}
-
 class NotificationService {
   static final FlutterLocalNotificationsPlugin _plugin = FlutterLocalNotificationsPlugin();
   static Function(String?)? _onNotificationTap;
@@ -79,9 +56,6 @@ class NotificationService {
           _initialPayload = response.payload;
         }
       },
-      // 🌟 LA PIÈCE MANQUANTE POUR TON IPHONE :
-      // On lie la fonction d'arrière-plan pour intercepter le clic natif d'iOS
-      onDidReceiveBackgroundNotificationResponse: onNotificationTapBackground,
     );
 
     final androidPlugin = _plugin.resolvePlatformSpecificImplementation<

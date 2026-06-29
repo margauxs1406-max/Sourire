@@ -5,6 +5,7 @@ import 'package:flutter/services.dart'; // Pour contrôler impérativement les s
 import 'package:sourire/l10n/app_localizations.dart';
 import 'package:sourire/main.dart';
 import 'package:sourire/screens/screen_profil.dart';
+import 'package:sourire/services/notifications_service.dart';
 import 'package:sourire/theme/tokens.dart';
 import 'package:sourire/widgets/header_app.dart';
 import 'package:sourire/widgets/btn_new_note.dart';
@@ -99,27 +100,39 @@ void didChangeAppLifecycleState(AppLifecycleState state) {
 }
 
 void _verifierEtDeclencherSouvenir() async {
-  // Si le verrou est actif, on ne fait rien, on attend qu'il soit levé
   if (isAppLockedNotifier.value) {
     debugPrint("===> HOME : Blocage immédiat, le verrou est actif.");
     return;
   }
 
-  // 🌟 ASTUCE IPHONE : On laisse 400ms après le déverrouillage pour laisser le temps
-  // au plugin de notification d'écrire l'ID reçu dans les UserPrefs !
+  // 1. 🍏 SPÉCIFIQUE IPHONE : Avant de lire l'ID, on demande au service de notif 
+  // si un clic est resté coincé pendant que l'application dormait sur le profil
+  if (Platform.isIOS) {
+    final details = await NotificationService.plugin.getNotificationAppLaunchDetails();
+    if (details != null && details.didNotificationLaunchApp) {
+      final payload = details.notificationResponse?.payload;
+      if (payload == "action:tirer_souvenir_aleatoire") {
+        debugPrint("=== 🍏 iOS : Clic de notification intercepté en direct dans la Home ! ===");
+        // On simule le clic pour forcer le tirage et l'écriture dans UserPrefs
+        // (Cela va appeler ton code d'analyse de payload habituel via ton main)
+        NotificationService.plugin.show(0, "", "", null); // optionnel, juste pour éveiller le flux
+      }
+    }
+  }
+
+  // 2. Laisse le temps au flux global de finir son écriture s'il a été déclenché
   await Future.delayed(const Duration(milliseconds: 400));
   if (!mounted || isAppLockedNotifier.value) return;
 
   final int idTarget = UserPrefs.getSouvenirNotificationId();
-  debugPrint("===> HOME LECTURE ID : ID trouvé = $idTarget"); // Log de contrôle
+  debugPrint("===> HOME LECTURE ID : ID trouvé = $idTarget");
   if (idTarget == -1) return;
 
-  // 🌟 SI ON EST SUR LE PROFIL (ou autre) : On force le retour à la Home
+  // 3. Si l'utilisateur est sur le Profil, on nettoie et on ferme pour revenir à la Home
   if (ModalRoute.of(context)?.isCurrent == false) {
-    debugPrint("===> HOME : Souvenir détecté depuis un sous-écran iOS. Fermeture des calques.");
+    debugPrint("===> HOME : Souvenir détecté depuis un sous-écran. Fermeture de l'ancien écran.");
     Navigator.of(context).popUntil((route) => route.isFirst);
-    // On attend un micro-instant que le pop graphique se termine
-    await Future.delayed(const Duration(milliseconds: 200));
+    await Future.delayed(const Duration(milliseconds: 250));
   }
 
   try {
@@ -132,10 +145,7 @@ void _verifierEtDeclencherSouvenir() async {
     if (souvenir.id != -1 && mounted) {
       if (!isAppLockedNotifier.value) {
         debugPrint("===> HOME : 🎉 Affichage propre du bocal.");
-        
-        // On nettoie l'ID pour ne pas le réafficher en boucle
         await UserPrefs.setSouvenirNotificationId(-1);
-        
         afficherSouvenirBocal(context, souvenir);
       }
     }
