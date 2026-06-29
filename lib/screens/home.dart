@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart'; // Pour contrôler impérativement les styles système
 import 'package:sourire/l10n/app_localizations.dart';
@@ -30,7 +32,7 @@ class Home extends StatefulWidget {
   State<Home> createState() => _HomeState();
 }
 
-class _HomeState extends State<Home> {
+class _HomeState extends State<Home> with WidgetsBindingObserver {
   final DraggableScrollableController _historyController = DraggableScrollableController();
 
   final GlobalKey _cleBoutonPhoto = GlobalKey();
@@ -48,17 +50,16 @@ class _HomeState extends State<Home> {
 @override
 void initState() {
   super.initState();
+  WidgetsBinding.instance.addObserver(this); // 🌟 AJOUT : Écouter le cycle de vie local
   _appliquerStyleZoneProtegee();
   debugPrint("===> HOME : Initialisation");
   
   isAppLockedNotifier.addListener(_verifierEtDeclencherSouvenir);
 
-  // On attend que l'écran soit construit, puis on vérifie
   WidgetsBinding.instance.addPostFrameCallback((_) {
     if (mounted) {
       _verifierEtDeclencherSouvenir();
     }
-
     if (!UserPrefs.modeDemoAffiche) {
       Future.delayed(const Duration(milliseconds: 1500), () {
         if (mounted) _tenterLancementDemo();
@@ -69,8 +70,32 @@ void initState() {
 
 @override
 void dispose() {
+  WidgetsBinding.instance.removeObserver(this); // 🌟 AJOUT : Nettoyage
   isAppLockedNotifier.removeListener(_verifierEtDeclencherSouvenir);
   super.dispose();
+}
+
+@override
+void didChangeAppLifecycleState(AppLifecycleState state) {
+  // 🌟 Uniquement sur iOS lorsque l'application revient au premier plan
+  if (state == AppLifecycleState.resumed && Platform.isIOS) {
+    
+    // On attend un tout petit peu que les UserPrefs se synchronisent potentiellement
+    Future.delayed(const Duration(milliseconds: 100), () async {
+      final int idTarget = UserPrefs.getSouvenirNotificationId();
+      
+      // Si un souvenir attend d'être affiché suite au clic de la notification
+      if (idTarget != -1 && mounted) {
+        debugPrint("=== 🍏 iOS local : Clic notification détecté en arrière-plan. Nettoyage de la pile d'écrans. ===");
+        
+        // Ferme tous les écrans (comme le ScreenProfil) pour revenir à la Home brute
+        Navigator.of(context).popUntil((route) => route.isFirst);
+        
+        // La Home est maintenant au premier plan, la logique de déverrouillage / affichage habituelle va prendre le relais
+        _verifierEtDeclencherSouvenir();
+      }
+    });
+  }
 }
 
 void _verifierEtDeclencherSouvenir() async {
