@@ -74,14 +74,14 @@ void dispose() {
 }
 
 void _verifierEtDeclencherSouvenir() async {
+  // Si le verrou est actif, on ne fait rien, on attend qu'il soit levé
   if (isAppLockedNotifier.value) {
     debugPrint("===> HOME : Blocage immédiat, le verrou est actif.");
     return;
   }
 
-  // 🌟 AJUSTEMENT TIMING IPHONE : On augmente légèrement le délai (de 150ms à 350ms)
-  // pour laisser le temps au calque de verrouillage iOS de disparaître complètement
-  await Future.delayed(const Duration(milliseconds: 350));
+  // 🌟 Double sécurité pour iOS : On laisse le temps à l'écran de respirer après le déverrouillage
+  await Future.delayed(const Duration(milliseconds: 400));
   if (!mounted || isAppLockedNotifier.value) return;
 
   final int idTarget = UserPrefs.getSouvenirNotificationId();
@@ -96,13 +96,21 @@ void _verifierEtDeclencherSouvenir() async {
 
     if (souvenir.id != -1 && mounted) {
       if (!isAppLockedNotifier.value) {
-        debugPrint("===> HOME : 🎉 Affichage propre du bocal.");
+        debugPrint("===> HOME : 🎉 Affichage propre du bocal suite au déverrouillage.");
         
-        // On consomme/nettoie l'ID SEULEMENT si le bocal s'affiche pour de bon !
+        // On nettoie l'ID pour ne pas le réafficher en boucle
         await UserPrefs.setSouvenirNotificationId(-1);
         
         afficherSouvenirBocal(context, souvenir);
       }
+    } else if (idTarget != -1) {
+      // 🌟 Sécurité additionnelle iOS : Si le contexte graphique n'était pas encore prêt au premier passage,
+      // on retente une seconde fois une fraction de seconde plus tard.
+      Future.delayed(const Duration(milliseconds: 300), () {
+        if (mounted && !isAppLockedNotifier.value && UserPrefs.getSouvenirNotificationId() == idTarget) {
+          _verifierEtDeclencherSouvenir();
+        }
+      });
     }
   } catch (e) {
     debugPrint("Erreur bocal Home : $e");
