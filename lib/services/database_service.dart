@@ -224,7 +224,7 @@ class DatabaseService {
 
     if (categoriesCibles != null && 
         categoriesCibles.isNotEmpty && 
-        !categoriesCibles.contains("Toutes catégories")) {
+        !categoriesCibles.contains("all_categories")) {
       
       notesFiltrees = notesFiltrees.where((note) {
         return note.categories.any((cat) => categoriesCibles.contains(cat));

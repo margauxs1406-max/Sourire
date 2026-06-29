@@ -99,7 +99,7 @@ class _ScreenCategorisationNoteState extends State<ScreenCategorisationNote> {
         text: widget.note,
         themeLabel: widget.themeVisuel.id, 
         colorLabel: widget.theme.label,   
-        categories: ["sans_categorie"],
+        categories: ["unclassified"],
         date: DateTime.now(),
       );
       _databaseService.insertNote(nouvelleNote);

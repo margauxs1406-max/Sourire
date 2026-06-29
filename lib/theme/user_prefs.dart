@@ -72,8 +72,20 @@ class UserPrefs {
   static int get minuteRappelSouvenirs => _prefs?.getInt('minuteRappelSouvenirs') ?? 00;
   static set minuteRappelSouvenirs(int value) => _prefs?.setInt('minuteRappelSouvenirs', value);
 
-  static List<String> get categoriesSouvenirs => _prefs?.getStringList('categoriesSouvenirs') ?? ["Toutes catégories"];
+  static List<String> get categoriesSouvenirs => _prefs?.getStringList('categoriesSouvenirs') ?? [];
   static set categoriesSouvenirs(List<String> value) => _prefs?.setStringList('categoriesSouvenirs', value);
+
+  // --- NOUVELLES MÉTHODES : GESTION DU SOUVENIR DE LA NOTIFICATION ---
+  
+  /// Récupère l'ID du souvenir stocké (-1 si aucun souvenir n'attend d'être affiché)
+  static int getSouvenirNotificationId() {
+    return _prefs?.getInt('souvenir_notif_id') ?? -1;
+  }
+
+  /// Écrit de manière asynchrone l'ID du souvenir pioché lors du clic
+  static Future<void> setSouvenirNotificationId(int value) async {
+    await _prefs?.setInt('souvenir_notif_id', value);
+  }
 
   // --- PERSISTANCE DU THÈME VISUEL ---
   static String get themeId => _prefs?.getString('themeId') ?? "classique";

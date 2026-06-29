@@ -123,7 +123,7 @@ class _WidgetHistoriqueState extends State<WidgetHistorique> {
       if (_filtresActifs.isEmpty) return true;
       final categoriesDeLaNote = note.categories;
 
-      if (_filtresActifs.contains("unclassified") && categoriesDeLaNote.contains("sans_categorie")) {
+      if (_filtresActifs.contains("unclassified") && categoriesDeLaNote.contains("unclassified")) {
         return true;
       }
       return categoriesDeLaNote.any((cat) => _filtresActifs.contains(cat));

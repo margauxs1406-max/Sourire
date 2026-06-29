@@ -189,6 +189,8 @@
   "notifDaySunday": "Sunday",
   "notifLabelCategoriesIncluded": "Categories included",
   "notifAllCategories": "All categories"
+  "notifBocalVideTitle": "Empty jar",
+  "notifBocalVideBody": "No memories to display in the selected categories."
 }
 }
 {
@@ -224,11 +226,12 @@
   "notifSouvenirsChannelName": "Happy memory",
   "notifSouvenirsChannelDesc": "Psst, look what just popped up...",
   "notifGratitudeTitle": "Gratitude reminder",
-  "notifGratitudeBody": "What positive thing happened in your day? ☀️ ",
-  "notifSouvenirsDefaultTitle": "Psst, look what just popped up...😉",
+  "notifGratitudeBody": "What positive thing happened in your day? ",
+  "notifSouvenirsDefaultTitle": "Psst, look what just popped up...",
   "notifSouvenirsEmptyTitle": "Your happiness jar is empty...",
   "notifSouvenirsEmptyBody": "Add your first happy memories to be able to see them!",
-  "notifSouvenirsPhotoBody": "📸 Take a look at this photo!"
+  "notifSouvenirsPhotoBody": "Take a look at this photo!"
+  "notifSouvenirsNoteBody": "You have written this someday..."
 }
 
   "themeClassique": "Classic",

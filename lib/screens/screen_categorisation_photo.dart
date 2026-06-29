@@ -99,7 +99,7 @@ class _ScreenCategorisationPhotoState extends State<ScreenCategorisationPhoto> {
         photoPath: localPath, 
         themeLabel: '', 
         colorLabel: '',
-        categories: _selectedCategories.isEmpty ? ["sans_categorie"] : List<String>.from(_selectedCategories),
+        categories: _selectedCategories.isEmpty ? ["unclassified"] : List<String>.from(_selectedCategories),
         date: DateTime.now(), 
       );
       _databaseService.insertNote(nouvellePhoto);
@@ -140,7 +140,7 @@ class _ScreenCategorisationPhotoState extends State<ScreenCategorisationPhoto> {
           photoPath: localPath, 
           themeLabel: '', 
           colorLabel: '',
-          categories: ["sans_categorie"],
+          categories: ["unclassified"],
           date: DateTime.now(),
         );
         _databaseService.insertNote(photoSansCategorie);

@@ -52,20 +52,16 @@ void initState() {
   debugPrint("===> HOME : Initialisation");
   
   isAppLockedNotifier.addListener(_verifierEtDeclencherSouvenir);
-  idSouvenirEnCacheGlobal.addListener(_verifierEtDeclencherSouvenir);
 
+  // On attend que l'écran soit construit, puis on vérifie
   WidgetsBinding.instance.addPostFrameCallback((_) {
-    if (!mounted) return;
-    
-    // 1. On lance la vérification du souvenir au cas où le bocal doit s'ouvrir
-    _verifierEtDeclencherSouvenir();
+    if (mounted) {
+      _verifierEtDeclencherSouvenir();
+    }
 
-    // 2. RÉACTIVATION DU MODE DÉMO (Le revoilà !)
     if (!UserPrefs.modeDemoAffiche) {
-      Future.delayed(const Duration(milliseconds: 1200), () {
-        if (mounted) {
-          _tenterLancementDemo(); // Appelé ici, le warning jaune disparaît !
-        }
+      Future.delayed(const Duration(milliseconds: 1500), () {
+        if (mounted) _tenterLancementDemo();
       });
     }
   });
@@ -74,46 +70,41 @@ void initState() {
 @override
 void dispose() {
   isAppLockedNotifier.removeListener(_verifierEtDeclencherSouvenir);
-  idSouvenirEnCacheGlobal.removeListener(_verifierEtDeclencherSouvenir);
   super.dispose();
 }
 
-/// Le cœur de la synchro : cette méthode est appelée dès que le verrou change OU dès qu'un souvenir arrive
 void _verifierEtDeclencherSouvenir() async {
-  // RÈGLE 1 : Si l'application est verrouillée graphiquement, on ne fait rien (on attend)
   if (isAppLockedNotifier.value) {
-    debugPrint("===> HOME : Blocage, l'application est verrouillée.");
+    debugPrint("===> HOME : Blocage immédiat, le verrou est actif.");
     return;
   }
 
-  // RÈGLE 2 : Si la Home n'est pas encore pleinement intégrée à l'arbre des widgets, on attend le prochain frame
-  if (!mounted) return;
+  // Petit temps d'attente pour s'assurer que le context de la Home est stable graphiquement
+  await Future.delayed(const Duration(milliseconds: 150));
+  if (!mounted || isAppLockedNotifier.value) return;
 
-  // RÈGLE 3 : Si un ID est présent dans notre Notifier réactif
-  if (idSouvenirEnCacheGlobal.value != null) {
-    final int idTarget = idSouvenirEnCacheGlobal.value!;
-    
-    // Crucial : On vide le notifier TOUT DE SUITE pour éviter les boucles infinies au rebuild
-    idSouvenirEnCacheGlobal.value = null; 
+  final int idTarget = UserPrefs.getSouvenirNotificationId();
+  if (idTarget == -1) return;
 
-    debugPrint("===> HOME : Récupération du souvenir $idTarget depuis SQLite...");
-    
+  try {
     final toutesLesNotes = await DatabaseService().getAllNotesAsync();
     final souvenir = toutesLesNotes.firstWhere(
       (note) => note.id == idTarget,
       orElse: () => NoteSourire(id: -1, text: '', themeLabel: 'orange', colorLabel: 'orange', categories: [], date: DateTime.now()),
     );
-    
+
     if (souvenir.id != -1 && mounted) {
-      debugPrint("===> HOME : Succès ! Affichage immédiat de l'overlay pour le souvenir.");
-      
-      // On attend un micro-délai pour s'assurer que les transitions d'écrans (ou le retrait du lock) sont finies
-      Future.delayed(const Duration(milliseconds: 100), () {
-        if (mounted) {
-          afficherSouvenirBocal(context, souvenir);
-        }
-      });
+      if (!isAppLockedNotifier.value) {
+        debugPrint("===> HOME : 🎉 Affichage propre du bocal.");
+        
+        // 🌟 NOUVEAUTÉ : On consomme/nettoie l'ID SEULEMENT si le bocal s'affiche pour de bon !
+        await UserPrefs.setSouvenirNotificationId(-1);
+        
+        afficherSouvenirBocal(context, souvenir);
+      }
     }
+  } catch (e) {
+    debugPrint("Erreur bocal Home : $e");
   }
 }
 

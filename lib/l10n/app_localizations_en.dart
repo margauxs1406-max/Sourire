@@ -435,6 +435,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get notifAllCategories => "All categories";
 
   @override
+String get notifBocalVideTitle => 'Empty jar';
+
+@override
+String get notifBocalVideBody => 'No memories to display in the selected categories.';
+
+  @override
   String get resetPasswordTitle => "Reset your password";
 
   @override
@@ -498,10 +504,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get notifGratitudeTitle => 'Gratitude reminder';
 
   @override
-  String get notifGratitudeBody => 'What positive thing happened in your day? ☀️ ';
+  String get notifGratitudeBody => 'What positive thing happened in your day? ';
 
   @override
-  String get notifSouvenirsDefaultTitle => 'Psst, look what just popped up...😉';
+  String get notifSouvenirsDefaultTitle => 'Psst, look what just popped up...';
 
   @override
   String get notifSouvenirsEmptyTitle => 'Your happiness jar is empty...';
@@ -510,7 +516,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get notifSouvenirsEmptyBody => 'Add your first happy memories to be able to see them!';
 
   @override
-  String get notifSouvenirsPhotoBody => '📸 Take a look at this photo!';
+  String get notifSouvenirsPhotoBody => 'Take a look at this photo!';
+
+  @override
+  String get notifSouvenirsNoteBody => 'You have written this someday...';
 
   @override
   String get btnPasserPremium => 'Go Premium';

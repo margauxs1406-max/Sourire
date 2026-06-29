@@ -29,9 +29,13 @@ class _ScreenLockState extends State<ScreenLock> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (UserPrefs.biomatrieActive) {
-        _authentifierBiometrie();
+        // Au réveil par notif, on laisse le temps au canal natif de respirer
+        await Future.delayed(const Duration(milliseconds: 350));
+        if (mounted) {
+          _authentifierBiometrie();
+        }
       } else if (UserPrefs.password.isNotEmpty) {
         setState(() {
           _showPasswordInput = true;
@@ -49,16 +53,33 @@ class _ScreenLockState extends State<ScreenLock> {
   }
 
   Future<void> _authentifierBiometrie() async {
+    // Si l'écran n'est plus affiché ou si l'app est déjà déverrouillée entre-temps, on stoppe tout
+    if (!mounted || !isAppLockedNotifier.value) return;
+
     final localizations = AppLocalizations.of(context);
     final reasonText = localizations?.lockBiometricReason ?? "Verrouillage de sécurité Sourire";
 
-    bool succes = await BiometricService.authentifier(
-      reason: reasonText,
-    );
-    if (succes) {
-      _traiterSuccesAuthentification();
-    } else {
-      if (UserPrefs.password.isNotEmpty) {
+    try {
+      bool succes = await BiometricService.authentifier(
+        reason: reasonText,
+      );
+      
+      if (!mounted) return;
+
+      if (succes) {
+        _traiterSuccesAuthentification();
+      } else {
+        // 🌟 SÉCURITÉ : Si la biométrie échoue, on vérifie d'abord que le verrouillage global
+        // est TOUJOURS actif avant de forcer l'affichage du mot de passe.
+        if (isAppLockedNotifier.value && UserPrefs.password.isNotEmpty) {
+          setState(() {
+            _showPasswordInput = true;
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint("Erreur biométrie interceptée : $e");
+      if (mounted && UserPrefs.password.isNotEmpty) {
         setState(() {
           _showPasswordInput = true;
         });

@@ -435,6 +435,12 @@ class AppLocalizationsFr extends AppLocalizations {
   String get notifAllCategories => "Toutes catégories";
 
   @override
+String get notifBocalVideTitle => 'Bocal vide';
+
+@override
+String get notifBocalVideBody => 'Aucun souvenir à afficher dans les catégories sélectionnées.';
+
+  @override
   String get resetPasswordTitle => "Réinitialise ton mot de passe";
 
   @override
@@ -498,10 +504,10 @@ class AppLocalizationsFr extends AppLocalizations {
   String get notifGratitudeTitle => 'Rappel de gratitude';
 
   @override
-  String get notifGratitudeBody => "Que s'est-il passé de positif dans ta journée ? ☀️ ";
+  String get notifGratitudeBody => "Que s'est-il passé de positif dans ta journée ? ";
 
   @override
-  String get notifSouvenirsDefaultTitle => 'Psst, regarde ce qui vient de remonter...😉';
+  String get notifSouvenirsDefaultTitle => 'Psst, regarde ce qui vient de remonter...';
 
   @override
   String get notifSouvenirsEmptyTitle => 'Ton bocal à bonheur est vide...';
@@ -510,7 +516,10 @@ class AppLocalizationsFr extends AppLocalizations {
   String get notifSouvenirsEmptyBody => 'Ajoute tes premiers souvenirs heureux pour pouvoir les revoir ! ';
 
   @override
-  String get notifSouvenirsPhotoBody => '📸 Jette un oeil à cette photo !';
+  String get notifSouvenirsPhotoBody => 'Jette un oeil à cette photo !';
+
+  @override
+  String get notifSouvenirsNoteBody => 'Tu as écrit ça un jour...';
 
   @override
   String get btnPasserPremium => 'Passer Premium';

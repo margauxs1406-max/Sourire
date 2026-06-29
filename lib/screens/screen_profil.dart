@@ -154,7 +154,7 @@ class _ScreenProfilState extends State<ScreenProfil> {
     if (localizations == null) return key;
 
     switch (key) {
-      case "Toutes catégories":
+      case "all_categories":
         return localizations.notifAllCategories;
       case "self_love":
         return localizations.catSelfLove;
@@ -595,18 +595,18 @@ _buildMenuRow(
                   stream: _databaseService.getCategoriesStream(),
                   builder: (context, snapshot) {
                     final List<String> categoriesBDD = snapshot.data ?? [];
-                    final List<String> optionsMenu = ["Toutes catégories", "unclassified", ...categoriesBDD];
+                    final List<String> optionsMenu = ["all_categories", "unclassified", ...categoriesBDD];
                     List<String> categoriesSelectionnees = List.from(UserPrefs.categoriesSouvenirs);
                     
                     if (snapshot.hasData) {
                       categoriesSelectionnees.removeWhere((cat) => 
-                        cat != "Toutes catégories" && 
+                        cat != "all_categories" && 
                         cat != "unclassified" && 
                         !categoriesBDD.contains(cat)
                       );
                       
                       if (categoriesSelectionnees.isEmpty) {
-                        categoriesSelectionnees = ["Toutes catégories"];
+                        categoriesSelectionnees = ["all_categories"];
                         UserPrefs.categoriesSouvenirs = categoriesSelectionnees;
                       }
                     }
@@ -1158,17 +1158,17 @@ _buildMenuRow(
     required Function(List<String>) onChanged,
     double? menuMaxHeight,
   }) {
-    final vraiesCategories = items.where((cat) => cat != "Toutes catégories").toList();
+    final vraiesCategories = items.where((cat) => cat != "all_categories").toList();
     final Map<String, StateSetter> menuStates = {};
 
     // CORRECTION : On travaille sur une copie locale pour isoler les changements graphiques instantanés
     final List<String> valeursLocales = List.from(selectedValues);
 
-    final bool toutEstCoche = valeursLocales.contains("Toutes catégories") || 
+    final bool toutEstCoche = valeursLocales.contains("all_categories") || 
         (valeursLocales.length == vraiesCategories.length && valeursLocales.isNotEmpty);
 
     final String texteBandeau = toutEstCoche
-        ? itemTranslator("Toutes catégories")
+        ? itemTranslator("all_categories")
         : valeursLocales.isEmpty
             ? "Aucune catégorie"
             : valeursLocales.map((e) => itemTranslator(e)).join(', ');
@@ -1204,20 +1204,20 @@ _buildMenuRow(
                 builder: (context, menuSetState) {
                   menuStates[item] = menuSetState;
 
-                  final bool isChecked = item == "Toutes catégories"
-                      ? valeursLocales.contains("Toutes catégories") || (valeursLocales.length == vraiesCategories.length && valeursLocales.isNotEmpty)
-                      : (valeursLocales.contains(item) || valeursLocales.contains("Toutes catégories"));
+                  final bool isChecked = item == "all_categories"
+                      ? valeursLocales.contains("all_categories") || (valeursLocales.length == vraiesCategories.length && valeursLocales.isNotEmpty)
+                      : (valeursLocales.contains(item) || valeursLocales.contains("all_categories"));
 
                   void gererLogiqueSelection(bool cocher) {
-                    if (item == "Toutes catégories") {
+                    if (item == "all_categories") {
                       if (cocher) {
                         valeursLocales.clear();
-                        valeursLocales.add("Toutes catégories");
+                        valeursLocales.add("all_categories");
                       } else {
                         valeursLocales.clear();
                       }
                     } else {
-                      if (valeursLocales.contains("Toutes catégories")) {
+                      if (valeursLocales.contains("all_categories")) {
                         valeursLocales.clear();
                         valeursLocales.addAll(vraiesCategories);
                       }
@@ -1226,10 +1226,10 @@ _buildMenuRow(
                         valeursLocales.add(item);
                         if (valeursLocales.length == vraiesCategories.length) {
                           valeursLocales.clear();
-                          valeursLocales.add("Toutes catégories");
+                          valeursLocales.add("all_categories");
                         }
                       } else {
-                        valeursLocales.remove("Toutes catégories");
+                        valeursLocales.remove("all_categories");
                         valeursLocales.remove(item);
                       }
                     }
@@ -1237,13 +1237,13 @@ _buildMenuRow(
                     // Rafraîchit l'item cliqué
                     menuSetState(() {});
                     
-                    // Rafraîchit l'item "Toutes catégories" si on clique sur une autre
-                    if (item != "Toutes catégories" && menuStates.containsKey("Toutes catégories")) {
-                      menuStates["Toutes catégories"]!(() {});
+                    // Rafraîchit l'item "all_categories" si on clique sur une autre
+                    if (item != "all_categories" && menuStates.containsKey("all_categories")) {
+                      menuStates["all_categories"]!(() {});
                     }
                     
-                    // Rafraîchit toute la liste si on clique sur "Toutes catégories"
-                    if (item == "Toutes catégories") {
+                    // Rafraîchit toute la liste si on clique sur "all_categories"
+                    if (item == "all_categories") {
                       for (var setter in menuStates.values) {
                         setter(() {});
                       }

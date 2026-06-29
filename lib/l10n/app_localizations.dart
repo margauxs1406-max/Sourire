@@ -161,6 +161,8 @@ abstract class AppLocalizations {
   String get notifDaySunday;
   String get notifLabelCategoriesIncluded;
   String get notifAllCategories;
+  String get notifBocalVideTitle;
+  String get notifBocalVideBody;
   String get onboardingBtnGetStarted;
   String get onboardingWelcomeMessage;
   String get onboardingQuestionName;
@@ -214,6 +216,7 @@ abstract class AppLocalizations {
   String get notifSouvenirsEmptyTitle;
   String get notifSouvenirsEmptyBody;
   String get notifSouvenirsPhotoBody;
+  String get notifSouvenirsNoteBody;
   String premiumSuccessSnackBar(String themeLabel);
   String get btnPasserPremium;
   String get btnAppliquer;

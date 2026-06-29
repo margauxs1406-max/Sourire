@@ -1,9 +1,9 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 import 'package:sourire/theme/user_prefs.dart';
-import 'package:sourire/services/database_service.dart';
-import 'package:sourire/models/note_model.dart';
+import 'package:sourire/services/database_service.dart'; // 🌟 Ajuste le chemin si nécessaire
 import 'package:sourire/l10n/app_localizations.dart';
 import 'package:sourire/l10n/app_localizations_en.dart';
 import 'package:sourire/l10n/app_localizations_fr.dart';
@@ -11,6 +11,7 @@ import 'package:sourire/l10n/app_localizations_fr.dart';
 class NotificationService {
   static final FlutterLocalNotificationsPlugin _plugin = FlutterLocalNotificationsPlugin();
   static Function(String?)? _onNotificationTap;
+  static String? _initialPayload;
 
   /// Détermine dynamiquement la classe de traduction à utiliser selon les préférences
   static AppLocalizations _obtenirTraductions() {
@@ -20,7 +21,14 @@ class NotificationService {
 
   static Future<void> init() async {
     tz.initializeTimeZones();
-    tz.setLocalLocation(tz.getLocation('Pacific/Noumea'));
+    
+    // Correction Android : Utiliser l'heure locale de l'appareil pour éviter les décalages du Doze Mode.
+    final String timeZoneName = DateTime.now().timeZoneName;
+    try {
+      tz.setLocalLocation(tz.getLocation(timeZoneName));
+    } catch (_) {
+      tz.setLocalLocation(tz.getLocation('Pacific/Noumea'));
+    }
 
     final localizations = _obtenirTraductions();
 
@@ -44,6 +52,8 @@ class NotificationService {
       onDidReceiveNotificationResponse: (NotificationResponse response) {
         if (_onNotificationTap != null) {
           _onNotificationTap!(response.payload);
+        } else if (response.payload != null) {
+          _initialPayload = response.payload;
         }
       },
     );
@@ -79,13 +89,19 @@ class NotificationService {
   static Future<void> configurerClic(Function(String?) callback) async {
     _onNotificationTap = callback;
 
+    if (_initialPayload != null) {
+      _onNotificationTap!(_initialPayload);
+      _initialPayload = null;
+      return;
+    }
+
     final NotificationAppLaunchDetails? appLaunchDetails =
         await _plugin.getNotificationAppLaunchDetails();
     
     if (appLaunchDetails != null && appLaunchDetails.didNotificationLaunchApp) {
       final payload = appLaunchDetails.notificationResponse?.payload;
       Future.delayed(const Duration(milliseconds: 600), () {
-        if (_onNotificationTap != null) {
+        if (_onNotificationTap != null && payload != null) {
           _onNotificationTap!(payload);
         }
       });
@@ -126,7 +142,8 @@ class NotificationService {
       UserPrefs.minuteRappelGratitude,
     );
     
-    if (instantPlanifie.isBefore(maintenant)) {
+    // 🌟 SÉCURITÉ : Si l'heure planifiée est passée ou arrive dans moins d'une minute, on reporte au lendemain
+    if (instantPlanifie.isBefore(maintenant.add(const Duration(minutes: 1)))) {
       instantPlanifie = instantPlanifie.add(const Duration(days: 1));
     }
 
@@ -143,7 +160,6 @@ class NotificationService {
           importance: Importance.max,
           priority: Priority.high,
         ),
-        // CORRECTION : Ajout obligatoire des détails iOS pour réveiller le device
         iOS: const DarwinNotificationDetails(
           presentAlert: true,
           presentBadge: true,
@@ -152,115 +168,146 @@ class NotificationService {
       ),
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
       uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
-      matchDateTimeComponents: DateTimeComponents.time, // Rappel quotidien régulier
+      matchDateTimeComponents: DateTimeComponents.time,
       payload: 'rappel_gratitude',
     );
   }
 
   /// Planification du rappel de souvenirs (Pérenne & Léger)
-  static Future<void> planifierRappelSouvenirs() async {
-    const int notifId = 2;
+static Future<void> planifierRappelSouvenirs() async {
+  const int notifId = 2;
+  await _plugin.cancel(notifId);
 
-    await _plugin.cancel(notifId);
+  if (!UserPrefs.rappelSouvenirsActive) return;
 
-    if (!UserPrefs.rappelSouvenirsActive) { 
-      return;
-    }
+  final localizations = _obtenirTraductions();
+  String notifTitle = localizations.notifSouvenirsDefaultTitle;
+  String notifBodyPhoto = localizations.notifSouvenirsPhotoBody;
+  String notifBodyNote = localizations.notifSouvenirsNoteBody;
+  String payloadData = "action:tirer_souvenir_aleatoire";
 
-    final localizations = _obtenirTraductions();
+  // 🌟 Variable temporaire qui va contenir le texte final choisi pour la notification
+  String corpsTexteFinal = notifBodyPhoto;
 
-    final androidPlugin = _plugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
-    if (androidPlugin != null) {
-      await androidPlugin.createNotificationChannel(AndroidNotificationChannel(
-        'rappel_souvenirs_id',
-        localizations.notifSouvenirsChannelName,
-        description: localizations.notifSouvenirsChannelDesc,
-        importance: Importance.max,
-        playSound: true,
-        enableVibration: true,
-      ));
-    }
-
-    // PLUS DE REQUÊTE SQLICI ! Le texte devient générique et invitant.
-    String notifTitle = localizations.notifSouvenirsDefaultTitle;
-    String notifBody = localizations.notifSouvenirsPhotoBody; // Ex: "Ouvrez votre bocal pour redécouvrir un moment heureux !"
+  try {
+    final toutesLesNotes = await DatabaseService().getAllNotesAsync();
+    final categoriesCibles = UserPrefs.categoriesSouvenirs;
     
-    // Le payload devient une action universelle
-    String payloadData = "action:tirer_souvenir_aleatoire";
-
-    final maintenant = tz.TZDateTime.now(tz.local);
-    
-    var instantPlanifie = tz.TZDateTime(
-      tz.local,
-      maintenant.year,
-      maintenant.month,
-      maintenant.day,
-      UserPrefs.heureRappelSouvenirs,
-      UserPrefs.minuteRappelSouvenirs,
-    );
-
-    DateTimeComponents? matchComponents;
-
-    if (UserPrefs.frequenceSouvenirs == "Tous les jours") {
-      if (instantPlanifie.isBefore(maintenant)) {
-        instantPlanifie = instantPlanifie.add(const Duration(days: 1));
-      }
-      matchComponents = DateTimeComponents.time;
+    // 🌟 CONDITION 1 : Le bocal est-il totalement vide ? (Priorité Absolue)
+    if (toutesLesNotes.isEmpty) {
+      notifTitle = localizations.notifSouvenirsEmptyTitle; // "Bocal vide"
+      corpsTexteFinal = localizations.notifSouvenirsEmptyBody; // "Ton bocal à bonheur est vide..."
+      payloadData = "action:bocal_vide_total_erreur";
     } 
-    else if (UserPrefs.frequenceSouvenirs == "Tous les 2 jours") {
-      if (instantPlanifie.isBefore(maintenant)) {
-        instantPlanifie = instantPlanifie.add(const Duration(days: 2));
-      }
-      matchComponents = null; 
-    } 
-    else if (UserPrefs.frequenceSouvenirs == "Toutes les semaines") {
-      final Map<String, int> joursMapping = {
-        "Lundi": DateTime.monday,
-        "Mardi": DateTime.tuesday,
-        "Mercredi": DateTime.wednesday,
-        "Jeudi": DateTime.thursday,
-        "Vendredi": DateTime.friday,
-        "Samedi": DateTime.saturday,
-        "Dimanche": DateTime.sunday,
-      };
+    // 🌟 CONDITION 2 : Le bocal n'est pas vide, on vérifie les filtres
+    else {
+      final bool veutTout = categoriesCibles.contains("all_categories") || categoriesCibles.isEmpty;
 
-      int jourCible = joursMapping[UserPrefs.jourSemaineSouvenirs] ?? DateTime.monday;
+      // On filtre les notes qui correspondent aux choix de l'utilisateur
+      final notesFiltrees = veutTout 
+          ? toutesLesNotes 
+          : toutesLesNotes.where((note) => note.categories.any((cat) => categoriesCibles.contains(cat))).toList();
 
-      if (instantPlanifie.weekday == jourCible && instantPlanifie.isBefore(maintenant)) {
-        instantPlanifie = instantPlanifie.add(const Duration(days: 7));
+      // Si l'utilisateur a des souvenirs, mais aucun qui ne correspond à ses filtres cochés
+      if (notesFiltrees.isEmpty) {
+        notifTitle = localizations.notifBocalVideTitle;
+        corpsTexteFinal = localizations.notifBocalVideBody; // "Aucun souvenir à afficher..."
+        payloadData = "action:bocal_vide_erreur";
       } else {
-        while (instantPlanifie.weekday != jourCible || instantPlanifie.isBefore(maintenant)) {
-          instantPlanifie = instantPlanifie.add(const Duration(days: 1));
+        notifTitle = localizations.notifSouvenirsDefaultTitle;
+        payloadData = "action:tirer_souvenir_aleatoire";
+
+        // 🌟 ARBITRAGE DU TEXTE : Note textuelle ou Photo ?
+        // On récupère le premier souvenir qui va être potentiellement tiré au sort
+        final premierSouvenirDisponible = notesFiltrees.first;
+
+        // Si photoPath n'existe pas ou est vide, on utilise ton texte pour les notes
+        if (premierSouvenirDisponible.photoPath == null || premierSouvenirDisponible.photoPath!.isEmpty) {
+          corpsTexteFinal = notifBodyNote; // 🌟 "Tu as écrit ça un jour... ✨"
+        } else {
+          corpsTexteFinal = notifBodyPhoto; // 🌟 "jette un coup d'oeil à cette photo"
         }
       }
-      matchComponents = DateTimeComponents.dayOfWeekAndTime;
     }
-
-    await _plugin.zonedSchedule(
-      notifId,
-      notifTitle,
-      notifBody,
-      instantPlanifie,
-      NotificationDetails(
-        android: AndroidNotificationDetails(
-          'rappel_souvenirs_id',
-          localizations.notifSouvenirsChannelName,
-          channelDescription: localizations.notifSouvenirsChannelDesc,
-          importance: Importance.max,
-          priority: Priority.high,
-        ),
-        iOS: const DarwinNotificationDetails(
-          presentAlert: true,
-          presentBadge: true,
-          presentSound: true,
-        ),
-      ),
-      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-      uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
-      matchDateTimeComponents: matchComponents, 
-      payload: payloadData,
-    );
+    
+  } catch (e) {
+    debugPrint("Erreur décompte rapide souvenirs : $e");
+    // En cas d'erreur de base de données, on garde le texte photo par défaut
+    corpsTexteFinal = notifBodyPhoto; 
   }
+
+  // Tout le reste s'exécute de façon fluide et instantanée pour l'OS
+  final maintenant = tz.TZDateTime.now(tz.local);
+  var instantPlanifie = tz.TZDateTime(
+    tz.local,
+    maintenant.year,
+    maintenant.month,
+    maintenant.day,
+    UserPrefs.heureRappelSouvenirs,
+    UserPrefs.minuteRappelSouvenirs,
+  );
+
+  if (instantPlanifie.isBefore(maintenant.add(const Duration(minutes: 1)))) {
+    if (UserPrefs.frequenceSouvenirs == "Tous les jours") {
+      instantPlanifie = instantPlanifie.add(const Duration(days: 1));
+    }
+  }
+
+  DateTimeComponents? matchComponents;
+  if (UserPrefs.frequenceSouvenirs == "Tous les jours") {
+    if (instantPlanifie.isBefore(maintenant)) {
+      instantPlanifie = instantPlanifie.add(const Duration(days: 1));
+    }
+    matchComponents = DateTimeComponents.time;
+  } 
+  else if (UserPrefs.frequenceSouvenirs == "Tous les 2 jours") {
+    if (instantPlanifie.isBefore(maintenant)) {
+      instantPlanifie = instantPlanifie.add(const Duration(days: 2));
+    }
+    matchComponents = null; 
+  } 
+  else if (UserPrefs.frequenceSouvenirs == "Toutes les semaines") {
+    final Map<String, int> joursMapping = {
+      "Lundi": DateTime.monday, "Mardi": DateTime.tuesday, "Mercredi": DateTime.wednesday,
+      "Jeudi": DateTime.thursday, "Vendredi": DateTime.friday, "Samedi": DateTime.saturday,
+      "Dimanche": DateTime.sunday,
+    };
+    int jourCible = joursMapping[UserPrefs.jourSemaineSouvenirs] ?? DateTime.monday;
+    if (instantPlanifie.weekday == jourCible && instantPlanifie.isBefore(maintenant)) {
+      instantPlanifie = instantPlanifie.add(const Duration(days: 7));
+    } else {
+      while (instantPlanifie.weekday != jourCible || instantPlanifie.isBefore(maintenant)) {
+        instantPlanifie = instantPlanifie.add(const Duration(days: 1));
+      }
+    }
+    matchComponents = DateTimeComponents.dayOfWeekAndTime;
+  }
+
+  await _plugin.zonedSchedule(
+    notifId,
+    notifTitle,
+    corpsTexteFinal, // 🌟 C'est cette variable arbitrée qui est transmise à l'OS
+    instantPlanifie,
+    NotificationDetails(
+      android: AndroidNotificationDetails(
+        'rappel_souvenirs_id',
+        localizations.notifSouvenirsChannelName,
+        channelDescription: localizations.notifSouvenirsChannelDesc,
+        importance: Importance.max,
+        priority: Priority.high,
+      ),
+      iOS: const DarwinNotificationDetails(
+        presentAlert: true,
+        presentBadge: true,
+        presentSound: true,
+      ),
+    ),
+    androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+    uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
+    matchDateTimeComponents: matchComponents, 
+    payload: payloadData,
+  );
+}
 
   static FlutterLocalNotificationsPlugin get plugin => _plugin;
 }
