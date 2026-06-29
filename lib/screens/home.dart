@@ -105,12 +105,22 @@ void _verifierEtDeclencherSouvenir() async {
     return;
   }
 
-  // 🌟 Double sécurité pour iOS : On laisse le temps à l'écran de respirer après le déverrouillage
+  // 🌟 ASTUCE IPHONE : On laisse 400ms après le déverrouillage pour laisser le temps
+  // au plugin de notification d'écrire l'ID reçu dans les UserPrefs !
   await Future.delayed(const Duration(milliseconds: 400));
   if (!mounted || isAppLockedNotifier.value) return;
 
   final int idTarget = UserPrefs.getSouvenirNotificationId();
+  debugPrint("===> HOME LECTURE ID : ID trouvé = $idTarget"); // Log de contrôle
   if (idTarget == -1) return;
+
+  // 🌟 SI ON EST SUR LE PROFIL (ou autre) : On force le retour à la Home
+  if (ModalRoute.of(context)?.isCurrent == false) {
+    debugPrint("===> HOME : Souvenir détecté depuis un sous-écran iOS. Fermeture des calques.");
+    Navigator.of(context).popUntil((route) => route.isFirst);
+    // On attend un micro-instant que le pop graphique se termine
+    await Future.delayed(const Duration(milliseconds: 200));
+  }
 
   try {
     final toutesLesNotes = await DatabaseService().getAllNotesAsync();
@@ -121,21 +131,13 @@ void _verifierEtDeclencherSouvenir() async {
 
     if (souvenir.id != -1 && mounted) {
       if (!isAppLockedNotifier.value) {
-        debugPrint("===> HOME : 🎉 Affichage propre du bocal suite au déverrouillage.");
+        debugPrint("===> HOME : 🎉 Affichage propre du bocal.");
         
         // On nettoie l'ID pour ne pas le réafficher en boucle
         await UserPrefs.setSouvenirNotificationId(-1);
         
         afficherSouvenirBocal(context, souvenir);
       }
-    } else if (idTarget != -1) {
-      // 🌟 Sécurité additionnelle iOS : Si le contexte graphique n'était pas encore prêt au premier passage,
-      // on retente une seconde fois une fraction de seconde plus tard.
-      Future.delayed(const Duration(milliseconds: 300), () {
-        if (mounted && !isAppLockedNotifier.value && UserPrefs.getSouvenirNotificationId() == idTarget) {
-          _verifierEtDeclencherSouvenir();
-        }
-      });
     }
   } catch (e) {
     debugPrint("Erreur bocal Home : $e");
