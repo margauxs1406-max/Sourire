@@ -507,7 +507,7 @@ String get notifBocalVideBody => 'Aucun souvenir à afficher dans les catégorie
   String get notifGratitudeBody => "Que s'est-il passé de positif dans ta journée ? ";
 
   @override
-  String get notifSouvenirsDefaultTitle => 'Psst, regarde ce qui vient de remonter...';
+  String get notifSouvenirsDefaultTitle => 'Psst, regarde ce qui vient de remonter 👀';
 
   @override
   String get notifSouvenirsEmptyTitle => 'Ton bocal à bonheur est vide...';

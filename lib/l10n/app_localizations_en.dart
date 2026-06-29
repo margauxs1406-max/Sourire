@@ -507,7 +507,7 @@ String get notifBocalVideBody => 'No memories to display in the selected categor
   String get notifGratitudeBody => 'What positive thing happened in your day? ';
 
   @override
-  String get notifSouvenirsDefaultTitle => 'Psst, look what just popped up...';
+  String get notifSouvenirsDefaultTitle => 'Psst, look what just popped up 👀';
 
   @override
   String get notifSouvenirsEmptyTitle => 'Your happiness jar is empty...';

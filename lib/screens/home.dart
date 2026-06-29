@@ -79,8 +79,9 @@ void _verifierEtDeclencherSouvenir() async {
     return;
   }
 
-  // Petit temps d'attente pour s'assurer que le context de la Home est stable graphiquement
-  await Future.delayed(const Duration(milliseconds: 150));
+  // 🌟 AJUSTEMENT TIMING IPHONE : On augmente légèrement le délai (de 150ms à 350ms)
+  // pour laisser le temps au calque de verrouillage iOS de disparaître complètement
+  await Future.delayed(const Duration(milliseconds: 350));
   if (!mounted || isAppLockedNotifier.value) return;
 
   final int idTarget = UserPrefs.getSouvenirNotificationId();
@@ -97,7 +98,7 @@ void _verifierEtDeclencherSouvenir() async {
       if (!isAppLockedNotifier.value) {
         debugPrint("===> HOME : 🎉 Affichage propre du bocal.");
         
-        // 🌟 NOUVEAUTÉ : On consomme/nettoie l'ID SEULEMENT si le bocal s'affiche pour de bon !
+        // On consomme/nettoie l'ID SEULEMENT si le bocal s'affiche pour de bon !
         await UserPrefs.setSouvenirNotificationId(-1);
         
         afficherSouvenirBocal(context, souvenir);
@@ -856,7 +857,9 @@ BtnNewNote(
                     context,
                     MaterialPageRoute(builder: (context) => const ScreenProfil()),
                   ).then((_) {
-                    setState(() {});
+                    if (mounted) {
+                      setState(() {});
+                    }
                   });
                 },
               ),
