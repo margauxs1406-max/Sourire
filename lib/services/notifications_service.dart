@@ -3,10 +3,33 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 import 'package:sourire/theme/user_prefs.dart';
-import 'package:sourire/services/database_service.dart'; // 🌟 Ajuste le chemin si nécessaire
+import 'package:sourire/services/database_service.dart'; 
 import 'package:sourire/l10n/app_localizations.dart';
 import 'package:sourire/l10n/app_localizations_en.dart';
 import 'package:sourire/l10n/app_localizations_fr.dart';
+
+// 🌟 AJOUT INDISPENSABLE POUR IPHONE EN ARRIÈRE-PLAN :
+// Cette fonction doit obligatoirement être globale (top-level), en dehors de toute classe.
+@pragma('vm:entry-point')
+void onNotificationTapBackground(NotificationResponse notificationResponse) async {
+  final payload = notificationResponse.payload;
+  if (payload == "action:tirer_souvenir_aleatoire") {
+    debugPrint("=== 🍏 iOS NATIVE BACKGROUND CLICK DETECTED ===");
+    try {
+      // On force la récupération immédiate du souvenir pendant qu'iOS réveille l'application
+      final souvenirAleatoire = await DatabaseService().getRandomNote(
+        categoriesCibles: UserPrefs.categoriesSouvenirs,
+      );
+      if (souvenirAleatoire != null) {
+        // On l'écrit directement en mémoire. Les UserPrefs seront prêts au moment du déverrouillage !
+        await UserPrefs.setSouvenirNotificationId(souvenirAleatoire.id!);
+        debugPrint("=== 🍏 iOS BACKGROUND : ID écrit en cache avec succès (${souvenirAleatoire.id}) ===");
+      }
+    } catch (e) {
+      debugPrint("Erreur récupération souvenir background iOS : $e");
+    }
+  }
+}
 
 class NotificationService {
   static final FlutterLocalNotificationsPlugin _plugin = FlutterLocalNotificationsPlugin();
@@ -56,6 +79,9 @@ class NotificationService {
           _initialPayload = response.payload;
         }
       },
+      // 🌟 LA PIÈCE MANQUANTE POUR TON IPHONE :
+      // On lie la fonction d'arrière-plan pour intercepter le clic natif d'iOS
+      onDidReceiveBackgroundNotificationResponse: onNotificationTapBackground,
     );
 
     final androidPlugin = _plugin.resolvePlatformSpecificImplementation<
@@ -142,7 +168,6 @@ class NotificationService {
       UserPrefs.minuteRappelGratitude,
     );
     
-    // 🌟 SÉCURITÉ : Si l'heure planifiée est passée ou arrive dans moins d'une minute, on reporte au lendemain
     if (instantPlanifie.isBefore(maintenant.add(const Duration(minutes: 1)))) {
       instantPlanifie = instantPlanifie.add(const Duration(days: 1));
     }
@@ -182,7 +207,7 @@ class NotificationService {
 
     final localizations = _obtenirTraductions();
     String notifTitle = localizations.notifSouvenirsDefaultTitle;
-    String notifAllBody = localizations.notifSouvenirsAllBody; // 🌟 "Jette un oeil à ce souvenir..."
+    String notifAllBody = localizations.notifSouvenirsAllBody; 
     String payloadData = "action:tirer_souvenir_aleatoire";
 
     String corpsTexteFinal = notifAllBody;
@@ -191,29 +216,25 @@ class NotificationService {
       final toutesLesNotes = await DatabaseService().getAllNotesAsync();
       final categoriesCibles = UserPrefs.categoriesSouvenirs;
       
-      // 🌟 CONDITION 1 : Le bocal est-il totalement vide ? (Priorité Absolue)
       if (toutesLesNotes.isEmpty) {
-        notifTitle = localizations.notifSouvenirsEmptyTitle; // "Bocal vide"
-        corpsTexteFinal = localizations.notifSouvenirsEmptyBody; // "Ton bocal à bonheur est vide..."
+        notifTitle = localizations.notifSouvenirsEmptyTitle; 
+        corpsTexteFinal = localizations.notifSouvenirsEmptyBody; 
         payloadData = "action:bocal_vide_total_erreur";
       } 
-      // 🌟 CONDITION 2 : Le bocal n'est pas vide, on vérifie les filtres
       else {
         final bool veutTout = categoriesCibles.contains("all_categories") || categoriesCibles.isEmpty;
 
-        // On filtre les notes qui correspondent aux choix de l'utilisateur
         final notesFiltrees = veutTout 
             ? toutesLesNotes 
             : toutesLesNotes.where((note) => note.categories.any((cat) => categoriesCibles.contains(cat))).toList();
 
-        // Si l'utilisateur a des souvenirs, mais aucun qui ne correspond à ses filtres cochés
         if (notesFiltrees.isEmpty) {
           notifTitle = localizations.notifBocalVideTitle;
-          corpsTexteFinal = localizations.notifBocalVideBody; // "Aucun souvenir à afficher..."
+          corpsTexteFinal = localizations.notifBocalVideBody; 
           payloadData = "action:bocal_vide_erreur";
         } else {
           notifTitle = localizations.notifSouvenirsDefaultTitle;
-          corpsTexteFinal = notifAllBody; // 🌟 Affichage systématique du texte unique
+          corpsTexteFinal = notifAllBody; 
           payloadData = "action:tirer_souvenir_aleatoire";
         }
       }
@@ -223,7 +244,6 @@ class NotificationService {
       corpsTexteFinal = notifAllBody; 
     }
 
-    // Tout le reste s'exécute de façon fluide et instantanée pour l'OS
     final maintenant = tz.TZDateTime.now(tz.local);
     var instantPlanifie = tz.TZDateTime(
       tz.local,
