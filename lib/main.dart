@@ -117,6 +117,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
           categoriesCibles: UserPrefs.categoriesSouvenirs,
         );
         if (souvenirAleatoire != null) {
+          debugPrint("=== 💾 ÉCRITURE SOUVENIR ID : ${souvenirAleatoire.id} ===");
           await UserPrefs.setSouvenirNotificationId(souvenirAleatoire.id!);
         }
       } catch (e) {
@@ -140,12 +141,10 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
     
     final bool secuActivee = UserPrefs.biomatrieActive || UserPrefs.password.isNotEmpty;
 
-    // 4. AIGUILLAGE PAR L'ÉTAT GLOBALE
+    // 4. AIGUILLAGE PAR L'ÉTAT GLOBAL
     if (secuActivee && (isAppLockedNotifier.value || doitVerrouiller)) {
       debugPrint("=== 🔒 ÉTAT : Activation du verrou via Notification ===");
       isAppLockedNotifier.value = true;
-      
-      // On nettoie la pile existante pour forcer le retour à l'état propre sous le verrou
       _navigatorKey.currentState?.popUntil((route) => route.isFirst);
     } else {
       debugPrint("=== 🚀 NAV : Accès direct Home via Notification ===");
@@ -160,16 +159,32 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
     _navigationNotificationEnCours = false;
   }
 
+  // Micro-méthode pour gérer l'interception asynchrone spécifique à iOS au réveil
+  void _verifierNotificationIosAuResume() async {
+    final details = await NotificationService.plugin.getNotificationAppLaunchDetails();
+    if (details != null && details.didNotificationLaunchApp) {
+      final iosPayload = details.notificationResponse?.payload;
+      if (iosPayload != null) {
+        debugPrint("=== 🍏 INTERCEPTION iOS REUSSIE AU RESUMED ===");
+        _navigationNotificationEnCours = true;
+        _analyserPayload(iosPayload);
+      }
+    }
+  }
+
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (!UserPrefs.biomatrieActive && UserPrefs.password.isEmpty) return;
-
     if (state == AppLifecycleState.paused) {
       _timeWhenPaused = DateTime.now();
     }
 
     if (state == AppLifecycleState.resumed) {
-      // Si la notification gère le réveil, on coupe court à 100%
+      // Déclenchement de la vérification iOS (synchrone vis-à-vis du cycle de vie)
+      _verifierNotificationIosAuResume();
+
+      if (!UserPrefs.biomatrieActive && UserPrefs.password.isEmpty) return;
+
+      // Si la notification gère déjà le réveil (Android), on coupe court
       if (_navigationNotificationEnCours) {
         debugPrint("=== 🛡️ Cycle de vie avorté : Notification prioritaire ===");
         return;
@@ -180,7 +195,6 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
         
         if (deconnexionDuration.inSeconds >= 3) {
           debugPrint("=== 🔒 ÉTAT : Activation du verrou via Cycle de Vie classique ===");
-          // 🌟 MAGIE : On change juste la valeur, le MaterialApp s'occupe du reste sans dupliquer de push !
           isAppLockedNotifier.value = true;
         }
         _timeWhenPaused = null;
@@ -189,11 +203,9 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   }
 
   void _surAuthentificationReussie() {
-  debugPrint("=== 🔓 Déverrouillage réussi, l'état reconstruit la Home instantanément ===");
-  // Le simple fait de passer à false va reconstruire le MaterialApp directement sur la Home 
-  // sans aucun push manuel ni écran blanc !
-  isAppLockedNotifier.value = false;
-}
+    debugPrint("=== 🔓 Déverrouillage réussi, l'état reconstruit la Home instantanément ===");
+    isAppLockedNotifier.value = false;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -229,23 +241,18 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
               ],
               supportedLocales: const [Locale('fr', 'FR'), Locale('en', 'US')],
               
-              // 🌟 LA PROTECTION ULTIME UNIQUE ICI :
-              // On écoute l'état de verrouillage directement à la racine de la structure.
-              // Si isAppLockedNotifier est true, l'application affiche invariablement LE ScreenLock, et rien d'autre.
               home: ValueListenableBuilder<bool>(
-  valueListenable: isAppLockedNotifier,
-  builder: (context, isLocked, child) {
-    if (isLocked) {
-      return ScreenLock(onAuthenticated: _surAuthentificationReussie);
-    }
-    // Si l'application a un mot de passe configuré, cela signifie qu'elle a déjà été 
-    // initialisée au moins une fois. Après déverrouillage, on l'envoie direct sur Home.
-    if (UserPrefs.password.isNotEmpty || UserPrefs.biomatrieActive) {
-      return const Home();
-    }
-    return const ScreenBoot(); 
-  },
-),
+                valueListenable: isAppLockedNotifier,
+                builder: (context, isLocked, child) {
+                  if (isLocked) {
+                    return ScreenLock(onAuthenticated: _surAuthentificationReussie);
+                  }
+                  if (UserPrefs.password.isNotEmpty || UserPrefs.biomatrieActive) {
+                    return const Home();
+                  }
+                  return const ScreenBoot(); 
+                },
+              ),
             );
           },
         );

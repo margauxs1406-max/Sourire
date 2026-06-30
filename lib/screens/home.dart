@@ -1,5 +1,4 @@
 import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart'; // Pour contrôler impérativement les styles système
 import 'package:sourire/l10n/app_localizations.dart';
