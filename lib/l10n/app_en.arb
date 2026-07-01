@@ -216,6 +216,9 @@
   "purchaseAlertNotesMessage": "You have reached the maximum limit of 5 notes for the free version. Upgrade to Premium to add unlimited memories and unlock new themes!",
   "btnGoPremium": "Go Premium"
 
+  "deleteAlertTitle": "Do you really want to delete these memories?",
+  "deleteAlertMessage": "This action cannot be undone and will permanently delete the selected memories.",
+
   // À l'intérieur de votre map ou classe de traduction EN
   "emptyHistory": "History is empty",
 

@@ -482,6 +482,13 @@ String get notifBocalVideBody => 'Aucun souvenir à afficher dans les catégorie
   @override
   String get purchaseAlertNotesMessage => "Tu as atteint la limite maximale de 5 notes pour la version gratuite. Passe à la version Premium pour ajouter des souvenirs en illimité et débloquer de nouveaux thèmes !";
 
+
+  @override
+  String get deleteAlertTitle => "Veux-tu vraiment supprimer ces souvenirs ?";
+
+  @override
+  String get deleteAlertMessage => "Cette action est irréversible et entraînera la suppression définitive des souvenirs sélectionnés.";
+
   @override
   String get btnGoPremium => "Passer Premium";
 

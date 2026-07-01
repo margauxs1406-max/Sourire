@@ -230,6 +230,9 @@
   "purchaseAlertNotesMessage": "Tu as atteint la limite maximale de 5 notes pour la version gratuite. Passe à la version Premium pour ajouter des souvenirs en illimité et débloquer de nouveaux thèmes !",
   "btnGoPremium": "Passer Premium"
 
+  "deleteAlertTitle": "Veux-tu vraiment supprimer ces souvenirs ?",
+  "deleteAlertMessage": "Cette action est irréversible et entraînera la suppression définitive des souvenirs sélectionnés.",
+
   "emptyHistory": "L'historique est vide",
 
   {

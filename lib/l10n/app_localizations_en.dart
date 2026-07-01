@@ -483,6 +483,12 @@ String get notifBocalVideBody => 'No memories to display in the selected categor
   String get purchaseAlertNotesMessage => "You have reached the maximum limit of 5 notes for the free version. Upgrade to Premium to add unlimited memories and unlock new themes!";
 
   @override
+  String get deleteAlertTitle => "Do you really want to delete these memories?";
+
+  @override
+  String get deleteAlertMessage => "This action cannot be undone and will permanently delete the selected memories.";
+
+  @override
   String get btnGoPremium => "Go Premium";
 
   @override

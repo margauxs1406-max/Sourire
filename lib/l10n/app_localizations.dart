@@ -204,6 +204,8 @@ abstract class AppLocalizations {
   String get purchaseAlertTitle;
   String get purchaseAlertPhotosMessage;
   String get purchaseAlertNotesMessage;
+  String get deleteAlertTitle;
+  String get deleteAlertMessage;
   String get btnGoPremium;
   String get emptyHistory;
   String get notifGratitudeChannelName;
