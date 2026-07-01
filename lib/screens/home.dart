@@ -50,10 +50,10 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
 @override
 void initState() {
   super.initState();
-  WidgetsBinding.instance.addObserver(this); // 🌟 AJOUT : Écouter le cycle de vie local
   _appliquerStyleZoneProtegee();
   debugPrint("===> HOME : Initialisation");
   
+  // Écoute du verrou global pour déclencher le souvenir dès le déverrouillage
   isAppLockedNotifier.addListener(_verifierEtDeclencherSouvenir);
 
   WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -70,69 +70,35 @@ void initState() {
 
 @override
 void dispose() {
-  WidgetsBinding.instance.removeObserver(this); // 🌟 AJOUT : Nettoyage
+  // On retire l'écouteur proprement
   isAppLockedNotifier.removeListener(_verifierEtDeclencherSouvenir);
   super.dispose();
 }
 
-@override
-void didChangeAppLifecycleState(AppLifecycleState state) {
-  // 🌟 Uniquement sur iOS lorsque l'application revient au premier plan
-  if (state == AppLifecycleState.resumed && Platform.isIOS) {
-    
-    // On attend un tout petit peu que les UserPrefs se synchronisent potentiellement
-    Future.delayed(const Duration(milliseconds: 100), () async {
-      final int idTarget = UserPrefs.getSouvenirNotificationId();
-      
-      // Si un souvenir attend d'être affiché suite au clic de la notification
-      if (idTarget != -1 && mounted) {
-        debugPrint("=== 🍏 iOS local : Clic notification détecté en arrière-plan. Nettoyage de la pile d'écrans. ===");
-        
-        // Ferme tous les écrans (comme le ScreenProfil) pour revenir à la Home brute
-        Navigator.of(context).popUntil((route) => route.isFirst);
-        
-        // La Home est maintenant au premier plan, la logique de déverrouillage / affichage habituelle va prendre le relais
-        _verifierEtDeclencherSouvenir();
-      }
-    });
-  }
-}
+// 🌟 didChangeAppLifecycleState ENTIÈREMENT SUPPRIMÉ : 
+// Le cycle de vie est désormais centralisé et géré uniquement par le main.dart
 
 void _verifierEtDeclencherSouvenir() async {
+  // Si l'application est verrouillée, on bloque immédiatement toute lecture
   if (isAppLockedNotifier.value) {
     debugPrint("===> HOME : Blocage immédiat, le verrou est actif.");
     return;
   }
 
-  // 1. 🍏 SPÉCIFIQUE IPHONE : Avant de lire l'ID, on demande au service de notif 
-  // si un clic est resté coincé pendant que l'application dormait sur le profil
-  if (Platform.isIOS) {
-    final details = await NotificationService.plugin.getNotificationAppLaunchDetails();
-    if (details != null && details.didNotificationLaunchApp) {
-      final payload = details.notificationResponse?.payload;
-      if (payload == "action:tirer_souvenir_aleatoire") {
-        debugPrint("=== 🍏 iOS : Clic de notification intercepté en direct dans la Home ! ===");
-        // On simule le clic pour forcer le tirage et l'écriture dans UserPrefs
-        // (Cela va appeler ton code d'analyse de payload habituel via ton main)
-        NotificationService.plugin.show(0, "", "", null); // optionnel, juste pour éveiller le flux
-      }
-    }
-  }
-
-  // 2. Laisse le temps au flux global de finir son écriture s'il a été déclenché
-  await Future.delayed(const Duration(milliseconds: 400));
-  if (!mounted || isAppLockedNotifier.value) return;
-
+  // Lecture directe de l'ID stocké dans les préférences
   final int idTarget = UserPrefs.getSouvenirNotificationId();
   debugPrint("===> HOME LECTURE ID : ID trouvé = $idTarget");
   if (idTarget == -1) return;
 
-  // 3. Si l'utilisateur est sur le Profil, on nettoie et on ferme pour revenir à la Home
+  // Si l'utilisateur a cliqué sur la notif depuis un sous-écran (ex: Profil), on ferme tout pour revenir à la Home
   if (ModalRoute.of(context)?.isCurrent == false) {
     debugPrint("===> HOME : Souvenir détecté depuis un sous-écran. Fermeture de l'ancien écran.");
     Navigator.of(context).popUntil((route) => route.isFirst);
-    await Future.delayed(const Duration(milliseconds: 250));
+    // Un infime délai pour laisser l'animation de fermeture de l'écran se terminer avant la boîte de dialogue
+    await Future.delayed(const Duration(milliseconds: 200));
   }
+
+  if (!mounted || isAppLockedNotifier.value) return;
 
   try {
     final toutesLesNotes = await DatabaseService().getAllNotesAsync();
@@ -144,6 +110,7 @@ void _verifierEtDeclencherSouvenir() async {
     if (souvenir.id != -1 && mounted) {
       if (!isAppLockedNotifier.value) {
         debugPrint("===> HOME : 🎉 Affichage propre du bocal.");
+        // Consommation immédiate de l'ID pour éviter les double-ouvertures
         await UserPrefs.setSouvenirNotificationId(-1);
         afficherSouvenirBocal(context, souvenir);
       }
