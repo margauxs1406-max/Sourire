@@ -108,7 +108,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
     }
     debugPrint("=== 🚨 CLIC NOTIFICATION DETECTÉ : $payload ===");
 
-    // 1. Sauvegarde des données en tâche de fond
+    // 1. Sauvegarde des données en tâche de fond (Indispensable Android/iOS)
     if (payload == "action:bocal_vide_erreur") {
       bocalVideEnCacheGlobal = true; 
     } else if (payload == "action:tirer_souvenir_aleatoire") {
@@ -125,12 +125,12 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
       }
     }
 
-    // 2. Attente du Navigator
+    // 2. Attente de la disponibilité du Navigator
     while (_navigatorKey.currentState == null) {
       await Future.delayed(const Duration(milliseconds: 50));
     }
 
-    // 3. Calcul du temps d'absence
+    // 3. Calcul du temps d'absence pour le verrouillage
     bool doitVerrouiller = false;
     if (_timeWhenPaused != null) {
       final deconnexionDuration = DateTime.now().difference(_timeWhenPaused!);
@@ -141,7 +141,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
     
     final bool secuActivee = UserPrefs.biomatrieActive || UserPrefs.password.isNotEmpty;
 
-    // 4. AIGUILLAGE PAR L'ÉTAT GLOBAL
+    // 4. Aiguillage et routage natif Android historique
     if (secuActivee && (isAppLockedNotifier.value || doitVerrouiller)) {
       debugPrint("=== 🔒 ÉTAT : Activation du verrou via Notification ===");
       isAppLockedNotifier.value = true;
@@ -155,21 +155,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
     }
 
     _timeWhenPaused = null;
-    await Future.delayed(const Duration(milliseconds: 300));
     _navigationNotificationEnCours = false;
-  }
-
-  // Micro-méthode pour gérer l'interception asynchrone spécifique à iOS au réveil
-  void _verifierNotificationIosAuResume() async {
-    final details = await NotificationService.plugin.getNotificationAppLaunchDetails();
-    if (details != null && details.didNotificationLaunchApp) {
-      final iosPayload = details.notificationResponse?.payload;
-      if (iosPayload != null) {
-        debugPrint("=== 🍏 INTERCEPTION iOS REUSSIE AU RESUMED ===");
-        _navigationNotificationEnCours = true;
-        _analyserPayload(iosPayload);
-      }
-    }
   }
 
   @override
@@ -179,12 +165,9 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
     }
 
     if (state == AppLifecycleState.resumed) {
-      // Déclenchement de la vérification iOS (synchrone vis-à-vis du cycle de vie)
-      _verifierNotificationIosAuResume();
-
       if (!UserPrefs.biomatrieActive && UserPrefs.password.isEmpty) return;
 
-      // Si la notification gère déjà le réveil (Android), on coupe court
+      // Si le callback de notification est déjà en train de s'exécuter, on n'applique pas le verrou standard
       if (_navigationNotificationEnCours) {
         debugPrint("=== 🛡️ Cycle de vie avorté : Notification prioritaire ===");
         return;
