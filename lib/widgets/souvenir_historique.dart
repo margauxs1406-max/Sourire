@@ -12,6 +12,45 @@ import 'package:sourire/models/theme_app.dart';
 // Déclaration du cache partagé pour éliminer les accès asynchrones répétitifs au stockage
 final Map<String, Uint8List> _historiqueImageCache = {};
 
+/// Précharge une photo dans le cache mémoire partagé de l'historique, en
+/// tâche de fond, SANS bloquer l'appelant (ne pas attendre son résultat).
+/// À appeler juste après l'enregistrement d'une nouvelle photo (ex: dans
+/// screen_categorisation_photo.dart), pour que l'image soit déjà prête en
+/// mémoire quand l'utilisateur ouvre l'historique — évite le flash noir
+/// de chargement à l'ouverture du volet.
+Future<void> preloadHistoriqueImage(String? photoPath) async {
+  if (photoPath == null || photoPath.trim().isEmpty) return;
+
+  final String pathKey = photoPath.trim();
+
+  // Déjà en cache : rien à faire.
+  if (_historiqueImageCache.containsKey(pathKey) && _historiqueImageCache[pathKey]!.isNotEmpty) {
+    return;
+  }
+
+  try {
+    final cleanPath = pathKey.replaceAll('file://', '');
+    File file;
+
+    if (Platform.isIOS) {
+      final String fileName = p.basename(cleanPath);
+      final Directory appDocDir = await getApplicationDocumentsDirectory();
+      file = File(p.join(appDocDir.path, fileName));
+    } else {
+      file = File(cleanPath);
+    }
+
+    if (file.existsSync()) {
+      final bytes = await file.readAsBytes();
+      _historiqueImageCache[pathKey] = bytes;
+      
+    } else {
+      
+    }
+  } catch (e) {
+  }
+}
+
 class WidgetSouvenirHistorique extends StatefulWidget {
   final NoteSourire souvenir;
 
@@ -31,14 +70,14 @@ class _WidgetSouvenirHistoriqueState extends State<WidgetSouvenirHistorique> {
     _verifierEtChargerImage();
   }
 
-  // Intercepte le cache de manière synchrone avant le rendu pour éviter les flashs/clignotements
   void _verifierEtChargerImage() {
   if (widget.souvenir.photoPath == null || widget.souvenir.photoPath!.trim().isEmpty) return;
   
   final String pathKey = widget.souvenir.photoPath!.trim();
+  final bool dejaEnCache = _historiqueImageCache.containsKey(pathKey) && _historiqueImageCache[pathKey]!.isNotEmpty;
   
-  // Si on est en train d'importer (nouvelle image), on contourne le cache mémoire pour forcer la lecture disque
-  if (_historiqueImageCache.containsKey(pathKey) && _historiqueImageCache[pathKey]!.isNotEmpty) {
+  
+  if (dejaEnCache) {
     _cachedBytes = _historiqueImageCache[pathKey];
   } else {
     _chargerImageAsynchrone(pathKey);
@@ -62,7 +101,7 @@ class _WidgetSouvenirHistoriqueState extends State<WidgetSouvenirHistorique> {
       }
 
       if (file.existsSync()) {
-        final bytes = file.readAsBytesSync();
+        final bytes = await file.readAsBytes();
         _historiqueImageCache[pathKey] = bytes;
         if (mounted) {
           setState(() {
@@ -74,7 +113,7 @@ class _WidgetSouvenirHistoriqueState extends State<WidgetSouvenirHistorique> {
         if (mounted) setState(() { _isLoading = false; });
       }
     } catch (e) {
-      debugPrint("Erreur accès photo historique : $e");
+      
       if (mounted) setState(() { _isLoading = false; });
     }
   }
@@ -141,7 +180,8 @@ class _WidgetSouvenirHistoriqueState extends State<WidgetSouvenirHistorique> {
                               width: size,
                               height: size,
                               fit: BoxFit.cover,
-                              gaplessPlayback: true, // Évite les sauts visuels lors du recyclage
+                              cacheWidth: (size * MediaQuery.of(context).devicePixelRatio).round(),
+                              gaplessPlayback: true,
                               errorBuilder: (context, error, stackTrace) {
                                 return const Center(
                                   child: Icon(Icons.broken_image, color: Colors.white, size: 24),

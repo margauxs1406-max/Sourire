@@ -18,6 +18,17 @@ const Color darkBg = Color(0xFF1E1E1E);
 const Color darkSurface = Color(0xFF2A2A2A);   
 const Color darkSeparateur = Color(0xFF2D2D2D); 
 
+// --- NOUVELLES COULEURS : dédiées aux photos, pour l'effet arc-en-ciel du bocal ---
+// Ajuste les hex si tu veux d'autres teintes.
+const Color yellow = Color(0xFFFFD93D);
+const Color lightYellow = Color(0xFFFFFEF5);
+const Color purple = Color(0xFF9B5DE5);
+const Color lightPurple = Color(0xFFFCFAFF);
+const Color red = Color(0xFFFF6B6B);
+const Color lightRed = Color(0xFFFFFAFA);
+const Color teal = Color(0xFF00C2A8);
+const Color lightTeal = Color(0xFFF5FFFE);
+
 // --- 1. AJOUT DE LA STRUCTURE DES ICÔNES ---
 class BackgroundIconConfig {
   final String assetPath;
@@ -44,7 +55,7 @@ class SourireTheme {
 
   SourireTheme({required this.main, required this.light, required this.label});
 
-  // --- AJOUT : La liste de référence de vos thèmes ---
+  // --- La liste de référence de vos thèmes pour les NOTES TEXTE ---
   static final List<SourireTheme> tousLesThemes = [
     SourireTheme(main: orange, light: lightOrange, label: "orange"),
     SourireTheme(main: green, light: lightGreen, label: "vert"),
@@ -52,12 +63,30 @@ class SourireTheme {
     SourireTheme(main: pink, light: lightPink, label: "rose"),
   ];
 
-  // --- MISE À JOUR : Plus propre en utilisant la liste statique ---
+  // --- NOUVEAU : liste de référence dédiée aux PHOTOS ---
+  static final List<SourireTheme> tousLesThemesPhotos = [
+    SourireTheme(main: yellow, light: lightYellow, label: "jaune"),
+    SourireTheme(main: purple, light: lightPurple, label: "violet"),
+    SourireTheme(main: red, light: lightRed, label: "rouge"),
+    SourireTheme(main: teal, light: lightTeal, label: "turquoise"),
+  ];
+
+  // Une seule instance de Random réutilisée, pour éviter tout risque
+  // de graines identiques lors d'appels très rapprochés (ex: import
+  // de plusieurs photos d'affilée dans une boucle).
+  static final Random _rng = Random();
+
   static SourireTheme getRandom() {
-    return tousLesThemes[Random().nextInt(tousLesThemes.length)];
+    return tousLesThemes[_rng.nextInt(tousLesThemes.length)];
   }
 
-  /// Récupère le thème exact à partir du texte enregistré en base de données
+  // --- NOUVEAU : tirage aléatoire dédié aux photos ---
+  static SourireTheme getRandomPhoto() {
+    return tousLesThemesPhotos[_rng.nextInt(tousLesThemesPhotos.length)];
+  }
+
+  /// Récupère le thème exact à partir du texte enregistré en base de données.
+  /// Gère maintenant aussi bien les labels des notes texte que ceux des photos.
   static SourireTheme fromLabel(String? colorLabel) {
     switch (colorLabel) {
       case 'vert':
@@ -66,6 +95,14 @@ class SourireTheme {
         return SourireTheme(main: blue, light: lightBlue, label: 'bleu');
       case 'rose':
         return SourireTheme(main: pink, light: lightPink, label: 'rose');
+      case 'jaune':
+        return SourireTheme(main: yellow, light: lightYellow, label: 'jaune');
+      case 'violet':
+        return SourireTheme(main: purple, light: lightPurple, label: 'violet');
+      case 'rouge':
+        return SourireTheme(main: red, light: lightRed, label: 'rouge');
+      case 'turquoise':
+        return SourireTheme(main: teal, light: lightTeal, label: 'turquoise');
       case 'orange':
       default:
         return SourireTheme(main: orange, light: lightOrange, label: 'orange');

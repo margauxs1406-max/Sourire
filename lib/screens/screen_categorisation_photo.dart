@@ -14,6 +14,7 @@ import 'package:sourire/services/database_service.dart';
 import 'package:sourire/l10n/app_localizations.dart';
 import 'package:sourire/widgets/btn_action_categorie.dart';
 import 'package:sourire/services/notifications_service.dart';
+import 'package:sourire/widgets/souvenir_historique.dart';
 
 class ScreenCategorisationPhoto extends StatefulWidget {
   final List<AssetEntity> photos; 
@@ -89,23 +90,24 @@ class _ScreenCategorisationPhotoState extends State<ScreenCategorisationPhoto> {
   }
 
   void _validerOuSuivant() async {
-    if (_isSaving) return;
-    setState(() => _isSaving = true);
+  if (_isSaving) return;
+  setState(() => _isSaving = true);
 
-    final String? localPath = await _sauvegarderFichierEnLocal(widget.photos[widget.currentIndex]);
-    if (localPath != null) {
-      final nouvellePhoto = NoteSourire(
-        text: null,
-        photoPath: localPath, 
-        themeLabel: '', 
-        colorLabel: '',
-        categories: _selectedCategories.isEmpty ? ["unclassified"] : List<String>.from(_selectedCategories),
-        date: DateTime.now(), 
-      );
-      _databaseService.insertNote(nouvellePhoto);
-      
-      await NotificationService.planifierRappelSouvenirs();
-    }
+  final String? localPath = await _sauvegarderFichierEnLocal(widget.photos[widget.currentIndex]);
+  if (localPath != null) {
+    final nouvellePhoto = NoteSourire(
+      text: null,
+      photoPath: localPath, 
+      themeLabel: '', 
+      colorLabel: SourireTheme.getRandomPhoto().label,
+      categories: _selectedCategories.isEmpty ? ["unclassified"] : List<String>.from(_selectedCategories),
+      date: DateTime.now(), 
+    );
+    _databaseService.insertNote(nouvellePhoto);
+    preloadHistoriqueImage(localPath); // ← ajouté, volontairement SANS await
+
+    await NotificationService.planifierRappelSouvenirs();
+  }
 
     if (isLast) {
       if (mounted) Navigator.of(context).popUntil((route) => route.isFirst);
@@ -139,11 +141,12 @@ class _ScreenCategorisationPhotoState extends State<ScreenCategorisationPhoto> {
           text: null,
           photoPath: localPath, 
           themeLabel: '', 
-          colorLabel: '',
+          colorLabel: SourireTheme.getRandomPhoto().label,
           categories: ["unclassified"],
           date: DateTime.now(),
         );
         _databaseService.insertNote(photoSansCategorie);
+        preloadHistoriqueImage(localPath); // ← ajouté
       }
     }
 
@@ -321,15 +324,17 @@ class _ScreenCategorisationPhotoState extends State<ScreenCategorisationPhoto> {
                                   ),
                                 ),
                                 const SizedBox(width: 15),
-                                ClipRRect(
-                                  borderRadius: BorderRadius.circular(10),
-                                  child: AssetEntityImage(
-                                    widget.photos[widget.currentIndex],
-                                    width: 65,
-                                    height: 65,
-                                    fit: BoxFit.cover,
-                                  ),
-                                ),
+ClipRRect(
+  borderRadius: BorderRadius.circular(10),
+  child: AssetEntityImage(
+    widget.photos[widget.currentIndex],
+    isOriginal: false, // ← demande une miniature, pas le fichier original
+    thumbnailSize: const ThumbnailSize.square(150), // ← résolution du décodage, pas de l'affichage
+    width: 65,
+    height: 65,
+    fit: BoxFit.cover,
+  ),
+),
                               ],
                             ),
                           ),

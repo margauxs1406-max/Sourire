@@ -16,6 +16,7 @@ import 'package:timezone/timezone.dart' as tz;
 import 'package:permission_handler/permission_handler.dart';
 import 'package:sourire/theme/theme_service.dart'; 
 import 'package:sourire/services/database_service.dart';
+import 'package:sourire/widgets/bocal_preloader.dart';
 
 // Variables globales
 NoteSourire? souvenirEnAttenteGlobal;
@@ -149,7 +150,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
     } else {
       debugPrint("=== 🚀 NAV : Accès direct Home via Notification ===");
       _navigatorKey.currentState?.pushAndRemoveUntil(
-        MaterialPageRoute(builder: (context) => const Home()),
+        MaterialPageRoute(builder: (context) => const BocalPreloader(child: Home())), // ← modifié
         (route) => false,
       );
     }
@@ -231,7 +232,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
                     return ScreenLock(onAuthenticated: _surAuthentificationReussie);
                   }
                   if (UserPrefs.password.isNotEmpty || UserPrefs.biomatrieActive) {
-                    return const Home();
+                    return const BocalPreloader(child: Home()); // ← modifié
                   }
                   return const ScreenBoot(); 
                 },

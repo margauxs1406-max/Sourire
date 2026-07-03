@@ -1,9 +1,11 @@
 import 'dart:async';
 import 'dart:io';
 import 'dart:math';
+import 'package:flutter/foundation.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 import '../models/note_model.dart';
+import 'package:sourire/theme/tokens.dart';
 
 class DatabaseService {
   static Database? _database;
@@ -202,6 +204,8 @@ class DatabaseService {
     final List<String> categoriesFinales = note.categories.isEmpty ? ["sans_categorie"] : note.categories;
     final db = await database;
 
+    debugPrint("--- DEBUG insertNote : photoPath=${note.photoPath} | colorLabel='${note.colorLabel}' ---");
+
     final rawNote = {
       'text': note.text,
       'photoPath': note.photoPath,
@@ -250,20 +254,20 @@ class DatabaseService {
     final batch = db.batch();
 
     for (String path in photoPaths) {
-      // CORRECTION CONTRE LES IMAGES NOIRES : 
-      // On extrait uniquement le nom du fichier ("image.jpg") pour éviter de stocker l'arborescence instable d'iOS.
-      // On applique p.basename(path) uniquement si on est sur iOS, ou globalement si on veut uniformiser.
       final String cleanPath = path.replaceAll('file://', '').trim();
       final String pathEnregistrer = Platform.isIOS ? basename(cleanPath) : cleanPath;
 
-      batch.insert('notes', {
-        'text': null,
-        'photoPath': pathEnregistrer,
-        'themeLabel': themeLabel,
-        'colorLabel': 'orange',
-        'categories': categoriesFinales.join(','),
-        'date': DateTime.now().toIso8601String(),
-      });
+      final randomLabel = SourireTheme.getRandomPhoto().label;
+print("--- DEBUG couleur photo choisie : $randomLabel ---");
+
+batch.insert('notes', {
+  'text': null,
+  'photoPath': pathEnregistrer,
+  'themeLabel': themeLabel,
+  'colorLabel': randomLabel,
+  'categories': categoriesFinales.join(','),
+  'date': DateTime.now().toIso8601String(),
+});
     }
 
     await batch.commit(noResult: true);

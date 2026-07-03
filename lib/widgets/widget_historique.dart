@@ -61,7 +61,6 @@ class _WidgetHistoriqueState extends State<WidgetHistorique> {
     );
   }
 
-  // 🌟 NOUVELLE MÉTHODE : Alerte de confirmation avant suppression permanente
   void _ouvrirAlerteSuppression(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
 
@@ -117,11 +116,10 @@ class _WidgetHistoriqueState extends State<WidgetHistorique> {
                       elevation: 0,
                     ),
                     onPressed: () async {
-                      Navigator.of(context).pop(); // Ferme la boîte de dialogue d'alerte
+                      Navigator.of(context).pop();
                       
                       if (_souvenirsSelectionnes.isEmpty) return;
                       
-                      // Suppression effective dans la base de données
                       await Future.sync(() => databaseService.deleteMultipleNotes(_souvenirsSelectionnes));
                       
                       if (mounted) {
@@ -132,7 +130,7 @@ class _WidgetHistoriqueState extends State<WidgetHistorique> {
                       }
                     },
                     child: Text(
-                      l10n.btnDeleteSelection, // Réutilisation du texte du bouton supprimer
+                      l10n.btnDeleteSelection,
                       style: const TextStyle(color: white, fontWeight: FontWeight.bold, fontSize: 15),
                     ),
                   ),
@@ -178,16 +176,26 @@ class _WidgetHistoriqueState extends State<WidgetHistorique> {
     if (widget.controller?.isAttached == true) {
       final double tailleActuelle = widget.controller!.size;
       final bool ouvert = tailleActuelle > 0.01; 
-
+ 
       if (ouvert != _voletEstOuvert) {
         setState(() {
           _voletEstOuvert = ouvert;
         });
       }
-
+ 
       if (tailleActuelle == 0.0 && _filtresActifs.isNotEmpty) {
         setState(() {
           _filtresActifs.clear();
+        });
+      }
+ 
+      // Réinitialise le mode sélection multiple quand le volet se ferme
+      // complètement, pour repartir sur un affichage propre à la prochaine
+      // ouverture.
+      if (tailleActuelle == 0.0 && _modeSelection) {
+        setState(() {
+          _modeSelection = false;
+          _souvenirsSelectionnes.clear();
         });
       }
     }
@@ -289,15 +297,26 @@ class _WidgetHistoriqueState extends State<WidgetHistorique> {
                             });
                           }
 
-                          final souvenirsGroupes = _grouperParDate(toutesLesNotes, context);
+                          // Le regroupement (coûteux si beaucoup de souvenirs) ne se fait
+                          // que si le volet est réellement ouvert.
+                          final souvenirsGroupes = _voletEstOuvert
+                              ? _grouperParDate(toutesLesNotes, context)
+                              : <String, List<NoteSourire>>{};
                           final localizations = AppLocalizations.of(context)!;
 
                           return Stack(
                             children: [
+                              // ⚠️ Le CustomScrollView (et son controller) DOIT toujours
+                              // être construit, même volet fermé : c'est ce qui permet au
+                              // DraggableScrollableController de s'attacher. Seul le
+                              // contenu des slivers (la grille de photos) est conditionné
+                              // à l'ouverture réelle du volet.
                               CustomScrollView(
                                 controller: scrollController,
                                 physics: const AlwaysScrollableScrollPhysics(),
-                                slivers: [
+                                slivers: !_voletEstOuvert
+                                    ? const [SliverToBoxAdapter(child: SizedBox.shrink())]
+                                    : [
                                   const SliverToBoxAdapter(
                                     child: SizedBox(height: 60),
                                   ),
@@ -537,7 +556,6 @@ class _WidgetHistoriqueState extends State<WidgetHistorique> {
                                           child: BtnCategorisation(
                                             text: localizations.btnDeleteSelection,
                                             isSecondary: true,
-                                            // 🌟 DEVENU SYNCHRONE : Redirige vers la boîte de dialogue d'alerte
                                             onTap: () {
                                               if (_souvenirsSelectionnes.isEmpty) return;
                                               _ouvrirAlerteSuppression(context);

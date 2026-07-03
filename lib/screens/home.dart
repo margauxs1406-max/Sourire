@@ -1,10 +1,8 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart'; // Pour contrôler impérativement les styles système
 import 'package:sourire/l10n/app_localizations.dart';
 import 'package:sourire/main.dart';
 import 'package:sourire/screens/screen_profil.dart';
-import 'package:sourire/services/notifications_service.dart';
 import 'package:sourire/theme/tokens.dart';
 import 'package:sourire/widgets/header_app.dart';
 import 'package:sourire/widgets/btn_new_note.dart';
@@ -22,6 +20,7 @@ import 'package:sourire/models/theme_app.dart'; // AJOUT : Accès aux modèles
 import 'package:sourire/theme/theme_service.dart'; // AJOUT : Accès à l'état du thème visuel
 import 'dart:ui';
 import 'package:sourire/models/note_model.dart';
+import 'package:sourire/widgets/bocal_pastilles.dart';
 
 class Home extends StatefulWidget {
   const Home({super.key});
@@ -579,6 +578,7 @@ void _verifierEtDeclencherSouvenir() async {
   }
 
   void _ouvrirHistoriqueDepuisBurger(BuildContext context) {
+    debugPrint("--- DEBUG burger : isAttached=${_historyController.isAttached} ---");
     if (_historyController.isAttached) {
       SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
@@ -719,46 +719,65 @@ Positioned.fill(
                         ),
 
                         Positioned(
-                          bottom: spaceBottomToBocal,
-                          left: 0,
-                          right: 0,
-                          child: Center(
-                            child: SizedBox(
-                              key: _cleBocal, 
-                              height: bocalHeight, 
-                              width: bocalWidth,   
-                              child: GestureDetector(
-                                onTap: () => _tirerSouvenir(context), 
-                                child: Stack(
-                                  clipBehavior: Clip.none,
-                                  children: [
-                                    Positioned(
-                                      left: 8.0,   
-                                      top: 4.0,    
-                                      right: -8.0,
-                                      bottom: -4.0,
-                                      child: ImageFiltered(
-                                        imageFilter: ImageFilter.blur(sigmaX: 6.0, sigmaY: 6.0, tileMode: TileMode.decal),
-                                        child: Image(
-                                          image: const AssetImage('assets/bocal@2x.png'),
-                                          fit: BoxFit.contain,
-                                          color: black.withOpacity(0.20), 
-                                          colorBlendMode: BlendMode.srcIn,
-                                        ),
-                                      ),
-                                    ),
-                                    const Positioned.fill(
-                                      child: Image(
-                                        image: AssetImage('assets/bocal@2x.png'),
-                                        fit: BoxFit.contain,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
+  bottom: spaceBottomToBocal,
+  left: 0,
+  right: 0,
+  child: Center(
+    child: SizedBox(
+      key: _cleBocal,
+      height: bocalHeight,
+      width: bocalWidth,
+      child: GestureDetector(
+        onTap: () => _tirerSouvenir(context),
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            // Ombre portée — inchangé
+            Positioned(
+              left: 8.0,
+              top: 4.0,
+              right: -8.0,
+              bottom: -4.0,
+              child: ImageFiltered(
+                imageFilter: ImageFilter.blur(sigmaX: 6.0, sigmaY: 6.0, tileMode: TileMode.decal),
+                child: Image(
+                  image: const AssetImage('assets/bocal_new.png'),
+                  fit: BoxFit.contain,
+                  color: black.withOpacity(0.20),
+                  colorBlendMode: BlendMode.srcIn,
+                ),
+              ),
+            ),
+
+            // NOUVEAU : bocal opaque en fond — toujours visible, même vide
+    const Positioned.fill(
+      child: Image(
+        image: AssetImage('assets/bocal_new.png'),
+        fit: BoxFit.contain,
+      ),
+    ),
+
+    // Pastilles — inchangé, entre les deux couches d'image
+    Positioned.fill(
+      child: BocalPastilles(maxCapacity: 65),
+    ),
+
+    // NOUVEAU : même image à 50% d'opacité par-dessus, pour l'effet "vu à travers le verre"
+    const Positioned.fill(
+      child: Opacity(
+        opacity: 0.35,
+        child: Image(
+          image: AssetImage('assets/bocal_new.png'),
+          fit: BoxFit.contain,
+        ),
+      ),
+    ),
+          ],
+        ),
+      ),
+    ),
+  ),
+),
 
                         Positioned(
                           bottom: spaceBottomToButtons,
@@ -840,8 +859,7 @@ BtnNewNote(
             builder: (context, snapshot) {
               final notesFluides = snapshot.data ?? [];
               return Positioned.fill(
-                child: WidgetHistorique(
-                  key: ValueKey(UserPrefs.isDark), 
+                child: WidgetHistorique( 
                   notes: notesFluides,
                   controller: _historyController,
                   isDark: UserPrefs.isDark,
