@@ -94,4 +94,11 @@ class UserPrefs {
   // --- PERSISTANCE DU STATUT PREMIUM ---
   static bool get isPremium => _prefs?.getBool('isPremium') ?? false;
   static set isPremium(bool value) => _prefs?.setBool('isPremium', value);
+
+  // --- GAMIFICATION : PALIERS DE SOUVENIRS ---
+static int get dernierPalierCelebre => _prefs?.getInt('dernierPalierCelebre') ?? 0;
+static set dernierPalierCelebre(int value) => _prefs?.setInt('dernierPalierCelebre', value);
+
+static bool get gamificationInitialisee => _prefs?.getBool('gamificationInitialisee') ?? false;
+static set gamificationInitialisee(bool value) => _prefs?.setBool('gamificationInitialisee', value);
 }

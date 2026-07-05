@@ -246,3 +246,14 @@
   "themeAnimauxMarins": "Marine Animals",
   "themeFloral": "Floral",
   "themeKawaii": "Kawaii",
+
+  "popupPalierTitle": "Congratulations!",
+"popupPalierMessage": "You've added {palier} memories to your jar!",
+"@popupPalierMessage": {
+  "placeholders": {
+    "palier": {
+      "type": "int"
+    }
+  }
+},
+"btnContinuerPalier": "Continue"

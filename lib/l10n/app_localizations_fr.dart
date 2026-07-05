@@ -574,4 +574,86 @@ String get notifBocalVideBody => 'Aucun souvenir à afficher dans les catégorie
 
   @override
   String get themeKawaii => 'Kawaii';
+
+  @override
+String get popupPalierTitle => 'Félicitations !';
+
+@override
+String popupPalierMessage(int palier) => 'Tu as ajouté $palier souvenirs à ton bocal !';
+
+@override
+String get btnContinuerPalier => 'Continuer';
+
+@override
+String get newBadgeUnlockedLabel => 'Nouveau badge débloqué';
+
+@override
+String get badge10Name => 'Chercheur d’Étoiles';
+@override
+String get badge10Phrase => 'Les plus beaux souvenirs commencent souvent tout petits.';
+
+@override
+String get badge50Name => 'Cueilleur d’Aurores';
+@override
+String get badge50Phrase => 'Continue à capturer les instants qui illuminent tes journées.';
+
+@override
+String get badge100Name => 'Gardien des Instants';
+@override
+String get badge100Phrase => 'Ton bocal devient un vrai refuge à souvenirs.';
+
+@override
+String get badge200Name => 'Conteur de Souvenirs';
+@override
+String get badge200Phrase => 'Chaque souvenir ajoute une page à ton histoire.';
+
+@override
+String get badge500Name => 'Émanateur de Joie';
+@override
+String get badge500Phrase => 'Ton bocal se remplit de beaux moments à revivre.';
+
+@override
+String get badge1000Name => 'Alchimiste du Bonheur';
+@override
+String get badge1000Phrase => 'Continue à garder précieusement ces petits instants de joie.';
+
+@override
+String get badge1500Name => 'Fée de Lumière';
+@override
+String get badge1500Phrase => 'Chaque souvenir ajouté éclaire un peu plus ton quotidien.';
+
+@override
+String get badge2000Name => 'Archiviste du Cœur';
+@override
+String get badge2000Phrase => 'Ton bocal devient une vraie mémoire d’émotions.';
+
+@override
+String get badge2500Name => 'Orfèvre d’Émotions';
+@override
+String get badge2500Phrase => 'Tu collectionnes des souvenirs aussi précieux que rares.';
+
+@override
+String get badge3000Name => 'Horloger des Instants';
+@override
+String get badge3000Phrase => 'Tu transformes les instants fugaces en souvenirs durables.';
+
+@override
+String get badge3500Name => 'Veilleur de Lumière';
+@override
+String get badge3500Phrase => 'Même les petits moments peuvent illuminer une journée.';
+
+@override
+String get badge4000Name => 'Gardien d’Éternité';
+@override
+String get badge4000Phrase => 'Tu construis une collection de souvenirs hors du temps.';
+
+@override
+String get badge4500Name => 'Mage des Souvenirs';
+@override
+String get badge4500Phrase => 'Ton bocal déborde déjà de moments précieux.';
+
+@override
+String get badge5000Name => 'Légende de Sourire';
+@override
+String get badge5000Phrase => 'Les plus beaux souvenirs sont encore à venir.';
 }

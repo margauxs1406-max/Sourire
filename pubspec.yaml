@@ -42,6 +42,7 @@ flutter:
 
   assets:
     - assets/
+    - assets/badges/
     - assets/bibliotheque/
     - assets/themes/abstrait/
     - assets/themes/animaux_marins/

@@ -21,6 +21,8 @@ import 'package:sourire/theme/theme_service.dart'; // AJOUT : Accès à l'état 
 import 'dart:ui';
 import 'package:sourire/models/note_model.dart';
 import 'package:sourire/widgets/bocal_pastilles.dart';
+import 'package:sourire/services/milestones_service.dart';
+import 'package:sourire/widgets/popup_palier.dart';
 
 class Home extends StatefulWidget {
   const Home({super.key});
@@ -41,7 +43,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
 
   final List<TargetFocus> _targets = [];
   int _tentativesCalculTaille = 0; // Sécurité anti-boucle pour le tutoriel
-
+  int? _palierEnAttente;
   dynamic _dernierIdTire; // AJOUT : Stocke l'ID du dernier souvenir affiché
   SourireTheme? _derniereCouleurNote; // AJOUT : Stocke la dernière couleur de note générée
 
@@ -65,6 +67,43 @@ void initState() {
       });
     }
   });
+}
+
+void _verifierPalier(int total, BuildContext context) {
+  if (!UserPrefs.gamificationInitialisee) {
+    UserPrefs.dernierPalierCelebre = plusHautPalierAtteint(total);
+    UserPrefs.gamificationInitialisee = true;
+    return;
+  }
+
+  final int? nouveauPalier = prochainPalierFranchi(total, UserPrefs.dernierPalierCelebre);
+  if (nouveauPalier != null) {
+    // Mis à jour immédiatement pour éviter tout doublon, MÊME si l'affichage
+    // effectif de la pop-up doit attendre que la Home soit au premier plan.
+    UserPrefs.dernierPalierCelebre = nouveauPalier;
+    _palierEnAttente = nouveauPalier;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _tenterAfficherPalierEnAttente(context);
+    });
+  }
+}
+
+/// Affiche la pop-up de palier UNIQUEMENT si la Home est bien l'écran
+/// actif au premier plan (pas caché derrière un écran de catégorisation
+/// en cours de fermeture, par exemple). Sinon, réessaie au frame suivant.
+void _tenterAfficherPalierEnAttente(BuildContext context) {
+  if (_palierEnAttente == null) return;
+
+  if (ModalRoute.of(context)?.isCurrent != true) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _tenterAfficherPalierEnAttente(context);
+    });
+    return;
+  }
+
+  final int palier = _palierEnAttente!;
+  _palierEnAttente = null;
+  afficherPopupPalier(context, palier, isDark: UserPrefs.isDark);
 }
 
 @override
@@ -858,14 +897,17 @@ BtnNewNote(
             stream: databaseService.getNotesStream(),
             builder: (context, snapshot) {
               final notesFluides = snapshot.data ?? [];
+
+              if (snapshot.hasData) {
+                _verifierPalier(notesFluides.length, context);
+              }
+
               return Positioned.fill(
-                child: WidgetHistorique( 
+                child: WidgetHistorique(
                   notes: notesFluides,
                   controller: _historyController,
                   isDark: UserPrefs.isDark,
-                  onNotesChanged: () {
-                    // Le StreamBuilder reconstruit déjà l'UI automatiquement lors des changements !
-                  },
+                  onNotesChanged: () {},
                 ),
               );
             },

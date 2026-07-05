@@ -20,8 +20,8 @@ class BocalPastilles extends StatefulWidget {
 
   const BocalPastilles({
     super.key,
-    this.maxCapacity = 50,
-    this.showDebugZone = true,
+    this.maxCapacity = 65,
+    this.showDebugZone = false,
   });
 
   @override
@@ -30,33 +30,29 @@ class BocalPastilles extends StatefulWidget {
 
 class _BocalPastillesState extends State<BocalPastilles> {
   // --- ZONE DE REMPLISSAGE ---
-  // Rectangle fractionnel représentant la partie "creuse" (transparente)
-  // de assets/bocal_new.png. Valeurs à AJUSTER via showDebugZone: true.
-  // 0 = bord gauche/haut du SizedBox bocalWidth x bocalHeight, 1 = bord droit/bas.
   static const double zoneLeft = 0.16;
   static const double zoneRight = 0.84;
-  static const double zoneBottom = 0.89; // bas du bocal, juste au-dessus du socle
-  static const double zoneTop = 0.15; // hauteur max quand le bocal est plein
+  static const double zoneBottom = 0.89;
+  static const double zoneTop = 0.15;
 
   // --- RÉTRÉCISSEMENT EN HAUT (forme du col/épaule du bocal) ---
-  // Le bocal n'est pas un rectangle parfait : il se resserre vers le col.
-  // maxInsetFraction = à quel point on resserre au tout début (t=0),
-  // exprimé en fraction de la largeur totale de la zone.
-  // taperT = jusqu'à quelle fraction de la hauteur ce resserrement
-  // s'applique (au-delà, la largeur redevient pleine, le "corps" du bocal).
-  // Ajuste ces deux valeurs à l'œil avec showDebugZone: true.
-  static const double maxInsetFraction = 0.33;
-  static const double taperT = 0.38;
+  static const double maxInsetFraction = 0.37;
+  static const double taperT = 0.37;
 
-  // Ne fait tomber-rebondir que les souvenirs ajoutés APRÈS le premier
-  // chargement de cette session — les souvenirs déjà présents au démarrage
-  // s'affichent directement figés à leur position finale.
+  // --- DENSITÉ DE L'EMPILEMENT (moins de trous) ---
+  // recouvrement vertical des billes entre elles
+  static const double overlapFactor = 0.45;
+  // espacement du centre de la colonne
+  static const double jitterFactor = 1.4;
+  // Empreinte élargie = deux pastilles voisines se "sentent" davantage
+  static const double footprintPaddingFactor = 0.5;
+
   Set<Object> _idsDejaPresentsAuDemarrage = {};
   bool _demarrageInitialise = false;
 
   double _insetPourT(double t, double zoneWidthPx) {
     if (t >= taperT) return 0.0;
-    final double facteur = (taperT - t) / taperT; // 1 en haut, 0 à la jonction
+    final double facteur = (taperT - t) / taperT;
     return maxInsetFraction * facteur * zoneWidthPx;
   }
 
@@ -67,9 +63,6 @@ class _BocalPastillesState extends State<BocalPastilles> {
       builder: (context, snapshot) {
         final notes = snapshot.data ?? [];
 
-        // Au tout premier chargement réel de données (une seule fois par
-        // session), on mémorise quels souvenirs existaient déjà : eux ne
-        // seront jamais animés, même si le widget se reconstruit ensuite.
         if (!_demarrageInitialise && snapshot.hasData) {
           _idsDejaPresentsAuDemarrage =
               notes.map<Object>((n) => n.id ?? n.hashCode).toSet();
@@ -87,8 +80,7 @@ class _BocalPastillesState extends State<BocalPastilles> {
             return Stack(
               clipBehavior: Clip.none,
               children: [
-                if (widget.showDebugZone)
-                  ..._buildDebugZone(width, height),
+                if (widget.showDebugZone) ..._buildDebugZone(width, height),
                 ..._buildPastilles(cappedCount, width, height, notes),
               ],
             );
@@ -102,21 +94,17 @@ class _BocalPastillesState extends State<BocalPastilles> {
     final double zoneWidthPx = (zoneRight - zoneLeft) * width;
     final double zoneHeightPx = (zoneBottom - zoneTop) * height;
 
-    // On dessine plusieurs bandes horizontales pour visualiser le
-    // resserrement progressif, plutôt qu'un simple rectangle plein.
     const int bandes = 12;
     List<Widget> widgets = [];
     for (int i = 0; i < bandes; i++) {
       final double t0 = i / bandes;
-      final double t1 = (i + 1) / bandes;
       final double inset0 = _insetPourT(t0, zoneWidthPx);
-      final double insetMoyen = inset0; // approximation par bande
 
       widgets.add(
         Positioned(
-          left: zoneLeft * width + insetMoyen,
+          left: zoneLeft * width + inset0,
           top: zoneTop * height + t0 * zoneHeightPx,
-          width: zoneWidthPx - insetMoyen * 2,
+          width: zoneWidthPx - inset0 * 2,
           height: zoneHeightPx / bandes,
           child: Container(
             decoration: BoxDecoration(
@@ -145,12 +133,11 @@ class _BocalPastillesState extends State<BocalPastilles> {
     final int resolution = max(10, (zoneWidth / (pastilleSize * 0.5)).floor());
     final double colWidth = zoneWidth / resolution;
     final List<double> heightMap = List.filled(resolution, 0.0);
-    final int footprintCols = max(1, (pastilleSize / 2 / colWidth).ceil());
+    final int footprintCols =
+        max(1, (pastilleSize * footprintPaddingFactor / colWidth).ceil());
 
     final chronological = notes.reversed.toList();
     final buildList = chronological.take(count).toList();
-
-    const double overlapFactor = 0.45;
 
     List<Widget> pastilles = [];
 
@@ -171,7 +158,7 @@ class _BocalPastillesState extends State<BocalPastilles> {
       }
 
       final rotationDeg = (rnd.nextDouble() - 0.5) * 30;
-      final jitterX = (rnd.nextDouble() - 0.5) * colWidth * 1.2;
+      final jitterX = (rnd.nextDouble() - 0.5) * colWidth * jitterFactor;
 
       final centerX = zoneLeft * width + (bestCol + 0.5) * colWidth + jitterX;
       double dx = centerX - pastilleSize / 2;
@@ -179,8 +166,6 @@ class _BocalPastillesState extends State<BocalPastilles> {
       double dy = zoneBottomPx - bestHeight - pastilleSize;
       dy = dy.clamp(zoneTopPx, zoneBottomPx - pastilleSize);
 
-      // Resserrement horizontal selon la hauteur, pour suivre la forme
-      // en biseau du bocal (col plus étroit que le corps).
       final double t = ((dy - zoneTopPx) / (zoneBottomPx - zoneTopPx - pastilleSize))
           .clamp(0.0, 1.0);
       final double inset = _insetPourT(t, zoneWidth);
@@ -234,11 +219,7 @@ class _BocalPastillesState extends State<BocalPastilles> {
           left: dx,
           top: dy,
           child: estDejaPresentAuDemarrage
-              // Souvenir déjà existant au démarrage : affiché directement,
-              // figé, sans chute ni rebond.
               ? pastilleVisuelle
-              // Nouveau souvenir ajouté durant cette session : anime la
-              // chute avec rebond, comme avant.
               : TweenAnimationBuilder<double>(
                   key: ValueKey('pastille_$seed'),
                   tween: Tween(begin: -(pastilleSize * 6), end: 0.0),

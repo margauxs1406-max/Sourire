@@ -234,6 +234,40 @@ abstract class AppLocalizations {
   String get themeAnimauxMarins;
   String get themeFloral;
   String get themeKawaii;
+  String get popupPalierTitle;
+  String popupPalierMessage(int palier);
+  String get btnContinuerPalier;
+
+String get newBadgeUnlockedLabel;
+
+String get badge10Name;
+String get badge10Phrase;
+String get badge50Name;
+String get badge50Phrase;
+String get badge100Name;
+String get badge100Phrase;
+String get badge200Name;
+String get badge200Phrase;
+String get badge500Name;
+String get badge500Phrase;
+String get badge1000Name;
+String get badge1000Phrase;
+String get badge1500Name;
+String get badge1500Phrase;
+String get badge2000Name;
+String get badge2000Phrase;
+String get badge2500Name;
+String get badge2500Phrase;
+String get badge3000Name;
+String get badge3000Phrase;
+String get badge3500Name;
+String get badge3500Phrase;
+String get badge4000Name;
+String get badge4000Phrase;
+String get badge4500Name;
+String get badge4500Phrase;
+String get badge5000Name;
+String get badge5000Phrase;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

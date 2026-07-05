@@ -573,4 +573,86 @@ String get notifBocalVideBody => 'No memories to display in the selected categor
 
   @override
   String get themeKawaii => 'Kawaii';
+
+  @override
+String get popupPalierTitle => 'Congratulations!';
+
+@override
+String popupPalierMessage(int palier) => "You've added $palier memories to your jar!";
+
+@override
+String get btnContinuerPalier => 'Continue';
+
+@override
+String get newBadgeUnlockedLabel => 'New badge unlocked';
+
+@override
+String get badge10Name => 'Star Seeker';
+@override
+String get badge10Phrase => 'The most beautiful memories often start small.';
+
+@override
+String get badge50Name => 'Dawn Gatherer';
+@override
+String get badge50Phrase => 'Keep capturing the moments that light up your days.';
+
+@override
+String get badge100Name => 'Guardian of Moments';
+@override
+String get badge100Phrase => 'Your jar is becoming a true haven for memories.';
+
+@override
+String get badge200Name => 'Storyteller of Memories';
+@override
+String get badge200Phrase => 'Every memory adds a page to your story.';
+
+@override
+String get badge500Name => 'Wellspring of Joy';
+@override
+String get badge500Phrase => 'Your jar is filling up with beautiful moments to relive.';
+
+@override
+String get badge1000Name => 'Alchemist of Happiness';
+@override
+String get badge1000Phrase => 'Keep treasuring these little sparks of joy.';
+
+@override
+String get badge1500Name => 'Fairy of Light';
+@override
+String get badge1500Phrase => 'Every memory you add brightens your everyday life a little more.';
+
+@override
+String get badge2000Name => 'Archivist of the Heart';
+@override
+String get badge2000Phrase => 'Your jar is becoming a true archive of emotions.';
+
+@override
+String get badge2500Name => 'Goldsmith of Emotions';
+@override
+String get badge2500Phrase => "You're collecting memories as precious as they are rare.";
+
+@override
+String get badge3000Name => 'Clockmaker of Moments';
+@override
+String get badge3000Phrase => "You're turning fleeting moments into lasting memories.";
+
+@override
+String get badge3500Name => 'Watcher of Light';
+@override
+String get badge3500Phrase => 'Even small moments can light up a whole day.';
+
+@override
+String get badge4000Name => 'Guardian of Eternity';
+@override
+String get badge4000Phrase => "You're building a timeless collection of memories.";
+
+@override
+String get badge4500Name => 'Mage of Memories';
+@override
+String get badge4500Phrase => 'Your jar is already overflowing with precious moments.';
+
+@override
+String get badge5000Name => 'Legend of Sourire';
+@override
+String get badge5000Phrase => 'The most beautiful memories are still to come.';
 }
