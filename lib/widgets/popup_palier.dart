@@ -83,13 +83,15 @@ class PopupPalier extends StatelessWidget {
           clipBehavior: Clip.none,
           alignment: Alignment.topCenter,
           children: [
-            // Confettis dorés par-dessus tout le reste, sans intercepter
-            // les taps (géré via IgnorePointer dans ConfettiExplosion).
+            // 1. COUCHE ARRIÈRE : Confettis en arrière-plan (derrière la pop-up)
             Positioned.fill(
-              top: -60,
-              child: ConfettiExplosion(),
+              child: ConfettiExplosion(
+                particleCount: 60,
+                yOffset: 0.28, // 💡 Jaillit du SVG
+              ),
             ),
 
+            // 2. LE CONTENEUR DE LA POP-UP
             Container(
               margin: const EdgeInsets.only(top: 20),
               padding: EdgeInsets.symmetric(
@@ -157,6 +159,14 @@ class PopupPalier extends StatelessWidget {
                     ),
                   ),
                 ],
+              ),
+            ),
+
+            // 3. COUCHE AVANT : Confettis en avant-plan (devant la pop-up)
+            Positioned.fill(
+              child: ConfettiExplosion(
+                particleCount: 70,
+                yOffset: 0.28, // 💡 Jaillit du SVG
               ),
             ),
           ],

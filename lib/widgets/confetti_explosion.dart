@@ -8,11 +8,13 @@ import 'package:flutter/material.dart';
 class ConfettiExplosion extends StatefulWidget {
   final int particleCount;
   final Duration duration;
+  final double yOffset; // 💡 Nouveau : 0.0 (haut) à 1.0 (bas)
 
   const ConfettiExplosion({
     super.key,
-    this.particleCount = 60,
-    this.duration = const Duration(milliseconds: 1600),
+    this.particleCount = 120,
+    this.duration = const Duration(milliseconds: 2500),
+    this.yOffset = 0.8, // 💡 Par défaut, on le place vers le bas
   });
 
   @override
@@ -65,7 +67,7 @@ class _ConfettiExplosionState extends State<ConfettiExplosion>
       final double angle = (-160 + rnd.nextDouble() * 140) * pi / 180;
       return _Particule(
         angle: angle,
-        vitesse: 180 + rnd.nextDouble() * 220,
+        vitesse: 300 + rnd.nextDouble() * 400,
         taille: 5 + rnd.nextDouble() * 6,
         rotationInitiale: rnd.nextDouble() * 2 * pi,
         vitesseRotation: (rnd.nextDouble() - 0.5) * 10,
@@ -91,6 +93,7 @@ class _ConfettiExplosionState extends State<ConfettiExplosion>
             painter: _ConfettiPainter(
               particules: _particules,
               progress: _controller.value,
+              yOffset: widget.yOffset, // 💡 On passe l'offset au peintre
             ),
           );
         },
@@ -102,13 +105,15 @@ class _ConfettiExplosionState extends State<ConfettiExplosion>
 class _ConfettiPainter extends CustomPainter {
   final List<_Particule> particules;
   final double progress;
+  final double yOffset; // 💡
 
-  _ConfettiPainter({required this.particules, required this.progress});
+  _ConfettiPainter({required this.particules, required this.progress, required this.yOffset});
 
   @override
   void paint(Canvas canvas, Size size) {
-    final Offset origine = Offset(size.width / 2, size.height * 0.35);
-    const double gravite = 380;
+    // 💡 L'origine est maintenant calculée dynamiquement
+    final Offset origine = Offset(size.width / 2, size.height * yOffset);
+    const double gravite = 250; // Un peu plus de gravité pour que ça retombe après la montée
 
     for (final p in particules) {
       final double t = progress;

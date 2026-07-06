@@ -593,7 +593,7 @@ String get badge10Name => 'Chercheur d’Étoiles';
 String get badge10Phrase => 'Les plus beaux souvenirs commencent souvent tout petits.';
 
 @override
-String get badge50Name => 'Cueilleur d’Aurores';
+String get badge50Name => 'Cueilleur de Beauté';
 @override
 String get badge50Phrase => 'Continue à capturer les instants qui illuminent tes journées.';
 

@@ -771,7 +771,7 @@ Positioned.fill(
         child: Stack(
           clipBehavior: Clip.none,
           children: [
-            // Ombre portée — inchangé
+            // 1. Ombre portée (inchangée, basée sur le PNG de fond)
             Positioned(
               left: 8.0,
               top: 4.0,
@@ -788,29 +788,30 @@ Positioned.fill(
               ),
             ),
 
-            // NOUVEAU : bocal opaque en fond — toujours visible, même vide
-    const Positioned.fill(
-      child: Image(
-        image: AssetImage('assets/bocal_new.png'),
-        fit: BoxFit.contain,
-      ),
-    ),
+            // 2. Bocal opaque en fond (Le PNG original complet) — Toujours en arrière-plan
+            const Positioned.fill(
+              child: Image(
+                image: AssetImage('assets/bocal_new.png'),
+                fit: BoxFit.contain,
+              ),
+            ),
 
-    // Pastilles — inchangé, entre les deux couches d'image
-    Positioned.fill(
-      child: BocalPastilles(maxCapacity: 65),
-    ),
+            // 3. Pastilles (Les billes de souvenirs animées)
+            Positioned.fill(
+              child: BocalPastilles(maxCapacity: 65),
+            ),
 
-    // NOUVEAU : même image à 50% d'opacité par-dessus, pour l'effet "vu à travers le verre"
-    const Positioned.fill(
-      child: Opacity(
-        opacity: 0.35,
-        child: Image(
-          image: AssetImage('assets/bocal_new.png'),
-          fit: BoxFit.contain,
-        ),
-      ),
-    ),
+            // 4. Ton calque PNG personnalisé avec Photopea par-dessus les pastilles
+            // On retire le widget Opacity puisque tu as déjà géré l'atténuation directement dans le fichier !
+            const Positioned.fill(
+              child: Opacity(
+                opacity: 0.5,
+                  child : Image(
+                    image: AssetImage('assets/bocal_reflets.png'),
+                    fit: BoxFit.contain,
+                  ),
+              ),
+            ),
           ],
         ),
       ),

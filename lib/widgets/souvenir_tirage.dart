@@ -10,9 +10,7 @@ import 'package:sourire/theme/tokens.dart';
 import 'package:sourire/models/note_model.dart';
 import 'package:sourire/screens/screen_profil.dart';
 import 'package:sourire/models/theme_app.dart'; 
-
-/// Cache global temporaire pour éviter le clignotement lors des rebuilds répétitifs
-final Map<String, Uint8List> _globalImageCache = {};
+import 'package:sourire/widgets/souvenir_historique.dart'; // Cache partagé
 
 /// Résolution des thèmes de couleur de l'application
 SourireTheme _getThemeFromColorLabel(String? colorLabel) {
@@ -48,45 +46,37 @@ class _WidgetSouvenirTirageState extends State<WidgetSouvenirTirage> {
   void initState() {
     super.initState();
     _scrollController = ScrollController();
-    _chargerImageBytes();
+    _verifierEtChargerImage();
   }
 
-  /// Résolution et lecture du fichier image avec gestion du cache
-  Future<void> _chargerImageBytes() async {
+  /// Vérifie d'abord le cache PARTAGÉ (le même que l'historique) de façon
+  /// SYNCHRONE. Comme chaque photo est préchargée dès son insertion en
+  /// base, ce cache est quasiment toujours déjà "chaud" au moment d'un
+  /// tirage — donc l'image est prête dès la toute première frame, sans
+  /// délai visible entre l'apparition du cadre/ombre et la photo.
+  void _verifierEtChargerImage() {
     final bool isPhoto = widget.souvenir.photoPath != null && widget.souvenir.photoPath!.trim().isNotEmpty;
     if (!isPhoto) {
-      if (mounted) setState(() { _isLoaded = true; });
+      _isLoaded = true; // Pas d'image à charger pour une note texte
       return;
     }
 
     final String pathKey = widget.souvenir.photoPath!.trim();
+    final Uint8List? cached = getCachedHistoriqueImageBytes(pathKey);
 
-    if (_globalImageCache.containsKey(pathKey)) {
-      _imageBytes = _globalImageCache[pathKey];
-      if (mounted) setState(() { _isLoaded = true; });
-      return;
+    if (cached != null) {
+      _imageBytes = cached;
+      _isLoaded = true;
+    } else {
+      // Cas rare (photo jamais encore préchargée) : on charge, ce qui
+      // alimentera au passage le cache partagé pour la prochaine fois.
+      _chargerImageAsynchrone(pathKey);
     }
+  }
 
-    try {
-      final cleanPath = pathKey.replaceAll('file://', '');
-      File file;
-
-      if (Platform.isIOS) {
-        final String fileName = p.basename(cleanPath);
-        final Directory appDocDir = await getApplicationDocumentsDirectory();
-        file = File(p.join(appDocDir.path, fileName));
-      } else {
-        file = File(cleanPath);
-      }
-
-      if (file.existsSync()) {
-        _imageBytes = file.readAsBytesSync();
-        _globalImageCache[pathKey] = _imageBytes!;
-      }
-    } catch (e) {
-      debugPrint("Erreur lecture photo tirage : $e");
-    }
-
+  Future<void> _chargerImageAsynchrone(String pathKey) async {
+    await preloadHistoriqueImage(pathKey);
+    _imageBytes = getCachedHistoriqueImageBytes(pathKey);
     if (mounted) {
       setState(() { _isLoaded = true; });
     }
@@ -204,8 +194,6 @@ class _WidgetSouvenirTirageState extends State<WidgetSouvenirTirage> {
                                       height: imageHeight,
                                       fit: isPaysage ? BoxFit.fitHeight : BoxFit.fitWidth,
                                       gaplessPlayback: true,
-                                      // FORCE LE MOTEUR À COUPE TOUTE LIMITATION :
-                                      // On désactive les limites de cache de Flutter pour ce rendu
                                       cacheWidth: null,
                                       cacheHeight: null,
                                     ),
@@ -244,12 +232,8 @@ class _WidgetSouvenirTirageState extends State<WidgetSouvenirTirage> {
     );
   }
 
-  // MODIFICATION MAJEURE : Utilisation du codec de bas niveau 'ui.instantiateImageCodec'
-  // Cela force Flutter à extraire le flux d'octets original sans l'aide d'Android,
-  // garantissant la lecture des dimensions physiques réelles du fichier brut.
   Future<Size> _getImageSize(Uint8List bytes) async {
     final ui.ImmutableBuffer buffer = await ui.ImmutableBuffer.fromUint8List(bytes);
-    // CORRECTION : Utilisation de 'encoded' au lieu de 'fromBytes'
     final ui.ImageDescriptor descriptor = await ui.ImageDescriptor.encoded(buffer);
     return Size(descriptor.width.toDouble(), descriptor.height.toDouble());
   }

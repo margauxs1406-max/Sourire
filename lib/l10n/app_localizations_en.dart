@@ -592,7 +592,7 @@ String get badge10Name => 'Star Seeker';
 String get badge10Phrase => 'The most beautiful memories often start small.';
 
 @override
-String get badge50Name => 'Dawn Gatherer';
+String get badge50Name => 'Beauty Gatherer';
 @override
 String get badge50Phrase => 'Keep capturing the moments that light up your days.';
 

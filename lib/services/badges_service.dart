@@ -3,7 +3,7 @@
 /// présents dans ton dossier assets/badges/ (accents, underscores...).
 const Map<int, String> badgeAssetParPalier = {
   10: 'assets/badges/chercheur_etoiles.svg',
-  50: 'assets/badges/cueilleur_aurore.svg',
+  50: 'assets/badges/cueilleur_beaute.svg',
   100: 'assets/badges/gardien_instants.svg',
   200: 'assets/badges/conteur_souvenirs.svg',
   500: 'assets/badges/emanateur_joie.svg',

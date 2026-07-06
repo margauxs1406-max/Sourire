@@ -18,13 +18,26 @@ final Map<String, Uint8List> _historiqueImageCache = {};
 /// screen_categorisation_photo.dart), pour que l'image soit déjà prête en
 /// mémoire quand l'utilisateur ouvre l'historique — évite le flash noir
 /// de chargement à l'ouverture du volet.
+/// Lecture SYNCHRONE du cache partagé — renvoie les bytes immédiatement
+/// s'ils sont déjà en mémoire, `null` sinon. Utilisée par d'autres
+/// widgets (comme WidgetSouvenirTirage) pour éviter tout délai si
+/// l'image a déjà été préchargée ailleurs.
+Uint8List? getCachedHistoriqueImageBytes(String? photoPath) {
+  if (photoPath == null || photoPath.trim().isEmpty) return null;
+  final String pathKey = photoPath.trim();
+  final bytes = _historiqueImageCache[pathKey];
+  return (bytes != null && bytes.isNotEmpty) ? bytes : null;
+}
+
 Future<void> preloadHistoriqueImage(String? photoPath) async {
   if (photoPath == null || photoPath.trim().isEmpty) return;
 
   final String pathKey = photoPath.trim();
+  debugPrint("--- PRELOAD : lancé pour $pathKey ---");
 
   // Déjà en cache : rien à faire.
   if (_historiqueImageCache.containsKey(pathKey) && _historiqueImageCache[pathKey]!.isNotEmpty) {
+    debugPrint("--- PRELOAD : déjà en cache, rien à faire ---");
     return;
   }
 
@@ -43,11 +56,12 @@ Future<void> preloadHistoriqueImage(String? photoPath) async {
     if (file.existsSync()) {
       final bytes = await file.readAsBytes();
       _historiqueImageCache[pathKey] = bytes;
-      
+      debugPrint("--- PRELOAD : terminé et mis en cache (${bytes.length} bytes) pour $pathKey ---");
     } else {
-      
+      debugPrint("--- PRELOAD : fichier introuvable pour $pathKey ---");
     }
   } catch (e) {
+    debugPrint("Erreur préchargement image historique : $e");
   }
 }
 
@@ -75,7 +89,7 @@ class _WidgetSouvenirHistoriqueState extends State<WidgetSouvenirHistorique> {
   
   final String pathKey = widget.souvenir.photoPath!.trim();
   final bool dejaEnCache = _historiqueImageCache.containsKey(pathKey) && _historiqueImageCache[pathKey]!.isNotEmpty;
-  
+  debugPrint("--- HISTORIQUE affichage : cache hit=$dejaEnCache pour $pathKey ---");
   
   if (dejaEnCache) {
     _cachedBytes = _historiqueImageCache[pathKey];
@@ -113,7 +127,7 @@ class _WidgetSouvenirHistoriqueState extends State<WidgetSouvenirHistorique> {
         if (mounted) setState(() { _isLoading = false; });
       }
     } catch (e) {
-      
+      debugPrint("Erreur accès photo historique : $e");
       if (mounted) setState(() { _isLoading = false; });
     }
   }
