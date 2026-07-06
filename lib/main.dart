@@ -177,7 +177,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
       if (_timeWhenPaused != null) {
         final deconnexionDuration = DateTime.now().difference(_timeWhenPaused!);
         
-        if (deconnexionDuration.inSeconds >= 3) {
+        if (deconnexionDuration.inSeconds >= 30) {
           debugPrint("=== 🔒 ÉTAT : Activation du verrou via Cycle de Vie classique ===");
           isAppLockedNotifier.value = true;
         }
