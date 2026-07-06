@@ -584,9 +584,6 @@ String popupPalierMessage(int palier) => "You've added $palier memories to your 
 String get btnContinuerPalier => 'Continue';
 
 @override
-String get newBadgeUnlockedLabel => 'New badge unlocked';
-
-@override
 String get badge10Name => 'Star Seeker';
 @override
 String get badge10Phrase => 'The most beautiful memories often start small.';
@@ -655,4 +652,9 @@ String get badge4500Phrase => 'Your jar is already overflowing with precious mom
 String get badge5000Name => 'Legend of Sourire';
 @override
 String get badge5000Phrase => 'The most beautiful memories are still to come.';
+
+@override
+String get rewardsSectionTitle => 'Rewards';
+@override
+String get myBadgesTitle => 'My badges';
 }

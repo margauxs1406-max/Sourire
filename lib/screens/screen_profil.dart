@@ -15,7 +15,8 @@ import 'package:sourire/widgets/widget_radio_langue.dart';
 import 'package:sourire/theme/user_prefs.dart';
 import 'package:sourire/widgets/widget_switch.dart';
 import 'package:sourire/services/stockage_service.dart';
-import 'package:sourire/services/database_service.dart';   
+import 'package:sourire/services/database_service.dart';  
+import 'package:sourire/screens/screen_mes_badges.dart'; 
 
 class ScreenProfil extends StatefulWidget {
   const ScreenProfil({super.key});
@@ -957,7 +958,32 @@ _buildMenuRow(
                         );
                       },
                     ),
-
+const SizedBox(height: 25),
+Divider(height: 1, color: couleurSeparateur),
+const SizedBox(height: 30),
+// --- SECTION 3 : RÉCOMPENSES ---
+Text(
+  localizations?.rewardsSectionTitle ?? "Récompenses",
+  style: TextStyle(
+    fontSize: 18,
+    fontWeight: FontWeight.bold,
+    color: couleurTextePrincipal,
+  ),
+),
+const SizedBox(height: 15),
+_buildMenuRow(
+  icon: Icons.emoji_events_outlined,
+  title: localizations?.myBadgesTitle ?? "Mes badges",
+  couleurTextePrincipal: couleurTextePrincipal,
+  onTap: () {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ScreenMesBadges(isDarkMode: isDark),
+      ),
+    );
+  },
+),
                     const SizedBox(height: 10),
                     Divider(height: 1, color: couleurSeparateur),
                     const SizedBox(height: 25),

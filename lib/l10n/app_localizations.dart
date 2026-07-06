@@ -238,8 +238,6 @@ abstract class AppLocalizations {
   String popupPalierMessage(int palier);
   String get btnContinuerPalier;
 
-String get newBadgeUnlockedLabel;
-
 String get badge10Name;
 String get badge10Phrase;
 String get badge50Name;
@@ -268,6 +266,8 @@ String get badge4500Name;
 String get badge4500Phrase;
 String get badge5000Name;
 String get badge5000Phrase;
+String get rewardsSectionTitle;
+String get myBadgesTitle;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

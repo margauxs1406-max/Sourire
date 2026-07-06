@@ -585,9 +585,6 @@ String popupPalierMessage(int palier) => 'Tu as ajouté $palier souvenirs à ton
 String get btnContinuerPalier => 'Continuer';
 
 @override
-String get newBadgeUnlockedLabel => 'Nouveau badge débloqué';
-
-@override
 String get badge10Name => 'Chercheur d’Étoiles';
 @override
 String get badge10Phrase => 'Les plus beaux souvenirs commencent souvent tout petits.';
@@ -656,4 +653,9 @@ String get badge4500Phrase => 'Ton bocal déborde déjà de moments précieux.';
 String get badge5000Name => 'Légende de Sourire';
 @override
 String get badge5000Phrase => 'Les plus beaux souvenirs sont encore à venir.';
+
+@override
+String get rewardsSectionTitle => 'Récompenses';
+@override
+String get myBadgesTitle => 'Mes badges';
 }
