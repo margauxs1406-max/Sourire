@@ -805,7 +805,7 @@ Positioned.fill(
             // On retire le widget Opacity puisque tu as déjà géré l'atténuation directement dans le fichier !
             const Positioned.fill(
               child: Opacity(
-                opacity: 0.5,
+                opacity: 0.55,
                   child : Image(
                     image: AssetImage('assets/bocal_reflets.png'),
                     fit: BoxFit.contain,

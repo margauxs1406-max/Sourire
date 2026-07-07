@@ -20,13 +20,13 @@ const Color darkSeparateur = Color(0xFF2D2D2D);
 
 // --- NOUVELLES COULEURS : dédiées aux photos, pour l'effet arc-en-ciel du bocal ---
 // Ajuste les hex si tu veux d'autres teintes.
-const Color yellow = Color(0xFFFFD93D);
+const Color yellow = Color.fromARGB(255, 255, 204, 1);
 const Color lightYellow = Color(0xFFFFFEF5);
-const Color purple = Color(0xFF9B5DE5);
+const Color purple = Color.fromARGB(255, 111, 6, 240);
 const Color lightPurple = Color(0xFFFCFAFF);
-const Color red = Color(0xFFFF6B6B);
+const Color red = Color.fromARGB(255, 250, 58, 58);
 const Color lightRed = Color(0xFFFFFAFA);
-const Color teal = Color(0xFF00C2A8);
+const Color teal = Color.fromARGB(255, 10, 219, 191);
 const Color lightTeal = Color(0xFFF5FFFE);
 
 // --- 1. AJOUT DE LA STRUCTURE DES ICÔNES ---
