@@ -30,6 +30,8 @@ dependencies:
   sqflite: ^2.4.0   # Gère la base de données SQLite
   path: ^1.9.1      # Gère la création sécurisée des chemins de fichiers sur le téléphone
   sensors_plus: ^6.0.0
+  url_launcher: ^6.3.0
+  device_info_plus: ^11.0.0
 
 dev_dependencies:
   flutter_test:
