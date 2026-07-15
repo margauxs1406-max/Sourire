@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 import 'dart:typed_data';
 import 'dart:ui' as ui; // Importation essentielle pour le décodeur brut
@@ -34,7 +35,9 @@ class WidgetSouvenirTirage extends StatefulWidget {
 }
 
 class _WidgetSouvenirTirageState extends State<WidgetSouvenirTirage> {
-  ScrollController? _scrollController;
+  // Remplace l'ancien ScrollController : gère à la fois le centrage
+  // initial (comme avant) ET le zoom/pan (nouveau), via InteractiveViewer.
+  final TransformationController _transformationController = TransformationController();
   Size? _lastCalculatedSize;
   Uint8List? _imageBytes;
   bool _isLoaded = false;
@@ -42,7 +45,6 @@ class _WidgetSouvenirTirageState extends State<WidgetSouvenirTirage> {
   @override
   void initState() {
     super.initState();
-    _scrollController = ScrollController();
     _verifierEtChargerImage();
   }
 
@@ -81,30 +83,35 @@ class _WidgetSouvenirTirageState extends State<WidgetSouvenirTirage> {
 
   @override
   void dispose() {
-    _scrollController?.dispose();
+    _transformationController.dispose();
     super.dispose();
   }
 
-  void _centrerLeScroll(Size imageSize, double bocalSize) {
+  /// Reproduit EXACTEMENT l'ancien calcul de centrage (image plus grande
+  /// que la fenêtre sur son axe dominant), mais l'applique désormais via
+  /// la matrice de transformation de l'InteractiveViewer plutôt que via
+  /// un ScrollController.jumpTo — même résultat visuel de départ, avec
+  /// en plus la possibilité de zoomer/dézoomer par-dessus.
+  void _centrerLaVue(Size imageSize, double bocalSize) {
     if (_lastCalculatedSize == imageSize) return;
     _lastCalculatedSize = imageSize;
 
     final bool isPaysage = imageSize.width > imageSize.height;
-    double targetOffset = 0.0;
+    double targetOffsetX = 0.0;
+    double targetOffsetY = 0.0;
 
     if (isPaysage) {
       final double renduWidth = (imageSize.width * bocalSize) / imageSize.height;
-      targetOffset = (renduWidth - bocalSize) / 2;
+      targetOffsetX = (renduWidth - bocalSize) / 2;
     } else {
       final double renduHeight = (imageSize.height * bocalSize) / imageSize.width;
-      targetOffset = (renduHeight - bocalSize) / 2;
+      targetOffsetY = (renduHeight - bocalSize) / 2;
     }
 
-    if (targetOffset > 0 && _scrollController != null) {
+    if (targetOffsetX > 0 || targetOffsetY > 0) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (_scrollController!.hasClients) {
-          _scrollController!.jumpTo(targetOffset);
-        }
+        _transformationController.value = Matrix4.identity()
+          ..translate(-targetOffsetX, -targetOffsetY);
       });
     }
   }
@@ -169,19 +176,25 @@ class _WidgetSouvenirTirageState extends State<WidgetSouvenirTirage> {
                               future: _getImageSize(_imageBytes!),
                               builder: (context, snapshot) {
                                 if (!snapshot.hasData) return const SizedBox.shrink();
-                                
+
                                 final imageSize = snapshot.data!;
                                 final bool isPaysage = imageSize.width > imageSize.height;
 
-                                _centrerLeScroll(imageSize, size);
+                                _centrerLaVue(imageSize, size);
 
                                 final double? imageWidth = isPaysage ? null : size;
                                 final double? imageHeight = isPaysage ? size : null;
 
-                                return SingleChildScrollView(
-                                  controller: _scrollController,
-                                  scrollDirection: isPaysage ? Axis.horizontal : Axis.vertical,
-                                  physics: const BouncingScrollPhysics(),
+                                // InteractiveViewer remplace le SingleChildScrollView :
+                                // même centrage initial (via _centrerLaVue), même
+                                // possibilité de parcourir une image plus grande que
+                                // la fenêtre, avec en plus le pinch-to-zoom natif.
+                                return InteractiveViewer(
+                                  transformationController: _transformationController,
+                                  minScale: 1.0,
+                                  maxScale: 4.0,
+                                  boundaryMargin: EdgeInsets.zero,
+                                  constrained: false,
                                   child: SizedBox(
                                     width: isPaysage ? (imageSize.width * size) / imageSize.height : size,
                                     height: isPaysage ? size : (imageSize.height * size) / imageSize.width,
