@@ -78,7 +78,7 @@ const List<SemaineTest> semainesTest = [
       'Recommanderais-tu cette application à un proche ?',
       'Quelles fonctionnalités as-tu préférée ?',
       'Quelles fonctionnalités te semblent encore à améliorer en priorité ?'
-      'Serais-tu prêt.e à payer 3,99€ pour disposer de l\'application à vie ?',
+      'Serais-tu prêt.e à payer 0,99€/mois pour disposer de l\'application ?',
     ],
     lienTally: 'https://tally.so/r/J9YGgd',
   ),
