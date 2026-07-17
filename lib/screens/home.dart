@@ -25,6 +25,11 @@ import 'package:sourire/services/milestones_service.dart';
 import 'package:sourire/widgets/popup_palier.dart';
 import 'package:sourire/screens/screen_testeurs.dart';
 
+/// Passe à `true` pour réafficher le bouton "Espace testeurs" sur la Home
+/// (utile pendant la phase de test), et à `false` pour le masquer avant
+/// de prendre des captures d'écran destinées aux stores.
+const bool afficherBoutonEspaceTesteurs = true;
+
 class Home extends StatefulWidget {
   const Home({super.key});
 
@@ -754,103 +759,43 @@ Positioned.fill(
                                   height: 1.2,
                                 ),
                               ),
+                              // --- BOUTON "ESPACE TESTEURS" : masqué temporairement
+                              // pour les captures d'écran Play Store / App Store.
+                              // Repasse `afficherBoutonEspaceTesteurs` à `true` en
+                              // haut de ce fichier pour le faire réapparaître.
+                              if (afficherBoutonEspaceTesteurs) ...[
+                                const SizedBox(height: 12),
+                                GestureDetector(
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(builder: (context) => const ScreenTesteurs()),
+                                    );
+                                  },
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white.withOpacity(0.2),
+                                      borderRadius: BorderRadius.circular(20),
+                                      border: Border.all(color: Colors.white.withOpacity(0.5), width: 1),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        const Icon(Icons.science_outlined, color: white, size: 16),
+                                        const SizedBox(width: 6),
+                                        Text(
+                                          "Espace testeurs",
+                                          style: TextStyle(color: white, fontSize: 13, fontWeight: FontWeight.w600),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ],
                           ),
                         ),
-
-Positioned(
-  top: heightScreen * 0.15, 
-  left: screenWidth * 0.1,
-  right: screenWidth * 0.1,
-  child: Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Text(
-        l10n.welcomeMessage(prenomAffiche),
-        style: styleNoteLarge.copyWith(color: white, fontSize: responsiveWelcomeFontSize),
-      ),
-      const SizedBox(height: 8),
-      Text(
-        l10n.mainQuestion(accordAffiche), 
-        style: styleNoteLarge.copyWith(color: white, fontSize: responsiveQuestionFontSize, height: 1.2),
-      ),
-      const SizedBox(height: 12), // ← ajouté
-      GestureDetector( // ← ajouté
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const ScreenTesteurs()),
-          );
-        },
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-          decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.2),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: Colors.white.withOpacity(0.5), width: 1),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.science_outlined, color: white, size: 16),
-              const SizedBox(width: 6),
-              Text(
-                "Espace testeurs",
-                style: TextStyle(color: white, fontSize: 13, fontWeight: FontWeight.w600),
-              ),
-            ],
-          ),
-        ),
-      ),
-    ],
-  ),
-),Positioned(
-  top: heightScreen * 0.15, 
-  left: screenWidth * 0.1,
-  right: screenWidth * 0.1,
-  child: Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Text(
-        l10n.welcomeMessage(prenomAffiche),
-        style: styleNoteLarge.copyWith(color: white, fontSize: responsiveWelcomeFontSize),
-      ),
-      const SizedBox(height: 8),
-      Text(
-        l10n.mainQuestion(accordAffiche), 
-        style: styleNoteLarge.copyWith(color: white, fontSize: responsiveQuestionFontSize, height: 1.2),
-      ),
-      const SizedBox(height: 12), // ← ajouté
-      GestureDetector( // ← ajouté
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const ScreenTesteurs()),
-          );
-        },
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-          decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.2),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: Colors.white.withOpacity(0.5), width: 1),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.science_outlined, color: white, size: 16),
-              const SizedBox(width: 6),
-              Text(
-                "Espace testeurs",
-                style: TextStyle(color: white, fontSize: 13, fontWeight: FontWeight.w600),
-              ),
-            ],
-          ),
-        ),
-      ),
-    ],
-  ),
-),
 
                         Positioned(
   bottom: spaceBottomToBocal,

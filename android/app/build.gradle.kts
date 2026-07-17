@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "com.example.sourire"
+    namespace = "com.margauxsilva.sourire"
     compileSdk = 36 // <-- PASSE À 36 POUR LE LOGICIEL DE COMPILATION
     ndkVersion = flutter.ndkVersion
 
@@ -21,7 +21,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.example.sourire"
+        applicationId = "com.margauxsilva.sourire"
         minSdk = flutter.minSdkVersion
         targetSdk = 34 // <-- GARDE 34 POUR LE COMPORTEMENT DE L'APP (PERMISSIONS)
         versionCode = flutter.versionCode

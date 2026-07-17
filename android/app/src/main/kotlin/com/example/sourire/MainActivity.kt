@@ -1,4 +1,4 @@
-package com.example.sourire
+package com.margauxsilva.sourire
 
 import io.flutter.embedding.android.FlutterFragmentActivity
 
