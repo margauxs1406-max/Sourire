@@ -129,16 +129,41 @@ class _ScreenChoixThemesState extends State<ScreenChoixThemes> {
                           _appliquerTheme(theme);
                         }
                       },
-                      child: Text(
-                        afficherBoutonPremium 
-                            ? AppLocalizations.of(context)!.btnPasserPremium 
-                            : AppLocalizations.of(context)!.btnAppliquer,
-                        style: TextStyle(
-                          color: white, 
-                          fontWeight: FontWeight.bold, 
-                          fontSize: sizeButtonText,
-                        ),
-                      ),
+                      child: afficherBoutonPremium
+                          ? Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  AppLocalizations.of(context)!.btnPasserPremium,
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    color: white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: sizeButtonText,
+                                  ),
+                                ),
+                                if (phaseDeTestActive) ...[
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    'Gratuit pour les tests ! 😁',
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      color: white,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: sizeButtonText * 0.85,
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            )
+                          : Text(
+                              AppLocalizations.of(context)!.btnAppliquer,
+                              style: TextStyle(
+                                color: white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: sizeButtonText,
+                              ),
+                            ),
                     ),
                   ),
                 ],

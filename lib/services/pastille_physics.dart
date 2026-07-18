@@ -26,6 +26,25 @@ class Pastille {
 /// Simulation physique 2D simple : gravité inclinable (venant du capteur
 /// d'inclinaison), collisions bille-bille, et collisions avec les parois
 /// du bocal (en tenant compte du rétrécissement en biseau vers le col).
+///
+/// --- STABILITÉ DU BOCAL PLEIN vs REBOND DES NOUVELLES BILLES ---
+/// Deux réglages clés permettent de dissocier ces deux comportements,
+/// qui se marchaient dessus dans la version précédente :
+///
+/// 1. `collisionIterations` : plusieurs passes de résolution des
+///    chevauchements PAR FRAME (au lieu d'une seule). Avec beaucoup de
+///    billes tassées (bocal plein), une seule passe ne suffit jamais à
+///    tout résoudre d'un coup, ce qui "fuit" un peu d'énergie à chaque
+///    frame et fait s'emballer le tas. Plusieurs passes convergent
+///    correctement et stabilisent un tas dense, SANS avoir besoin de
+///    réduire la gravité ou le rebond général.
+///
+/// 2. `vitesseSeuilRebond` : le rebond (restitution) ne s'applique QUE
+///    si la vitesse d'impact dépasse ce seuil. En dessous, la collision
+///    devient inélastique (pas de rebond) — exactement ce qu'on veut
+///    pour des billes déjà presque immobiles dans un tas (pas de
+///    "vibration perpétuelle"), tout en gardant un vrai rebond visible
+///    pour une bille qui vient de tomber avec de la vitesse.
 class PastillePhysicsWorld {
   final List<Pastille> pastilles = [];
 
@@ -34,10 +53,26 @@ class PastillePhysicsWorld {
   double gravityY = 1; // vers le bas par défaut, tant qu'aucune inclinaison connue
 
   // --- Réglages physiques ---
-  static const double gravityMagnitude = 800; // px/s², ajuste pour + ou - de "poids"
-  static const double damping = 0.900; // freinage naturel (frottement de l'air/verre)
-  static const double restitutionBilleBille = 0.55; // "rebond" entre deux billes
-  static const double restitutionParoi = 0.55; // "rebond" contre le verre
+  static const double gravityMagnitude = 1600; // px/s², ajuste pour + ou - de "poids"
+  static const double damping = 0.995; // freinage naturel (frottement de l'air/verre)
+  static const double restitutionBilleBille = 0.45; // "rebond" entre deux billes (au-dessus du seuil)
+  static const double restitutionParoi = 0.40; // "rebond" contre le verre (au-dessus du seuil)
+
+  /// En dessous de cette vitesse d'impact (px/s), le rebond est désactivé
+  /// (collision inélastique) — évite qu'un tas déjà posé ne vibre à l'infini.
+  /// Augmente si le bocal plein bouge encore trop ; diminue si les
+  /// nouvelles billes rebondissent trop peu.
+  static const double vitesseSeuilRebond = 7.0;
+
+  /// Nombre de passes de résolution des collisions par frame. Plus haut =
+  /// tas plus stable (surtout à haute densité), mais légèrement plus coûteux.
+  /// 4 est un bon compromis pour ~60-100 billes sur mobile.
+  static const int collisionIterations = 4;
+
+  /// En dessous de cette vitesse globale, on "endort" complètement la
+  /// bille (vitesse mise à 0) pour éliminer tout micro-tremblement
+  /// résiduel une fois posée.
+  static const double vitesseSommeil = 12.0;
 
   // --- Zone de remplissage (identique à l'ancienne version statique) ---
   final double zoneLeft;
@@ -71,8 +106,6 @@ class PastillePhysicsWorld {
   }
 
   /// À appeler avec la lecture brute de l'accéléromètre (axes x, y en m/s²).
-  /// Les signes peuvent avoir besoin d'être inversés selon le ressenti —
-  /// ajuste [invertX]/[invertY] si le mouvement semble inversé au test.
   void updateGravityFromAccelerometer(double sensorX, double sensorY, {bool invertX = false, bool invertY = false}) {
     const double g = 9.8;
     double gx = (sensorX / g).clamp(-1.0, 1.0);
@@ -91,7 +124,7 @@ class PastillePhysicsWorld {
     final double zoneLeftPx = zoneLeft * width;
     final double zoneRightPx = zoneRight * width;
 
-    // 1. Gravité + intégration
+    // 1. Gravité + intégration (une seule fois par frame)
     for (final p in pastilles) {
       p.vx += gravityX * gravityMagnitude * dt;
       p.vy += gravityY * gravityMagnitude * dt;
@@ -101,41 +134,58 @@ class PastillePhysicsWorld {
       p.y += p.vy * dt;
     }
 
-    // 2. Collisions bille-bille (O(n²) — largement suffisant pour ~60-100 billes)
-    for (int i = 0; i < pastilles.length; i++) {
-      for (int j = i + 1; j < pastilles.length; j++) {
-        _resoudreCollisionPaire(pastilles[i], pastilles[j]);
+    // 2. Résolution des collisions en PLUSIEURS passes — c'est ce qui
+    // stabilise un tas dense (bocal plein) sans avoir à toucher à la
+    // gravité ou au rebond général.
+    for (int iter = 0; iter < collisionIterations; iter++) {
+      for (int i = 0; i < pastilles.length; i++) {
+        for (int j = i + 1; j < pastilles.length; j++) {
+          _resoudreCollisionPaire(pastilles[i], pastilles[j]);
+        }
+      }
+      for (final p in pastilles) {
+        _resoudreCollisionParoi(p, zoneLeftPx, zoneRightPx, zoneTopPx, zoneBottomPx);
       }
     }
 
-    // 3. Collisions avec les parois (avec biseau vers le col)
+    // 3. Rotation visuelle + mise en sommeil des billes quasi immobiles
     for (final p in pastilles) {
-      final double t = ((p.y - zoneTopPx) / (zoneBottomPx - zoneTopPx)).clamp(0.0, 1.0);
-      final double inset = _insetAt(t);
-      final double minX = zoneLeftPx + inset + p.radius;
-      final double maxX = zoneRightPx - inset - p.radius;
-      final double minY = zoneTopPx + p.radius;
-      final double maxY = zoneBottomPx - p.radius;
-
-      if (p.x < minX) {
-        p.x = minX;
-        p.vx = -p.vx * restitutionParoi;
-      } else if (p.x > maxX) {
-        p.x = maxX;
-        p.vx = -p.vx * restitutionParoi;
+      final double vitesse = math.sqrt(p.vx * p.vx + p.vy * p.vy);
+      if (vitesse < vitesseSommeil) {
+        p.vx = 0;
+        p.vy = 0;
       }
-
-      if (p.y < minY) {
-        p.y = minY;
-        p.vy = -p.vy * restitutionParoi;
-      } else if (p.y > maxY) {
-        p.y = maxY;
-        p.vy = -p.vy * restitutionParoi;
-      }
-
-      // Rotation visuelle liée à la vitesse horizontale (effet "roulement").
       p.angularVelocity = p.radius > 0 ? (p.vx / p.radius) * 0.3 : 0;
       p.angle += p.angularVelocity * dt;
+    }
+  }
+
+  void _resoudreCollisionParoi(Pastille p, double zoneLeftPx, double zoneRightPx, double zoneTopPx, double zoneBottomPx) {
+    final double t = ((p.y - zoneTopPx) / (zoneBottomPx - zoneTopPx)).clamp(0.0, 1.0);
+    final double inset = _insetAt(t);
+    final double minX = zoneLeftPx + inset + p.radius;
+    final double maxX = zoneRightPx - inset - p.radius;
+    final double minY = zoneTopPx + p.radius;
+    final double maxY = zoneBottomPx - p.radius;
+
+    if (p.x < minX) {
+      final double vitesseImpact = -p.vx;
+      p.x = minX;
+      p.vx = vitesseImpact > vitesseSeuilRebond ? vitesseImpact * restitutionParoi : 0.0;
+    } else if (p.x > maxX) {
+      final double vitesseImpact = p.vx;
+      p.x = maxX;
+      p.vx = vitesseImpact > vitesseSeuilRebond ? -vitesseImpact * restitutionParoi : 0.0;
+    }
+
+    if (p.y < minY) {
+      final double vitesseImpact = -p.vy;
+      p.y = minY;
+      p.vy = vitesseImpact > vitesseSeuilRebond ? vitesseImpact * restitutionParoi : 0.0;
+    } else if (p.y > maxY) {
+      final double vitesseImpact = p.vy;
+      p.y = maxY;
+      p.vy = vitesseImpact > vitesseSeuilRebond ? -vitesseImpact * restitutionParoi : 0.0;
     }
   }
 
@@ -150,19 +200,25 @@ class PastillePhysicsWorld {
     final double ny = dy / dist;
     final double overlap = minDist - dist;
 
-    // Séparation positionnelle (moitié chacune, pour ne pas favoriser l'une)
+    // Séparation positionnelle : TOUJOURS appliquée (même à vitesse nulle)
+    // pour éliminer le chevauchement — c'est elle qui, répétée sur
+    // plusieurs passes, stabilise vraiment le tas.
     a.x -= nx * overlap / 2;
     a.y -= ny * overlap / 2;
     b.x += nx * overlap / 2;
     b.y += ny * overlap / 2;
 
-    // Échange de vitesse le long de la normale de collision (avec restitution)
     final double relVx = b.vx - a.vx;
     final double relVy = b.vy - a.vy;
     final double relDot = relVx * nx + relVy * ny;
     if (relDot > 0) return; // s'éloignent déjà, rien à faire
 
-    final double impulse = -(1 + restitutionBilleBille) * relDot / 2;
+    // Rebond seulement si l'impact est assez rapide — sinon collision
+    // inélastique (les deux billes se "collent", pas de vibration).
+    final double vitesseImpact = -relDot;
+    final double restitution = vitesseImpact > vitesseSeuilRebond ? restitutionBilleBille : 0.0;
+
+    final double impulse = -(1 + restitution) * relDot / 2;
     a.vx -= impulse * nx;
     a.vy -= impulse * ny;
     b.vx += impulse * nx;
