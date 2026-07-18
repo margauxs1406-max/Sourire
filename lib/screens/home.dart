@@ -608,9 +608,23 @@ void _verifierEtDeclencherSouvenir() async {
                         ),
                       );
                     },
-                    child: Text(
-                      l10n.btnGoPremium,
-                      style: const TextStyle(color: white, fontWeight: FontWeight.bold, fontSize: 15),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          l10n.btnGoPremium,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(color: white, fontWeight: FontWeight.bold, fontSize: 15),
+                        ),
+                        if (phaseDeTestActive) ...[
+                          const SizedBox(height: 2),
+                          const Text(
+                            'Gratuit pour les tests ! 😁',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(color: white, fontWeight: FontWeight.bold, fontSize: 13),
+                          ),
+                        ],
+                      ],
                     ),
                   ),
                 ),

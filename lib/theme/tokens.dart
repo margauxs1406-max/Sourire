@@ -120,3 +120,8 @@ const List<BoxShadow> shadowDrop = [BoxShadow(color: Color(0x33000000), blurRadi
 const double radiusDefault = 15.0;
 const double paddingDefault = 20.0;
 const double gapDefault = 16.0;
+
+/// Passe à `false` une fois la phase de test terminée, pour masquer
+/// automatiquement la mention "Gratuit pour les tests" sur les boutons
+/// Premium (home.dart et screen_choix_themes.dart).
+const bool phaseDeTestActive = true;
