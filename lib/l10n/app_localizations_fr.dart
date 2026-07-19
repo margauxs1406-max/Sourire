@@ -658,4 +658,13 @@ String get badge5000Phrase => 'Les plus beaux souvenirs sont encore à venir.';
 String get rewardsSectionTitle => 'Récompenses';
 @override
 String get myBadgesTitle => 'Mes badges';
+
+@override
+String get btnSelectAll => 'Tout sélectionner';
+
+@override
+String get btnDeselectAll => 'Tout désélectionner';
+
+@override
+String selectedCountLabel(int count) => '$count sélectionné(s)';
 }

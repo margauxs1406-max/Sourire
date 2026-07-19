@@ -15,6 +15,16 @@ import 'package:sourire/theme/tokens.dart';
 /// Cette version utilise une VRAIE simulation physique (gravité pilotée
 /// par l'inclinaison du téléphone, collisions bille-bille et bille-paroi)
 /// au lieu de positions statiques calculées une fois.
+///
+/// --- IMPRESSION DE PROFONDEUR (3 "couches" Z) ---
+/// Chaque bille se voit attribuer une couche de profondeur (arrière,
+/// milieu, avant) fixée UNE FOIS à sa création, de façon déterministe
+/// (même graine que sa position). Le peintre trie ensuite les billes par
+/// couche avant de les dessiner (arrière d'abord, avant en dernier), et
+/// applique une légère variation de taille/luminosité par couche — ce qui
+/// recrée l'impression de chevauchement/profondeur qu'on avait avec
+/// l'ancien rendu statique, SANS toucher à la physique 2D (positions,
+/// collisions, stabilité) qu'on vient de stabiliser.
 class BocalPastilles extends StatefulWidget {
   final int maxCapacity;
 
@@ -158,6 +168,7 @@ class _BocalPastillesState extends State<BocalPastilles> with SingleTickerProvid
         y: dy,
         radius: radius,
         baseColor: SourireTheme.fromLabel(note.colorLabel).main,
+        zLayer: rnd.nextInt(3), // 0=arrière, 1=milieu, 2=avant — fixé une fois pour toutes
       ));
       _idsConnus.add(seed);
     }
@@ -183,6 +194,7 @@ class _BocalPastillesState extends State<BocalPastilles> with SingleTickerProvid
       radius: radius,
       baseColor: SourireTheme.fromLabel(note.colorLabel).main,
       vx: (rnd.nextDouble() - 0.5) * 40,
+      zLayer: rnd.nextInt(3), // 0=arrière, 1=milieu, 2=avant — fixé une fois pour toutes
     ));
     _idsConnus.add(seed);
   }
@@ -278,32 +290,73 @@ class _PastillesPainter extends CustomPainter {
   final List<Pastille> pastilles;
   _PastillesPainter(this.pastilles);
 
+  // Réglages de l'effet de profondeur par couche (index = zLayer : 0=arrière, 1=milieu, 2=avant)
+  // Écart de taille ENTRE COUCHES volontairement très léger (~±1px de
+  // diamètre) — la variation de taille entre couches reste subtile.
+  static const List<double> _echelleParCouche = [0.985, 1.0, 1.015];
+
+  /// Gonflement visuel GLOBAL (appliqué à toutes les couches de la même
+  /// façon) : le rayon AFFICHÉ est plus grand que le rayon physique réel
+  /// (celui utilisé pour les collisions). Comme les centres des billes
+  /// restent à distance physique normale (jamais de vrai chevauchement
+  /// dans la simulation), c'est ce facteur qui crée un chevauchement
+  /// visuel net entre billes voisines — combiné à l'ordre de dessin par
+  /// couche (arrière→avant), on voit clairement une bille "avant"
+  /// recouvrir le bord d'une bille "arrière". Augmente pour plus de
+  /// chevauchement, diminue si les billes semblent trop "gonflées".
+  static const double _facteurChevauchementGlobal = 1.07;
+  static const List<double> _assombrissementSupplementaire = [0.20, 0.0, 0.0]; // couche arrière plus sombre = "recule"
+  static const List<double> _eclaircissementSupplementaire = [0.0, 0.0, 0.10]; // couche avant plus lumineuse = "ressort"
+
   @override
   void paint(Canvas canvas, Size size) {
-    for (final p in pastilles) {
-      final Color highlight = Color.lerp(p.baseColor, Colors.white, 0.55)!;
-      final Color shade = Color.lerp(p.baseColor, Colors.black, 0.30)!;
+    // Tri par couche (arrière d'abord, avant en dernier) pour que les
+    // billes "avant" recouvrent bien visuellement celles "arrière" —
+    // c'est cet ordre de dessin qui recrée l'impression de profondeur.
+    final List<Pastille> triees = List<Pastille>.from(pastilles)
+      ..sort((a, b) => a.zLayer.compareTo(b.zLayer));
+
+    for (final p in triees) {
+      final int couche = p.zLayer.clamp(0, 2);
+      final double echelle = _echelleParCouche[couche] * _facteurChevauchementGlobal;
+      final double rayonAffiche = p.radius * echelle;
+
+      Color highlight = Color.lerp(p.baseColor, Colors.white, 0.55)!;
+      Color shade = Color.lerp(p.baseColor, Colors.black, 0.30)!;
+      Color base = p.baseColor;
+
+      final double assombrir = _assombrissementSupplementaire[couche];
+      if (assombrir > 0) {
+        highlight = Color.lerp(highlight, Colors.black, assombrir)!;
+        shade = Color.lerp(shade, Colors.black, assombrir)!;
+        base = Color.lerp(base, Colors.black, assombrir)!;
+      }
+
+      final double eclaircir = _eclaircissementSupplementaire[couche];
+      if (eclaircir > 0) {
+        highlight = Color.lerp(highlight, Colors.white, eclaircir)!;
+      }
 
       canvas.save();
       canvas.translate(p.x, p.y);
       canvas.rotate(p.angle);
 
-      final Rect rect = Rect.fromCircle(center: Offset.zero, radius: p.radius);
+      final Rect rect = Rect.fromCircle(center: Offset.zero, radius: rayonAffiche);
       final Paint fillPaint = Paint()
         ..shader = RadialGradient(
           center: const Alignment(-0.35, -0.35),
           radius: 0.9,
-          colors: [highlight, p.baseColor, shade],
+          colors: [highlight, base, shade],
           stops: const [0.0, 0.55, 1.0],
         ).createShader(rect)
         ..style = PaintingStyle.fill;
-      canvas.drawCircle(Offset.zero, p.radius, fillPaint);
+      canvas.drawCircle(Offset.zero, rayonAffiche, fillPaint);
 
       final Paint borderPaint = Paint()
         ..color = shade.withOpacity(0.6)
         ..style = PaintingStyle.stroke
         ..strokeWidth = 0.5;
-      canvas.drawCircle(Offset.zero, p.radius, borderPaint);
+      canvas.drawCircle(Offset.zero, rayonAffiche, borderPaint);
 
       canvas.restore();
     }

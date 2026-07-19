@@ -201,6 +201,21 @@ class _WidgetHistoriqueState extends State<WidgetHistorique> {
     }
   }
 
+  /// Applique les filtres de catégorie actifs à une liste de souvenirs.
+  /// Extrait dans une méthode partagée pour être réutilisable à la fois
+  /// par le regroupement par date ET par le "Tout sélectionner" (qui doit
+  /// sélectionner exactement ce que l'utilisateur voit à l'écran).
+  List<NoteSourire> _filtrerListe(List<NoteSourire> liste) {
+    if (_filtresActifs.isEmpty) return liste;
+    return liste.where((note) {
+      final categoriesDeLaNote = note.categories;
+      if (_filtresActifs.contains("unclassified") && categoriesDeLaNote.contains("unclassified")) {
+        return true;
+      }
+      return categoriesDeLaNote.any((cat) => _filtresActifs.contains(cat));
+    }).toList();
+  }
+
   Map<String, List<NoteSourire>> _grouperParDate(List<NoteSourire> liste, BuildContext context) {
     final localizations = AppLocalizations.of(context)!;
     final Map<String, List<NoteSourire>> groupes = {};
@@ -211,15 +226,7 @@ class _WidgetHistoriqueState extends State<WidgetHistorique> {
     
     final localeCourante = Localizations.localeOf(context).toString();
 
-    final listeFiltree = liste.where((note) {
-      if (_filtresActifs.isEmpty) return true;
-      final categoriesDeLaNote = note.categories;
-
-      if (_filtresActifs.contains("unclassified") && categoriesDeLaNote.contains("unclassified")) {
-        return true;
-      }
-      return categoriesDeLaNote.any((cat) => _filtresActifs.contains(cat));
-    }).toList();
+    final listeFiltree = _filtrerListe(liste);
 
     listeFiltree.sort((a, b) => b.date.compareTo(a.date));
 
@@ -248,6 +255,27 @@ class _WidgetHistoriqueState extends State<WidgetHistorique> {
       return SourireTheme(main: black, light: white, label: 'blanc');
     }
     return SourireTheme.fromLabel(label);
+  }
+
+  /// Bascule entre "tout sélectionner" et "tout désélectionner", sur la
+  /// base de ce qui est réellement affiché à l'écran (donc en tenant
+  /// compte des filtres de catégorie actifs).
+  void _toggleSelectionnerTout(List<NoteSourire> listeVisible) {
+    setState(() {
+      final bool toutEstDejaSelectionne = listeVisible.isNotEmpty &&
+          _souvenirsSelectionnes.length == listeVisible.length &&
+          listeVisible.every((n) => _souvenirsSelectionnes.any((s) => s.id == n.id));
+
+      if (toutEstDejaSelectionne) {
+        _souvenirsSelectionnes.clear();
+        _modeSelection = false;
+      } else {
+        _souvenirsSelectionnes
+          ..clear()
+          ..addAll(listeVisible);
+        _modeSelection = true;
+      }
+    });
   }
 
   @override
@@ -302,6 +330,9 @@ class _WidgetHistoriqueState extends State<WidgetHistorique> {
                           final souvenirsGroupes = _voletEstOuvert
                               ? _grouperParDate(toutesLesNotes, context)
                               : <String, List<NoteSourire>>{};
+                          final listeVisibleActuelle = _voletEstOuvert
+                              ? _filtrerListe(toutesLesNotes)
+                              : <NoteSourire>[];
                           final localizations = AppLocalizations.of(context)!;
 
                           return Stack(
@@ -317,8 +348,8 @@ class _WidgetHistoriqueState extends State<WidgetHistorique> {
                                 slivers: !_voletEstOuvert
                                     ? const [SliverToBoxAdapter(child: SizedBox.shrink())]
                                     : [
-                                  const SliverToBoxAdapter(
-                                    child: SizedBox(height: 60),
+                                  SliverToBoxAdapter(
+                                    child: SizedBox(height: _modeSelection ? 96 : 60),
                                   ),
 
                                   if (toutesLesNotes.isEmpty)
@@ -519,6 +550,43 @@ class _WidgetHistoriqueState extends State<WidgetHistorique> {
                                           ],
                                         ),
                                       ),
+                                      // --- BARRE "SÉLECTION" : n'apparaît que quand au
+                                      // moins un souvenir est sélectionné. Affiche le
+                                      // nombre d'éléments sélectionnés à gauche, et un
+                                      // bouton "Tout sélectionner"/"Tout désélectionner"
+                                      // à droite (basé sur ce qui est visible à l'écran,
+                                      // donc respecte les filtres actifs).
+                                      if (_modeSelection)
+                                        Padding(
+                                          padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+                                          child: Row(
+                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              GestureDetector(
+                                                onTap: () => _toggleSelectionnerTout(listeVisibleActuelle),
+                                                child: Text(
+                                                  _souvenirsSelectionnes.length == listeVisibleActuelle.length &&
+                                                          listeVisibleActuelle.isNotEmpty
+                                                      ? localizations.btnDeselectAll
+                                                      : localizations.btnSelectAll,
+                                                  style: const TextStyle(
+                                                    color: orange,
+                                                    fontWeight: FontWeight.w600,
+                                                    fontSize: 14,
+                                                  ),
+                                                ),
+                                              ),
+                                              Text(
+                                                localizations.selectedCountLabel(_souvenirsSelectionnes.length),
+                                                style: TextStyle(
+                                                  color: isDarkMode ? Colors.grey[400] : Colors.grey[800],
+                                                  fontWeight: FontWeight.w600,
+                                                  fontSize: 14,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
                                       Divider(
                                         height: 1, 
                                         color: isDarkMode ? const Color(0xFF2D2D2D) : const Color(0xFFE0E0E0)
