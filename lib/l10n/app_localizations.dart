@@ -268,6 +268,9 @@ String get badge5000Name;
 String get badge5000Phrase;
 String get rewardsSectionTitle;
 String get myBadgesTitle;
+String get btnSelectAll;
+String get btnDeselectAll;
+String selectedCountLabel(int count);
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

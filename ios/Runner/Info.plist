@@ -24,10 +24,10 @@
 	<string>1.0.0</string>
 	<key>CFBundleSignature</key>
 	<string>????</string>
-    <key>CFBundleVersion</key>
-    <string>3</string>
-    <key>ITSAppUsesNonExemptEncryption</key>
-    <false/>
+	<key>CFBundleVersion</key>
+	<string>4</string>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 	<key>NSFaceIDUsageDescription</key>
 	<string>Nous utilisons la biométrie pour sécuriser l&apos;accès à ton bocal de souvenirs.</string>
 	<key>LSRequiresIPhoneOS</key>

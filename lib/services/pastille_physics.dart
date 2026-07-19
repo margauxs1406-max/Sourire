@@ -10,6 +10,13 @@ class Pastille {
   final double radius;
   final Color baseColor;
 
+  /// Couche de profondeur PUREMENT VISUELLE (0 = arrière-plan, 1 = milieu,
+  /// 2 = premier plan). N'affecte JAMAIS la physique (position, collisions,
+  /// gravité) — uniquement l'ordre de dessin et un léger effet de taille/
+  /// luminosité, pour recréer une impression de "3D" sans rien changer à
+  /// la simulation 2D stabilisée.
+  final int zLayer;
+
   Pastille({
     required this.id,
     required this.x,
@@ -20,6 +27,7 @@ class Pastille {
     this.vy = 0,
     this.angle = 0,
     this.angularVelocity = 0,
+    this.zLayer = 1,
   });
 }
 
@@ -55,14 +63,14 @@ class PastillePhysicsWorld {
   // --- Réglages physiques ---
   static const double gravityMagnitude = 1600; // px/s², ajuste pour + ou - de "poids"
   static const double damping = 0.995; // freinage naturel (frottement de l'air/verre)
-  static const double restitutionBilleBille = 0.45; // "rebond" entre deux billes (au-dessus du seuil)
-  static const double restitutionParoi = 0.40; // "rebond" contre le verre (au-dessus du seuil)
+  static const double restitutionBilleBille = 0.25; // "rebond" entre deux billes (réduit pour un tas plus calme)
+  static const double restitutionParoi = 0.40; // "rebond" contre le verre (inchangé, préserve le rebond des nouvelles billes)
 
   /// En dessous de cette vitesse d'impact (px/s), le rebond est désactivé
   /// (collision inélastique) — évite qu'un tas déjà posé ne vibre à l'infini.
   /// Augmente si le bocal plein bouge encore trop ; diminue si les
   /// nouvelles billes rebondissent trop peu.
-  static const double vitesseSeuilRebond = 7.0;
+  static const double vitesseSeuilRebond = 40.0;
 
   /// Nombre de passes de résolution des collisions par frame. Plus haut =
   /// tas plus stable (surtout à haute densité), mais légèrement plus coûteux.
@@ -105,6 +113,15 @@ class PastillePhysicsWorld {
     return maxInsetFraction * facteur * (zoneRight - zoneLeft) * width;
   }
 
+  /// Facteur de lissage (0 < x ≤ 1) appliqué à chaque nouvelle lecture du
+  /// capteur d'inclinaison, AVANT qu'elle n'influence la physique. Plus la
+  /// valeur est PETITE, plus le filtrage est fort (les micro-tremblements
+  /// de la main sont ignorés), mais plus l'app met de temps à réagir à une
+  /// vraie inclinaison volontaire. Ne touche en rien à la vitesse ou au
+  /// rebond de la chute d'une nouvelle bille (gérés par gravityMagnitude
+  /// et les constantes de restitution, totalement indépendants de ceci).
+  static const double filtragePenteAccelerometre = 0.07;
+
   /// À appeler avec la lecture brute de l'accéléromètre (axes x, y en m/s²).
   void updateGravityFromAccelerometer(double sensorX, double sensorY, {bool invertX = false, bool invertY = false}) {
     const double g = 9.8;
@@ -112,8 +129,14 @@ class PastillePhysicsWorld {
     double gy = (-sensorY / g).clamp(-1.0, 1.0);
     if (invertX) gx = -gx;
     if (invertY) gy = -gy;
-    gravityX = gx;
-    gravityY = gy;
+
+    // Filtre passe-bas (moyenne mobile exponentielle) : chaque nouvelle
+    // lecture ne compte que pour une petite fraction de la valeur finale,
+    // le reste vient de la valeur précédente déjà lissée. Ça absorbe les
+    // à-coups très rapides (tremblement de la main) tout en laissant
+    // passer les inclinaisons volontaires, plus lentes et plus amples.
+    gravityX = gravityX + (gx - gravityX) * filtragePenteAccelerometre;
+    gravityY = gravityY + (gy - gravityY) * filtragePenteAccelerometre;
   }
 
   void step(double dt) {

@@ -86,7 +86,7 @@ const List<SemaineTest> semainesTest = [
 
 /// Date de démarrage de la campagne de test — LA MÊME POUR TOUS LES
 /// TESTEURS. Ajuste-la à la vraie date de lancement de ton programme.
-final DateTime dateDebutCampagneTest = DateTime(2026, 7, 7);
+final DateTime dateDebutCampagneTest = DateTime(2026, 7, 27);
 
 int semaineActuelle() {
   final int joursEcoules = DateTime.now().difference(dateDebutCampagneTest).inDays;
@@ -156,7 +156,16 @@ class ScreenTesteurs extends StatelessWidget {
         final Color texteSecondaire = isDark ? lightGrey : grey;
 
         final double screenWidth = MediaQuery.of(context).size.width;
-        final double titleFontSize = (screenWidth * 18) / 390;
+        // --- FACTEUR RESPONSIVE GLOBAL ---
+        // Basé sur une largeur de référence de 390 (iPhone standard),
+        // avec des bornes (clamp) pour éviter un texte minuscule sur
+        // très petits écrans ou démesuré sur tablette.
+        final double scale = (screenWidth / 390).clamp(0.85, 1.35);
+
+        final double titleFontSize = 22 * scale;
+        final double sectionTitleFontSize = 18 * scale;
+        final double bodyFontSize = 14 * scale;
+        final double horizontalPadding = 30 * scale;
 
         final int semaine = semaineActuelle();
 
@@ -167,7 +176,7 @@ class ScreenTesteurs extends StatelessWidget {
               children: [
                 Container(
                   color: headerBgColor,
-                  padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 10),
+                  padding: EdgeInsets.symmetric(horizontal: horizontalPadding, vertical: 10 * scale),
                   width: double.infinity,
                   child: Stack(
                     alignment: Alignment.center,
@@ -176,13 +185,18 @@ class ScreenTesteurs extends StatelessWidget {
                         left: 0,
                         child: BtnChevronGauche(onTap: () => Navigator.pop(context)),
                       ),
-                      const LogoSourire(color: orange),
+                      LogoSourire(color: orange),
                     ],
                   ),
                 ),
                 Expanded(
                   child: SingleChildScrollView(
-                    padding: const EdgeInsets.only(left: 30, right: 30, top: 20, bottom: 30),
+                    padding: EdgeInsets.only(
+                      left: horizontalPadding,
+                      right: horizontalPadding,
+                      top: 20 * scale,
+                      bottom: 30 * scale,
+                    ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -194,41 +208,41 @@ class ScreenTesteurs extends StatelessWidget {
                             color: textColor,
                           ),
                         ),
-                        const SizedBox(height: 8),
+                        SizedBox(height: 8 * scale),
                         Text(
                           'Merci de participer au test de Sourire ! Voici tes scénarios '
                           'hebdomadaires et un aperçu de ton utilisation.',
-                          style: TextStyle(fontSize: 14, color: texteSecondaire, height: 1.4),
+                          style: TextStyle(fontSize: bodyFontSize, color: texteSecondaire, height: 1.4),
                         ),
-                        const SizedBox(height: 25),
+                        SizedBox(height: 25 * scale),
 
-                        _buildBlocStatistiques(context, isDark, cardColor, textColor, texteSecondaire),
+                        _buildBlocStatistiques(context, isDark, cardColor, textColor, texteSecondaire, scale),
 
-                        const SizedBox(height: 30),
+                        SizedBox(height: 30 * scale),
                         Text(
                           'Programme de test (4 semaines)',
                           style: TextStyle(
-                            fontSize: 18,
+                            fontSize: sectionTitleFontSize,
                             fontWeight: FontWeight.bold,
                             color: textColor,
                           ),
                         ),
-                        const SizedBox(height: 15),
+                        SizedBox(height: 15 * scale),
 
                         if (semaine == 0)
                           Text(
                             'Le programme de test n\'a pas encore commencé.',
-                            style: TextStyle(color: texteSecondaire, fontSize: 14),
+                            style: TextStyle(color: texteSecondaire, fontSize: bodyFontSize),
                           )
                         else if (semaine == 5)
                           Text(
                             'Le programme de test est terminé — merci infiniment pour ta '
                             'participation ! Tu peux encore consulter les semaines '
                             'ci-dessous si tu veux revenir sur un retour.',
-                            style: TextStyle(color: texteSecondaire, fontSize: 14, height: 1.4),
+                            style: TextStyle(color: texteSecondaire, fontSize: bodyFontSize, height: 1.4),
                           ),
 
-                        const SizedBox(height: 15),
+                        SizedBox(height: 15 * scale),
 
                         ...semainesTest.map((s) => _buildCarteSemaine(
                               context,
@@ -238,6 +252,7 @@ class ScreenTesteurs extends StatelessWidget {
                               cardColor: cardColor,
                               textColor: textColor,
                               texteSecondaire: texteSecondaire,
+                              scale: scale,
                             )),
                       ],
                     ),
@@ -257,6 +272,7 @@ class ScreenTesteurs extends StatelessWidget {
     Color cardColor,
     Color textColor,
     Color texteSecondaire,
+    double scale,
   ) {
     return StreamBuilder<List<NoteSourire>>(
       stream: DatabaseService().getNotesStream(),
@@ -271,7 +287,7 @@ class ScreenTesteurs extends StatelessWidget {
 
         return Container(
           width: double.infinity,
-          padding: const EdgeInsets.all(16),
+          padding: EdgeInsets.all(16 * scale),
           decoration: BoxDecoration(
             color: cardColor,
             borderRadius: BorderRadius.circular(12),
@@ -281,15 +297,15 @@ class ScreenTesteurs extends StatelessWidget {
             children: [
               Text(
                 'Activité des 30 derniers jours',
-                style: TextStyle(fontWeight: FontWeight.bold, color: textColor, fontSize: 15),
+                style: TextStyle(fontWeight: FontWeight.bold, color: textColor, fontSize: 15 * scale),
               ),
-              const SizedBox(height: 12),
+              SizedBox(height: 12 * scale),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  _buildStatItem('$total30j', 'souvenirs ajoutés', textColor, texteSecondaire),
-                  _buildStatItem(moyenneParSemaine.toStringAsFixed(1), 'par semaine (moy.)', textColor, texteSecondaire),
-                  _buildStatItem(moyenneParJour.toStringAsFixed(2), 'par jour (moy.)', textColor, texteSecondaire),
+                  _buildStatItem('$total30j', 'souvenirs ajoutés', textColor, texteSecondaire, scale),
+                  _buildStatItem(moyenneParSemaine.toStringAsFixed(1), 'par semaine (moy.)', textColor, texteSecondaire, scale),
+                  _buildStatItem(moyenneParJour.toStringAsFixed(2), 'par jour (moy.)', textColor, texteSecondaire, scale),
                 ],
               ),
             ],
@@ -299,16 +315,16 @@ class ScreenTesteurs extends StatelessWidget {
     );
   }
 
-  Widget _buildStatItem(String valeur, String label, Color textColor, Color texteSecondaire) {
+  Widget _buildStatItem(String valeur, String label, Color textColor, Color texteSecondaire, double scale) {
     return Expanded(
       child: Column(
         children: [
-          Text(valeur, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20, color: orange)),
-          const SizedBox(height: 4),
+          Text(valeur, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20 * scale, color: orange)),
+          SizedBox(height: 4 * scale),
           Text(
             label,
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 11, color: texteSecondaire),
+            style: TextStyle(fontSize: 11 * scale, color: texteSecondaire),
           ),
         ],
       ),
@@ -323,9 +339,10 @@ class ScreenTesteurs extends StatelessWidget {
     required Color cardColor,
     required Color textColor,
     required Color texteSecondaire,
+    required double scale,
   }) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 14),
+      margin: EdgeInsets.only(bottom: 14 * scale),
       decoration: BoxDecoration(
         color: cardColor,
         borderRadius: BorderRadius.circular(12),
@@ -343,49 +360,49 @@ class ScreenTesteurs extends StatelessWidget {
           children: [
             if (estSemaineActuelle)
               Container(
-                margin: const EdgeInsets.only(right: 8),
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                margin: EdgeInsets.only(right: 8 * scale),
+                padding: EdgeInsets.symmetric(horizontal: 8 * scale, vertical: 3 * scale),
                 decoration: BoxDecoration(color: orange, borderRadius: BorderRadius.circular(20)),
-                child: const Text(
+                child: Text(
                   'EN COURS',
-                  style: TextStyle(color: white, fontSize: 10, fontWeight: FontWeight.bold),
+                  style: TextStyle(color: white, fontSize: 10 * scale, fontWeight: FontWeight.bold),
                 ),
               ),
             Expanded(
               child: Text(
                 s.titre,
-                style: TextStyle(fontWeight: FontWeight.w600, color: textColor, fontSize: 15),
+                style: TextStyle(fontWeight: FontWeight.w600, color: textColor, fontSize: 15 * scale),
               ),
             ),
           ],
         ),
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            padding: EdgeInsets.fromLTRB(16 * scale, 0, 16 * scale, 16 * scale),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(s.scenario, style: TextStyle(color: texteSecondaire, height: 1.4, fontSize: 14)),
-                const SizedBox(height: 12),
+                Text(s.scenario, style: TextStyle(color: texteSecondaire, height: 1.4, fontSize: 14 * scale)),
+                SizedBox(height: 12 * scale),
                 Text(
                   'Questions à te poser :',
-                  style: TextStyle(color: textColor, fontWeight: FontWeight.w600, fontSize: 13),
+                  style: TextStyle(color: textColor, fontWeight: FontWeight.w600, fontSize: 13 * scale),
                 ),
-                const SizedBox(height: 6),
+                SizedBox(height: 6 * scale),
                 ...s.questions.map((q) => Padding(
-                      padding: const EdgeInsets.only(bottom: 4),
-                      child: Text('• $q', style: TextStyle(color: texteSecondaire, fontSize: 13, height: 1.3)),
+                      padding: EdgeInsets.only(bottom: 4 * scale),
+                      child: Text('• $q', style: TextStyle(color: texteSecondaire, fontSize: 13 * scale, height: 1.3)),
                     )),
-                const SizedBox(height: 14),
+                SizedBox(height: 14 * scale),
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton.icon(
                     onPressed: () => _ouvrirLienTally(s.lienTally),
-                    icon: const Icon(Icons.open_in_new, size: 16, color: white),
-                    label: const Text('Donner mon avis', style: TextStyle(color: white, fontWeight: FontWeight.bold)),
+                    icon: Icon(Icons.open_in_new, size: 16 * scale, color: white),
+                    label: Text('Donner mon avis', style: TextStyle(color: white, fontWeight: FontWeight.bold, fontSize: 14 * scale)),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: orange,
-                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      padding: EdgeInsets.symmetric(vertical: 12 * scale),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                       elevation: 0,
                     ),
