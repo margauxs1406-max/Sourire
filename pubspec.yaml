@@ -2,7 +2,7 @@ name: sourire
 description: "A new Flutter project."
 publish_to: 'none'
 
-version: 1.0.0+5
+version: 1.0.0+6
 
 environment:
   sdk: ^3.11.5
@@ -38,6 +38,13 @@ dev_dependencies:
     sdk: flutter
   flutter_lints: ^6.0.0
   simple_shadow: ^0.3.1  # <-- Ajoutez cette ligne ici
+  flutter_launcher_icons: ^0.14.1
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/icon/icon.png"
+  remove_alpha_ios: true
 
 flutter:
   uses-material-design: true
