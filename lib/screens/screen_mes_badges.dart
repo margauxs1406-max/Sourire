@@ -142,52 +142,109 @@ class ScreenMesBadges extends StatelessWidget {
                         color: textColor,
                       ),
                     ),
-                    const SizedBox(height: 25),
-                    StreamBuilder<List<NoteSourire>>(
-                      stream: DatabaseService().getNotesStream(),
-                      builder: (context, snapshot) {
-                        final int total = snapshot.data?.length ?? 0;
 
-                        return GridView.builder(
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          itemCount: paliersOrdonnes.length,
-                          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 4,
-                            crossAxisSpacing: 12,
-                            mainAxisSpacing: 12,
-                            childAspectRatio: 1.0,
-                          ),
-                          itemBuilder: (context, index) {
-                            final int palier = paliersOrdonnes[index];
-                            final bool debloque = total >= palier;
-                            final String assetPath = badgeAssetParPalier[palier]!;
-
-                            return GestureDetector(
-                              onTap: debloque ? () => _ouvrirBadgeAgrandi(context, palier) : null,
-                              child: LayoutBuilder(
-                                builder: (context, constraints) {
-                                  final double taille = constraints.maxWidth;
-                                  return Container(
-                                    decoration: BoxDecoration(
-                                      color: debloque ? white : orange,
-                                      borderRadius: BorderRadius.circular(4),
-                                    ),
-                                    child: Center(
-                                      child: debloque
-                                          ? Padding(
-                                              padding: EdgeInsets.all(taille * 0.15),
-                                              child: SvgPicture.asset(assetPath),
-                                            )
-                                          : Icon(
-                                              Icons.star,
-                                              color: Colors.white.withOpacity(0.5),
-                                              size: taille * 0.45,
-                                            ),
-                                    ),
-                                  );
-                                },
+                    // --- OUTIL DE TEST : force l'affichage de tous les
+                    // badges comme débloqués, sans créer réellement des
+                    // milliers de souvenirs. Visible uniquement pendant
+                    // la phase de test (voir `phaseDeTestActive` dans
+                    // tokens.dart) — à retirer ou masquer ensuite.
+                    if (phaseDeTestActive) ...[
+                      const SizedBox(height: 14),
+                      ValueListenableBuilder<bool>(
+                        valueListenable: debloquerTousBadgesTestNotifier,
+                        builder: (context, forceTout, _) {
+                          return GestureDetector(
+                            onTap: () {
+                              debloquerTousBadgesTestNotifier.value = !forceTout;
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                              decoration: BoxDecoration(
+                                color: (forceTout ? orange : Colors.grey).withOpacity(0.15),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                  color: forceTout ? orange : Colors.grey,
+                                  width: 1,
+                                ),
                               ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.science_outlined,
+                                    size: 16,
+                                    color: forceTout ? orange : (isDarkMode ? lightGrey : grey),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    forceTout
+                                        ? 'Test : tous les badges débloqués !'
+                                        : 'Test : débloquer tous les badges',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                      color: forceTout ? orange : (isDarkMode ? lightGrey : grey),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ],
+
+                    const SizedBox(height: 25),
+                    ValueListenableBuilder<bool>(
+                      valueListenable: debloquerTousBadgesTestNotifier,
+                      builder: (context, forceTout, _) {
+                        return StreamBuilder<List<NoteSourire>>(
+                          stream: DatabaseService().getNotesStream(),
+                          builder: (context, snapshot) {
+                            final int total = snapshot.data?.length ?? 0;
+
+                            return GridView.builder(
+                              shrinkWrap: true,
+                              physics: const NeverScrollableScrollPhysics(),
+                              itemCount: paliersOrdonnes.length,
+                              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 4,
+                                crossAxisSpacing: 12,
+                                mainAxisSpacing: 12,
+                                childAspectRatio: 1.0,
+                              ),
+                              itemBuilder: (context, index) {
+                                final int palier = paliersOrdonnes[index];
+                                final bool debloque = forceTout || total >= palier;
+                                final String assetPath = badgeAssetParPalier[palier]!;
+
+                                return GestureDetector(
+                                  onTap: debloque ? () => _ouvrirBadgeAgrandi(context, palier) : null,
+                                  child: LayoutBuilder(
+                                    builder: (context, constraints) {
+                                      final double taille = constraints.maxWidth;
+                                      return Container(
+                                        decoration: BoxDecoration(
+                                          color: debloque ? white : orange,
+                                          borderRadius: BorderRadius.circular(4),
+                                        ),
+                                        child: Center(
+                                          child: debloque
+                                              ? Padding(
+                                                  padding: EdgeInsets.all(taille * 0.15),
+                                                  child: SvgPicture.asset(assetPath),
+                                                )
+                                              : Icon(
+                                                  Icons.star,
+                                                  color: Colors.white.withOpacity(0.5),
+                                                  size: taille * 0.45,
+                                                ),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                );
+                              },
                             );
                           },
                         );

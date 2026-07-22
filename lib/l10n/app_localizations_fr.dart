@@ -667,4 +667,13 @@ String get btnDeselectAll => 'Tout désélectionner';
 
 @override
 String selectedCountLabel(int count) => '$count sélectionné(s)';
+
+@override
+String get jarFullTitle => 'Ton bocal est plein !';
+
+@override
+String get jarFullMessage => 'Remplis-en un nouveau ! Tes souvenirs restent bien sûr tous conservés — seul l\'affichage change, un nouveau bocal t\'attend.';
+
+@override
+String get btnNewJar => 'Nouveau bocal';
 }

@@ -271,6 +271,9 @@ String get myBadgesTitle;
 String get btnSelectAll;
 String get btnDeselectAll;
 String selectedCountLabel(int count);
+String get jarFullTitle;
+String get jarFullMessage;
+String get btnNewJar;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

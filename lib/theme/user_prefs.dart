@@ -101,4 +101,17 @@ static set dernierPalierCelebre(int value) => _prefs?.setInt('dernierPalierCeleb
 
 static bool get gamificationInitialisee => _prefs?.getBool('gamificationInitialisee') ?? false;
 static set gamificationInitialisee(bool value) => _prefs?.setBool('gamificationInitialisee', value);
+
+/// Nombre de souvenirs (chronologiquement, du plus ancien au plus
+/// récent) déjà rangés dans un bocal précédent, fermé. Avance de
+/// `capaciteBocal` à chaque fois que l'utilisateur clique "Nouveau bocal".
+static int get bocalResetOffset => _prefs?.getInt('bocalResetOffset') ?? 0;
+static set bocalResetOffset(int value) => _prefs?.setInt('bocalResetOffset', value);
+
+/// Position sauvegardée de chaque bille du bocal (JSON), écrite juste
+/// avant que l'app ne passe en arrière-plan ou ne se ferme. Permet de
+/// restaurer exactement le même rendu au retour, plutôt que de tout
+/// recalculer.
+static String get positionsBocal => _prefs?.getString('positionsBocal') ?? '{}';
+static set positionsBocal(String value) => _prefs?.setString('positionsBocal', value);
 }

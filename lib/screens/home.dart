@@ -53,6 +53,10 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
   dynamic _dernierIdTire; // AJOUT : Stocke l'ID du dernier souvenir affiché
   SourireTheme? _derniereCouleurNote; // AJOUT : Stocke la dernière couleur de note générée
 
+  static const int _capaciteBocal = 50;
+  bool _bocalPleinEnAttente = false;
+  bool _prochainBocalDoitAnimerDemarrage = false;
+
   // Dans le fichier de ta Home
 @override
 void initState() {
@@ -608,23 +612,99 @@ void _verifierEtDeclencherSouvenir() async {
                         ),
                       );
                     },
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          l10n.btnGoPremium,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(color: white, fontWeight: FontWeight.bold, fontSize: 15),
-                        ),
-                        if (phaseDeTestActive) ...[
-                          const SizedBox(height: 2),
-                          const Text(
-                            'Gratuit pour les tests ! 😁',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(color: white, fontWeight: FontWeight.bold, fontSize: 13),
-                          ),
-                        ],
-                      ],
+                    child: Text(
+                      l10n.btnGoPremium,
+                      style: const TextStyle(color: white, fontWeight: FontWeight.bold, fontSize: 15),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  /// Affiche la pop-up "Ton bocal est plein !" UNIQUEMENT si Home est
+  /// bien l'écran actif au premier plan — sinon réessaie au frame
+  /// suivant. Sans ça, si le seuil est franchi pendant qu'un autre écran
+  /// est encore ouvert (ex: la catégorisation d'un import en cours), la
+  /// pop-up peut apparaître puis être aussitôt "avalée" par le retour à
+  /// Home. Même principe que _tenterAfficherPalierEnAttente.
+  void _tenterAfficherPopupBocalPlein(BuildContext context) {
+    if (!_bocalPleinEnAttente) return;
+
+    if (ModalRoute.of(context)?.isCurrent != true) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _tenterAfficherPopupBocalPlein(context);
+      });
+      return;
+    }
+
+    _bocalPleinEnAttente = false;
+    _afficherPopupBocalPlein(context);
+  }
+
+  /// Affiche la pop-up "Ton bocal est plein !" — déclenchée par
+  /// BocalPastilles quand le bocal courant atteint sa capacité maximale
+  /// alors qu'il reste des souvenirs en attente au-delà. Le clic sur
+  /// "Nouveau bocal" fait avancer l'offset persisté (UserPrefs), ce qui
+  /// force — via le changement de Key sur BocalPastilles — une
+  /// réinitialisation propre : le bocal réapparaît vide, avec les
+  /// souvenirs excédentaires déjà placés dedans.
+  void _afficherPopupBocalPlein(BuildContext context) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext dialogContext) {
+        final l10n = AppLocalizations.of(dialogContext)!;
+        final ThemeMode currentMode = MyApp.themeNotifier.value;
+        final bool isDark = currentMode == ThemeMode.dark ||
+            (currentMode == ThemeMode.system && MediaQuery.of(dialogContext).platformBrightness == Brightness.dark);
+
+        final Color couleurFond = isDark ? const Color(0xFF1E1E1E) : white;
+        final Color couleurTitre = isDark ? white : black;
+        final Color couleurDescription = isDark ? Colors.white70 : grey;
+
+        return Dialog(
+          backgroundColor: couleurFond,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  l10n.jarFullTitle,
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: couleurTitre),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  l10n.jarFullMessage,
+                  style: TextStyle(fontSize: 14, color: couleurDescription, height: 1.4),
+                ),
+                const SizedBox(height: 24),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: orange,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      elevation: 0,
+                    ),
+                    onPressed: () {
+                      Navigator.of(dialogContext).pop();
+                      setState(() {
+                        _prochainBocalDoitAnimerDemarrage = true;
+                        UserPrefs.bocalResetOffset = UserPrefs.bocalResetOffset + _capaciteBocal;
+                      });
+                    },
+                    child: Text(
+                      l10n.btnNewJar,
+                      style: const TextStyle(color: white, fontWeight: FontWeight.bold, fontSize: 15),
                     ),
                   ),
                 ),
@@ -852,7 +932,18 @@ Positioned.fill(
 
             // 3. Pastilles (Les billes de souvenirs animées)
             Positioned.fill(
-              child: BocalPastilles(maxCapacity: 65),
+              child: BocalPastilles(
+                key: ValueKey(UserPrefs.bocalResetOffset),
+                capaciteBocal: _capaciteBocal,
+                offsetBocal: UserPrefs.bocalResetOffset,
+                animerDemarrage: _prochainBocalDoitAnimerDemarrage,
+                onBocalPlein: () {
+                  _bocalPleinEnAttente = true;
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    if (mounted) _tenterAfficherPopupBocalPlein(context);
+                  });
+                },
+              ),
             ),
 
             // 4. Ton calque PNG personnalisé avec Photopea par-dessus les pastilles

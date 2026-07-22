@@ -125,3 +125,10 @@ const double gapDefault = 16.0;
 /// automatiquement la mention "Gratuit pour les tests" sur les boutons
 /// Premium (home.dart et screen_choix_themes.dart).
 const bool phaseDeTestActive = true;
+
+/// Interrupteur de test : force l'affichage de TOUS les badges comme
+/// débloqués dans screen_mes_badges.dart, sans avoir besoin de créer
+/// réellement des milliers de souvenirs. Purement en mémoire (non
+/// persisté) — se réinitialise à chaque redémarrage de l'app. Visible
+/// uniquement quand `phaseDeTestActive` est actif.
+final ValueNotifier<bool> debloquerTousBadgesTestNotifier = ValueNotifier<bool>(false);

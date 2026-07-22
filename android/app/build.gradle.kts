@@ -32,7 +32,7 @@ android {
     defaultConfig {
         applicationId = "com.margauxsilva.sourire"
         minSdk = flutter.minSdkVersion
-        targetSdk = 35 // Mis à jour : Google Play exige désormais un minimum de 35
+        targetSdk = 36 // Mis à jour : conformité à l'exigence Google Play du 31/08/2026 (Android 16)
         versionCode = flutter.versionCode
         versionName = flutter.versionName
         multiDexEnabled = true

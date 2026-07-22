@@ -666,4 +666,13 @@ String get btnDeselectAll => 'Deselect all';
 
 @override
 String selectedCountLabel(int count) => '$count selected';
+
+@override
+String get jarFullTitle => 'Your jar is full!';
+
+@override
+String get jarFullMessage => 'Fill a new one! Your memories are of course all kept safe — only the display changes, a fresh jar awaits you.';
+
+@override
+String get btnNewJar => 'New jar';
 }

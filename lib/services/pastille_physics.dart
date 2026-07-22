@@ -82,6 +82,14 @@ class PastillePhysicsWorld {
   /// résiduel une fois posée.
   static const double vitesseSommeil = 12.0;
 
+  /// Filet de sécurité : aucune bille ne peut jamais dépasser cette
+  /// vitesse, peu importe la cause (chevauchement initial important lors
+  /// d'un import groupé, instabilité ponctuelle, etc.). Empêche tout
+  /// emballement numérique de s'auto-amplifier indéfiniment ("bocal
+  /// possédé"). Bien au-dessus de la vitesse d'une chute normale, donc
+  /// invisible en usage normal.
+  static const double vitesseMaximale = 2200.0;
+
   // --- Zone de remplissage (identique à l'ancienne version statique) ---
   final double zoneLeft;
   final double zoneRight;
@@ -120,7 +128,7 @@ class PastillePhysicsWorld {
   /// vraie inclinaison volontaire. Ne touche en rien à la vitesse ou au
   /// rebond de la chute d'une nouvelle bille (gérés par gravityMagnitude
   /// et les constantes de restitution, totalement indépendants de ceci).
-  static const double filtragePenteAccelerometre = 0.07;
+  static const double filtragePenteAccelerometre = 0.10;
 
   /// À appeler avec la lecture brute de l'accéléromètre (axes x, y en m/s²).
   void updateGravityFromAccelerometer(double sensorX, double sensorY, {bool invertX = false, bool invertY = false}) {
@@ -172,11 +180,16 @@ class PastillePhysicsWorld {
     }
 
     // 3. Rotation visuelle + mise en sommeil des billes quasi immobiles
+    // + plafond de vitesse (filet de sécurité anti-emballement)
     for (final p in pastilles) {
       final double vitesse = math.sqrt(p.vx * p.vx + p.vy * p.vy);
       if (vitesse < vitesseSommeil) {
         p.vx = 0;
         p.vy = 0;
+      } else if (vitesse > vitesseMaximale) {
+        final double facteur = vitesseMaximale / vitesse;
+        p.vx *= facteur;
+        p.vy *= facteur;
       }
       p.angularVelocity = p.radius > 0 ? (p.vx / p.radius) * 0.3 : 0;
       p.angle += p.angularVelocity * dt;

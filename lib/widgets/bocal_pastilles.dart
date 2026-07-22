@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
@@ -7,26 +8,57 @@ import '../services/database_service.dart';
 import '../models/note_model.dart';
 import '../services/pastille_physics.dart';
 import 'package:sourire/theme/tokens.dart';
+import 'package:sourire/theme/user_prefs.dart';
 
 /// Couche de pastilles à insérer DANS ton Stack existant (entre l'ombre
 /// et l'image du bocal), en Positioned.fill, pour occuper exactement
 /// bocalWidth x bocalHeight.
 ///
-/// Cette version utilise une VRAIE simulation physique (gravité pilotée
-/// par l'inclinaison du téléphone, collisions bille-bille et bille-paroi)
-/// au lieu de positions statiques calculées une fois.
+/// --- SYSTÈME "BOCAL PLEIN → NOUVEAU BOCAL" ---
+/// Le bocal a une capacité limitée (`capaciteBocal`). [offsetBocal]
+/// indique combien de souvenirs (du plus ancien au plus récent) sont
+/// déjà "rangés" dans un bocal précédent, fermé — ils ne sont PLUS
+/// affichés dans CE bocal, mais restent bien présents en base de données
+/// (le tirage aléatoire continue donc de porter sur la TOTALITÉ des
+/// souvenirs, jamais uniquement sur le bocal actuellement affiché).
 ///
-/// --- IMPRESSION DE PROFONDEUR (3 "couches" Z) ---
-/// Chaque bille se voit attribuer une couche de profondeur (arrière,
-/// milieu, avant) fixée UNE FOIS à sa création, de façon déterministe
-/// (même graine que sa position). Le peintre trie ensuite les billes par
-/// couche avant de les dessiner (arrière d'abord, avant en dernier), et
-/// applique une légère variation de taille/luminosité par couche — ce qui
-/// recrée l'impression de chevauchement/profondeur qu'on avait avec
-/// l'ancien rendu statique, SANS toucher à la physique 2D (positions,
-/// collisions, stabilité) qu'on vient de stabiliser.
+/// Dès que le nombre de souvenirs à afficher dans la fenêtre courante
+/// dépasse `capaciteBocal`, le widget :
+/// 1. N'affiche que les `capaciteBocal` premiers (les plus anciens de la
+///    fenêtre courante) — le bocal se remplit visuellement jusqu'au bord.
+/// 2. Déclenche UNE SEULE FOIS [onBocalPlein], pour que l'écran parent
+///    (Home) affiche la pop-up "Ton bocal est plein !".
+///
+/// C'est à l'écran parent de faire avancer [offsetBocal] (persisté dans
+/// UserPrefs) quand l'utilisateur clique "Nouveau bocal", et de passer
+/// une NOUVELLE Key à ce widget à ce moment-là (ex: `ValueKey(offsetBocal)`)
+/// pour forcer une réinitialisation propre — le bocal reparaît alors vide,
+/// avec les souvenirs excédentaires déjà placés dedans (pas d'animation
+/// de chute pour ceux-là, ils apparaissent directement "posés").
 class BocalPastilles extends StatefulWidget {
-  final int maxCapacity;
+  /// Nombre maximum de souvenirs affichés dans CE bocal avant qu'il ne
+  /// soit considéré comme plein.
+  final int capaciteBocal;
+
+  /// Nombre de souvenirs (chronologiquement, du plus ancien au plus
+  /// récent) à ignorer car déjà rangés dans un bocal précédent fermé.
+  final int offsetBocal;
+
+  /// Appelé UNE SEULE FOIS (par instance de ce widget) quand le bocal
+  /// vient d'atteindre sa capacité maximale avec encore des souvenirs en
+  /// attente au-delà. Laisse le soin à l'écran parent d'afficher la
+  /// pop-up et de gérer le passage au bocal suivant.
+  final VoidCallback? onBocalPlein;
+
+  /// Si `true`, la toute première fenêtre de souvenirs de CETTE instance
+  /// est traitée comme des nouvelles arrivées qui TOMBENT (animées,
+  /// étagées) plutôt que d'être placées instantanément déjà posées.
+  /// À utiliser quand le bocal vient d'être réinitialisé PENDANT que
+  /// l'utilisateur regarde (ex: clic sur "Nouveau bocal" après un import
+  /// groupé) — pour un vrai démarrage à froid de l'app, laisse `false`
+  /// (comportement historique : évite une longue cascade de chutes à
+  /// chaque ouverture de l'app).
+  final bool animerDemarrage;
 
   /// Affiche un rectangle semi-transparent représentant la zone de
   /// remplissage (avec le biseau) pour calibrer visuellement.
@@ -34,7 +66,10 @@ class BocalPastilles extends StatefulWidget {
 
   const BocalPastilles({
     super.key,
-    this.maxCapacity = 50,
+    this.capaciteBocal = 50,
+    this.offsetBocal = 0,
+    this.onBocalPlein,
+    this.animerDemarrage = false,
     this.showDebugZone = false,
   });
 
@@ -42,7 +77,7 @@ class BocalPastilles extends StatefulWidget {
   State<BocalPastilles> createState() => _BocalPastillesState();
 }
 
-class _BocalPastillesState extends State<BocalPastilles> with SingleTickerProviderStateMixin {
+class _BocalPastillesState extends State<BocalPastilles> with SingleTickerProviderStateMixin, WidgetsBindingObserver {
   static const double zoneLeft = 0.18;
   static const double zoneRight = 0.82;
   static const double zoneBottom = 0.89;
@@ -62,11 +97,27 @@ class _BocalPastillesState extends State<BocalPastilles> with SingleTickerProvid
   final Set<Object> _idsConnus = {};
   bool _demarrageInitialise = false;
 
+  // Empêche de redéclencher onBocalPlein plusieurs fois pour la même
+  // instance du widget (donc pour le même bocal en cours).
+  bool _popupDejaDeclenchee = false;
+
+  // --- ÉTAGEMENT DES ARRIVÉES GROUPÉES ---
+  // Les souvenirs importés en lot (ex: 10 photos d'un coup) sont insérés
+  // en base UN PAR UN, ce qui déclenche plusieurs émissions successives
+  // du stream très rapprochées dans le temps — pas un seul appel avec
+  // les 10 d'un coup. Ce compteur ne se réinitialise que s'il y a eu une
+  // vraie pause (> 400ms) depuis la dernière arrivée, pour que tout un
+  // import groupé reste correctement étagé ensemble, même réparti sur
+  // plusieurs appels à _synchroniserAvecNotes.
+  int _compteurArriveesLotCourant = 0;
+  DateTime? _dernierAjoutHorodatage;
+
   StreamSubscription<AccelerometerEvent>? _accelSub;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _world = PastillePhysicsWorld(
       zoneLeft: zoneLeft,
       zoneRight: zoneRight,
@@ -106,9 +157,32 @@ class _BocalPastillesState extends State<BocalPastilles> with SingleTickerProvid
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _sauvegarderPositions(); // Filet de sécurité supplémentaire
     _ticker.dispose();
     _accelSub?.cancel();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // Dès que l'app quitte le premier plan (mise en arrière-plan,
+    // verrouillage, fermeture) — pas d'attente, on sauvegarde tout de
+    // suite pour ne rien perdre même en cas de fermeture brutale par l'OS.
+    if (state == AppLifecycleState.paused || state == AppLifecycleState.inactive) {
+      _sauvegarderPositions();
+    }
+  }
+
+  /// Sauvegarde la position actuelle de chaque bille (en fractions de la
+  /// largeur/hauteur du bocal, pour rester valable même si la taille
+  /// d'écran diffère légèrement au prochain lancement).
+  void _sauvegarderPositions() {
+    if (_width == 0 || _height == 0 || _world.pastilles.isEmpty) return;
+    final Map<String, dynamic> donnees = {
+      for (final p in _world.pastilles) p.id.toString(): [p.x / _width, p.y / _height],
+    };
+    UserPrefs.positionsBocal = jsonEncode(donnees);
   }
 
   double _insetAt(double t, double zoneWidthPx) {
@@ -117,9 +191,12 @@ class _BocalPastillesState extends State<BocalPastilles> with SingleTickerProvid
     return maxInsetFraction * facteur * zoneWidthPx;
   }
 
-  /// Calcule une position de repos initiale (méthode "tas de sable", comme
-  /// dans l'ancienne version statique) pour les souvenirs déjà présents au
-  /// démarrage — ils doivent apparaître déjà installés, pas tomber du ciel.
+  /// Calcule une position de repos initiale pour les souvenirs déjà
+  /// présents au démarrage. PRIORITÉ à une position sauvegardée
+  /// (mise en arrière-plan ou fermeture précédente) si elle existe pour
+  /// ce souvenir — sinon, algorithme "tas de sable" comme avant, pour les
+  /// souvenirs jamais encore affichés. [notes] doit être fourni du PLUS
+  /// RÉCENT au PLUS ANCIEN.
   void _placerSouvenirsExistants(List<NoteSourire> notes, double width, double height) {
     final double pastilleSize = (width * 0.11).clamp(12.0, 26.0);
     final double radius = pastilleSize / 2;
@@ -132,35 +209,69 @@ class _BocalPastillesState extends State<BocalPastilles> with SingleTickerProvid
     final List<double> heightMap = List.filled(resolution, 0.0);
     max(1, (pastilleSize * 0.7 / colWidth).ceil());
 
+    Map<String, dynamic> positionsSauvegardees = {};
+    try {
+      final decoded = jsonDecode(UserPrefs.positionsBocal);
+      if (decoded is Map<String, dynamic>) positionsSauvegardees = decoded;
+    } catch (_) {
+      positionsSauvegardees = {};
+    }
+
     final chronological = notes.reversed.toList();
 
     for (final note in chronological) {
       final Object seed = note.id ?? note.hashCode;
       final rnd = Random(seed.hashCode);
+      final dynamic positionSauvegardee = positionsSauvegardees[seed.toString()];
 
-      const int candidates = 9;
-      int bestCol = rnd.nextInt(resolution);
-      double bestHeight = heightMap[bestCol];
-      for (int c = 1; c < candidates; c++) {
-        final col = rnd.nextInt(resolution);
-        if (heightMap[col] < bestHeight) {
-          bestHeight = heightMap[col];
-          bestCol = col;
+      double dx;
+      double dy;
+
+      if (positionSauvegardee is List && positionSauvegardee.length == 2) {
+        // Position restaurée telle quelle (convertie depuis des
+        // fractions, donc valable même si la taille d'écran a changé).
+        dx = (positionSauvegardee[0] as num).toDouble() * width;
+        dy = (positionSauvegardee[1] as num).toDouble() * height;
+
+        final double t = ((dy - zoneTopPx) / (zoneBottomPx - zoneTopPx)).clamp(0.0, 1.0);
+        final double inset = _insetAt(t, zoneWidth);
+        final double minX = zoneLeft * width + inset + radius;
+        final double maxX = zoneRight * width - inset - radius;
+        dx = dx.clamp(minX, maxX);
+        dy = dy.clamp(zoneTopPx + radius, zoneBottomPx - radius);
+
+        // Met à jour la carte de hauteur locale pour que les souvenirs
+        // NON sauvegardés (nouveaux) tiennent compte de cette bille lors
+        // de leur propre placement "tas de sable" juste en dessous.
+        final int colApprox = (((dx - zoneLeft * width) / colWidth).floor()).clamp(0, resolution - 1);
+        heightMap[colApprox] = max(heightMap[colApprox], zoneBottomPx - dy + radius * 0.32);
+      } else {
+        // Pas de position connue (souvenir jamais encore affiché) :
+        // algorithme "tas de sable" habituel.
+        const int candidates = 9;
+        int bestCol = rnd.nextInt(resolution);
+        double bestHeight = heightMap[bestCol];
+        for (int c = 1; c < candidates; c++) {
+          final col = rnd.nextInt(resolution);
+          if (heightMap[col] < bestHeight) {
+            bestHeight = heightMap[col];
+            bestCol = col;
+          }
         }
+
+        final double jitterX = (rnd.nextDouble() - 0.5) * colWidth * 0.6;
+        final double centerX = zoneLeft * width + (bestCol + 0.5) * colWidth + jitterX;
+        dy = zoneBottomPx - bestHeight - radius;
+        dy = dy.clamp(zoneTopPx + radius, zoneBottomPx - radius);
+
+        final double t = ((dy - zoneTopPx) / (zoneBottomPx - zoneTopPx)).clamp(0.0, 1.0);
+        final double inset = _insetAt(t, zoneWidth);
+        final double minX = zoneLeft * width + inset + radius;
+        final double maxX = zoneRight * width - inset - radius;
+        dx = centerX.clamp(minX, maxX);
+
+        heightMap[bestCol] = max(heightMap[bestCol], bestHeight + pastilleSize * 0.32);
       }
-
-      final double jitterX = (rnd.nextDouble() - 0.5) * colWidth * 0.6;
-      final double centerX = zoneLeft * width + (bestCol + 0.5) * colWidth + jitterX;
-      double dy = zoneBottomPx - bestHeight - radius;
-      dy = dy.clamp(zoneTopPx + radius, zoneBottomPx - radius);
-
-      final double t = ((dy - zoneTopPx) / (zoneBottomPx - zoneTopPx)).clamp(0.0, 1.0);
-      final double inset = _insetAt(t, zoneWidth);
-      final double minX = zoneLeft * width + inset + radius;
-      final double maxX = zoneRight * width - inset - radius;
-      final double dx = centerX.clamp(minX, maxX);
-
-      heightMap[bestCol] = max(heightMap[bestCol], bestHeight + pastilleSize * 0.32);
 
       _world.pastilles.add(Pastille(
         id: seed,
@@ -168,7 +279,7 @@ class _BocalPastillesState extends State<BocalPastilles> with SingleTickerProvid
         y: dy,
         radius: radius,
         baseColor: SourireTheme.fromLabel(note.colorLabel).main,
-        zLayer: rnd.nextInt(3), // 0=arrière, 1=milieu, 2=avant — fixé une fois pour toutes
+        zLayer: rnd.nextInt(3),
       ));
       _idsConnus.add(seed);
     }
@@ -177,15 +288,28 @@ class _BocalPastillesState extends State<BocalPastilles> with SingleTickerProvid
   /// Ajoute un souvenir tout nouveau : il apparaît au-dessus du bocal et
   /// tombe naturellement sous l'effet de la gravité simulée — plus besoin
   /// d'animation "fausse", la vraie physique donne le rebond.
-  void _ajouterNouveauSouvenir(NoteSourire note, double width, double height) {
+  ///
+  /// [indexDansLot] : position de cette bille dans le lot de nouvelles
+  /// arrivées traitées lors de ce même passage. Sert à répartir les
+  /// billes sur plusieurs "couloirs" horizontaux et à étager leur hauteur
+  /// de départ — indispensable lors d'un IMPORT GROUPÉ (ex: 10 photos
+  /// d'un coup) : sans ça, plusieurs billes démarraient quasiment au même
+  /// endroit, provoquant un chevauchement initial énorme et un
+  /// emballement de la simulation.
+  void _ajouterNouveauSouvenir(NoteSourire note, double width, double height, int indexDansLot) {
     final double pastilleSize = (width * 0.11).clamp(12.0, 26.0);
     final double radius = pastilleSize / 2;
     final Object seed = note.id ?? note.hashCode;
     final rnd = Random(seed.hashCode);
 
     final double zoneWidth = (zoneRight - zoneLeft) * width;
-    final double startX = zoneLeft * width + zoneWidth * (0.3 + rnd.nextDouble() * 0.4);
-    final double startY = zoneTop * height - radius * (2 + rnd.nextDouble() * 3);
+
+    const int nombreCouloirs = 5;
+    final int couloir = indexDansLot % nombreCouloirs;
+    final double centreCouloir = zoneLeft * width + zoneWidth * ((couloir + 0.5) / nombreCouloirs);
+    final double startX = centreCouloir + (rnd.nextDouble() - 0.5) * (zoneWidth / nombreCouloirs) * 0.5;
+
+    final double startY = zoneTop * height - radius * (2 + rnd.nextDouble() * 3) - (indexDansLot * radius * 2.2);
 
     _world.pastilles.add(Pastille(
       id: seed,
@@ -194,34 +318,78 @@ class _BocalPastillesState extends State<BocalPastilles> with SingleTickerProvid
       radius: radius,
       baseColor: SourireTheme.fromLabel(note.colorLabel).main,
       vx: (rnd.nextDouble() - 0.5) * 40,
-      zLayer: rnd.nextInt(3), // 0=arrière, 1=milieu, 2=avant — fixé une fois pour toutes
+      zLayer: rnd.nextInt(3),
     ));
     _idsConnus.add(seed);
   }
 
-  void _synchroniserAvecNotes(List<NoteSourire> notes, double width, double height) {
+  /// [notesBrutes] est fourni par le stream, du PLUS RÉCENT au PLUS ANCIEN.
+  void _synchroniserAvecNotes(List<NoteSourire> notesBrutes, double width, double height) {
+    // Remise en ordre chronologique croissant (plus ancien en premier),
+    // pour pouvoir appliquer proprement l'offset du bocal courant.
+    final List<NoteSourire> chronologique = notesBrutes.reversed.toList();
+
+    final List<NoteSourire> fenetreBocalActuel = widget.offsetBocal < chronologique.length
+        ? chronologique.sublist(widget.offsetBocal)
+        : <NoteSourire>[];
+
+    final bool depassementCapacite = fenetreBocalActuel.length > widget.capaciteBocal;
+    final List<NoteSourire> notesAffichees =
+        depassementCapacite ? fenetreBocalActuel.sublist(0, widget.capaciteBocal) : fenetreBocalActuel;
+
     if (!_demarrageInitialise) {
-      final int cappedCount = notes.length > widget.maxCapacity ? widget.maxCapacity : notes.length;
-      _placerSouvenirsExistants(notes.take(cappedCount).toList(), width, height);
+      if (widget.animerDemarrage) {
+        // Nouveau bocal déclenché EN SESSION (l'utilisateur regarde) :
+        // on fait tomber chaque souvenir de la fenêtre initiale, étagé
+        // comme un lot de nouvelles arrivées, plutôt que de les placer
+        // instantanément déjà posés.
+        int indexDansLot = 0;
+        for (final note in notesAffichees) {
+          _ajouterNouveauSouvenir(note, width, height, indexDansLot);
+          indexDansLot++;
+        }
+      } else {
+        // Démarrage à froid normal de l'app : placement instantané déjà
+        // posé (évite une longue cascade de chutes à chaque ouverture).
+        // _placerSouvenirsExistants attend une liste "plus récent
+        // d'abord" (elle fait son propre .reversed en interne).
+        _placerSouvenirsExistants(notesAffichees.reversed.toList(), width, height);
+      }
       _demarrageInitialise = true;
-      return;
-    }
+    } else {
+      final Set<Object> idsActuels = notesAffichees.map<Object>((n) => n.id ?? n.hashCode).toSet();
 
-    final Set<Object> idsActuels = notes.map<Object>((n) => n.id ?? n.hashCode).toSet();
+      _world.pastilles.removeWhere((p) => !idsActuels.contains(p.id));
+      _idsConnus.removeWhere((id) => !idsActuels.contains(id));
 
-    // Suppressions
-    _world.pastilles.removeWhere((p) => !idsActuels.contains(p.id));
-    _idsConnus.removeWhere((id) => !idsActuels.contains(id));
+      if (_world.pastilles.length < widget.capaciteBocal) {
+        for (final note in notesAffichees) {
+          final Object seed = note.id ?? note.hashCode;
+          if (!_idsConnus.contains(seed)) {
+            final DateTime maintenant = DateTime.now();
+            if (_dernierAjoutHorodatage == null ||
+                maintenant.difference(_dernierAjoutHorodatage!) > const Duration(milliseconds: 400)) {
+              _compteurArriveesLotCourant = 0;
+            }
+            _dernierAjoutHorodatage = maintenant;
 
-    // Ajouts (uniquement si sous la capacité max)
-    if (_world.pastilles.length < widget.maxCapacity) {
-      for (final note in notes) {
-        final Object seed = note.id ?? note.hashCode;
-        if (!_idsConnus.contains(seed)) {
-          _ajouterNouveauSouvenir(note, width, height);
-          if (_world.pastilles.length >= widget.maxCapacity) break;
+            _ajouterNouveauSouvenir(note, width, height, _compteurArriveesLotCourant);
+            _compteurArriveesLotCourant++;
+
+            if (_world.pastilles.length >= widget.capaciteBocal) break;
+          }
         }
       }
+    }
+
+    // Le bocal est plein ET il reste des souvenirs en attente au-delà :
+    // on prévient l'écran parent, une seule fois par bocal (jusqu'à ce
+    // qu'une nouvelle Key recrée cette State, au moment du "Nouveau bocal").
+    if (depassementCapacite && !_popupDejaDeclenchee) {
+      _popupDejaDeclenchee = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        widget.onBocalPlein?.call();
+      });
     }
   }
 
@@ -291,28 +459,17 @@ class _PastillesPainter extends CustomPainter {
   _PastillesPainter(this.pastilles);
 
   // Réglages de l'effet de profondeur par couche (index = zLayer : 0=arrière, 1=milieu, 2=avant)
-  // Écart de taille ENTRE COUCHES volontairement très léger (~±1px de
-  // diamètre) — la variation de taille entre couches reste subtile.
   static const List<double> _echelleParCouche = [0.985, 1.0, 1.015];
 
   /// Gonflement visuel GLOBAL (appliqué à toutes les couches de la même
-  /// façon) : le rayon AFFICHÉ est plus grand que le rayon physique réel
-  /// (celui utilisé pour les collisions). Comme les centres des billes
-  /// restent à distance physique normale (jamais de vrai chevauchement
-  /// dans la simulation), c'est ce facteur qui crée un chevauchement
-  /// visuel net entre billes voisines — combiné à l'ordre de dessin par
-  /// couche (arrière→avant), on voit clairement une bille "avant"
-  /// recouvrir le bord d'une bille "arrière". Augmente pour plus de
-  /// chevauchement, diminue si les billes semblent trop "gonflées".
+  /// façon) : le rayon AFFICHÉ est plus grand que le rayon physique réel.
   static const double _facteurChevauchementGlobal = 1.07;
-  static const List<double> _assombrissementSupplementaire = [0.20, 0.0, 0.0]; // couche arrière plus sombre = "recule"
-  static const List<double> _eclaircissementSupplementaire = [0.0, 0.0, 0.10]; // couche avant plus lumineuse = "ressort"
+
+  static const List<double> _assombrissementSupplementaire = [0.20, 0.0, 0.0];
+  static const List<double> _eclaircissementSupplementaire = [0.0, 0.0, 0.10];
 
   @override
   void paint(Canvas canvas, Size size) {
-    // Tri par couche (arrière d'abord, avant en dernier) pour que les
-    // billes "avant" recouvrent bien visuellement celles "arrière" —
-    // c'est cet ordre de dessin qui recrée l'impression de profondeur.
     final List<Pastille> triees = List<Pastille>.from(pastilles)
       ..sort((a, b) => a.zLayer.compareTo(b.zLayer));
 
