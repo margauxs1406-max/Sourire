@@ -4,9 +4,8 @@ import 'package:sourire/l10n/app_localizations.dart';
 import 'package:sourire/theme/tokens.dart';
 import 'package:sourire/widgets/logo_sourire.dart';
 import 'package:sourire/widgets/btn_chevron_gauche.dart';
-import 'package:sourire/services/database_service.dart';
 import 'package:sourire/services/badges_service.dart';
-import 'package:sourire/models/note_model.dart';
+import 'package:sourire/theme/user_prefs.dart';
 
 class ScreenMesBadges extends StatelessWidget {
   final bool isDarkMode;
@@ -178,7 +177,7 @@ class ScreenMesBadges extends StatelessWidget {
                                   const SizedBox(width: 8),
                                   Text(
                                     forceTout
-                                        ? 'Test : tous les badges débloqués !'
+                                        ? 'Test : tous les badges débloqués (appuyer pour annuler)'
                                         : 'Test : débloquer tous les badges',
                                     style: TextStyle(
                                       fontSize: 12,
@@ -198,53 +197,53 @@ class ScreenMesBadges extends StatelessWidget {
                     ValueListenableBuilder<bool>(
                       valueListenable: debloquerTousBadgesTestNotifier,
                       builder: (context, forceTout, _) {
-                        return StreamBuilder<List<NoteSourire>>(
-                          stream: DatabaseService().getNotesStream(),
-                          builder: (context, snapshot) {
-                            final int total = snapshot.data?.length ?? 0;
+                        // On se base sur le plus haut palier JAMAIS atteint
+                        // (persistant, ne fait qu'augmenter) plutôt que sur
+                        // le total ACTUEL de souvenirs — sinon, supprimer
+                        // des souvenirs après coup ferait "reverrouiller"
+                        // à tort un badge pourtant déjà mérité.
+                        final int dernierPalierAtteint = UserPrefs.dernierPalierCelebre;
 
-                            return GridView.builder(
-                              shrinkWrap: true,
-                              physics: const NeverScrollableScrollPhysics(),
-                              itemCount: paliersOrdonnes.length,
-                              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: 4,
-                                crossAxisSpacing: 12,
-                                mainAxisSpacing: 12,
-                                childAspectRatio: 1.0,
+                        return GridView.builder(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: paliersOrdonnes.length,
+                          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 4,
+                            crossAxisSpacing: 12,
+                            mainAxisSpacing: 12,
+                            childAspectRatio: 1.0,
+                          ),
+                          itemBuilder: (context, index) {
+                            final int palier = paliersOrdonnes[index];
+                            final bool debloque = forceTout || palier <= dernierPalierAtteint;
+                            final String assetPath = badgeAssetParPalier[palier]!;
+
+                            return GestureDetector(
+                              onTap: debloque ? () => _ouvrirBadgeAgrandi(context, palier) : null,
+                              child: LayoutBuilder(
+                                builder: (context, constraints) {
+                                  final double taille = constraints.maxWidth;
+                                  return Container(
+                                    decoration: BoxDecoration(
+                                      color: debloque ? white : orange,
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                    child: Center(
+                                      child: debloque
+                                          ? Padding(
+                                              padding: EdgeInsets.all(taille * 0.15),
+                                              child: SvgPicture.asset(assetPath),
+                                            )
+                                          : Icon(
+                                              Icons.star,
+                                              color: Colors.white.withOpacity(0.5),
+                                              size: taille * 0.45,
+                                            ),
+                                    ),
+                                  );
+                                },
                               ),
-                              itemBuilder: (context, index) {
-                                final int palier = paliersOrdonnes[index];
-                                final bool debloque = forceTout || total >= palier;
-                                final String assetPath = badgeAssetParPalier[palier]!;
-
-                                return GestureDetector(
-                                  onTap: debloque ? () => _ouvrirBadgeAgrandi(context, palier) : null,
-                                  child: LayoutBuilder(
-                                    builder: (context, constraints) {
-                                      final double taille = constraints.maxWidth;
-                                      return Container(
-                                        decoration: BoxDecoration(
-                                          color: debloque ? white : orange,
-                                          borderRadius: BorderRadius.circular(4),
-                                        ),
-                                        child: Center(
-                                          child: debloque
-                                              ? Padding(
-                                                  padding: EdgeInsets.all(taille * 0.15),
-                                                  child: SvgPicture.asset(assetPath),
-                                                )
-                                              : Icon(
-                                                  Icons.star,
-                                                  color: Colors.white.withOpacity(0.5),
-                                                  size: taille * 0.45,
-                                                ),
-                                        ),
-                                      );
-                                    },
-                                  ),
-                                );
-                              },
                             );
                           },
                         );
