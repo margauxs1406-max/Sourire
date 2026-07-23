@@ -216,7 +216,7 @@ class _WidgetSouvenirHistoriqueState extends State<WidgetSouvenirHistorique> {
                             ))
                       : Container(
                           padding: EdgeInsets.all(size * 0.1),
-                          alignment: Alignment.center,
+                          alignment: Alignment.center, 
                           child: Text(
                             widget.souvenir.text ?? "",
                             textAlign: TextAlign.center,
