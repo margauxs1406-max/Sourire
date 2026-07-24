@@ -35,11 +35,38 @@ class _ScreenCategorisationPhotoState extends State<ScreenCategorisationPhoto> {
   final List<String> _selectedCategories = [];
   final TextEditingController _newCategoryController = TextEditingController();
   bool _isAddingNew = false;
-  // Sécurité anti-double tap / état de chargement
+
+  // --- SÉCURITÉ ANTI DOUBLE-TAP ---------------------------------------------
+  // 1) Verrou d'instance : passe à true de façon SYNCHRONE, avant tout await,
+  //    donc avant même le premier rebuild. Sert aussi à l'affichage (spinner).
   bool _isSaving = false;
+
+  // 2) Quelle action est en cours ('skip' ou 'validate') : permet de n'afficher
+  //    l'indicateur de chargement que sur le bouton réellement pressé.
+  String? _actionEnCours;
+
+  // 3) Verrou global (static) : sur un écran 120 Hz, plusieurs instances de cet
+  //    écran peuvent coexister dans la pile de navigation (route empilée
+  //    pendant la transition). Le verrou d'instance ne les couvrirait pas.
+  static bool _enregistrementGlobalEnCours = false;
+
+  // 4) Index de photos déjà écrites en base pour la session de catégorisation
+  //    en cours. Empêche tout ré-enregistrement (retour arrière puis nouvelle
+  //    validation, route dupliquée, etc.).
+  static final Set<int> _indexDejaEnregistres = <int>{};
 
   bool get isLast => widget.currentIndex == widget.photos.length - 1;
   bool get isMultiple => widget.photos.length > 1;
+
+  @override
+  void initState() {
+    super.initState();
+    // Nouvelle session de catégorisation : on repart d'une ardoise propre.
+    if (widget.currentIndex == 0) {
+      _indexDejaEnregistres.clear();
+      _enregistrementGlobalEnCours = false;
+    }
+  }
 
   @override
   void dispose() {
@@ -89,30 +116,75 @@ class _ScreenCategorisationPhotoState extends State<ScreenCategorisationPhoto> {
     }
   }
 
-  void _validerOuSuivant() async {
-  if (_isSaving) return;
-  setState(() => _isSaving = true);
-
-  final String? localPath = await _sauvegarderFichierEnLocal(widget.photos[widget.currentIndex]);
-  if (localPath != null) {
-    final nouvellePhoto = NoteSourire(
-      text: null,
-      photoPath: localPath, 
-      themeLabel: '', 
-      colorLabel: SourireTheme.getRandomPhoto().label,
-      categories: _selectedCategories.isEmpty ? ["unclassified"] : List<String>.from(_selectedCategories),
-      date: DateTime.now(), 
-    );
-    _databaseService.insertNote(nouvellePhoto);
-    preloadHistoriqueImage(localPath); // ← ajouté, volontairement SANS await
-
-    await NotificationService.planifierRappelSouvenirs();
+  /// Prend le verrou de façon SYNCHRONE (aucun await avant l'affectation).
+  /// Retourne false si un enregistrement est déjà en cours : le tap est ignoré.
+  bool _prendreVerrou(String action) {
+    if (_isSaving || _enregistrementGlobalEnCours) return false;
+    _enregistrementGlobalEnCours = true;
+    _isSaving = true;
+    _actionEnCours = action;
+    // setState uniquement pour rafraîchir l'UI : les verrous sont déjà posés
+    // au-dessus, ils ne dépendent donc pas du cycle de rendu.
+    setState(() {});
+    return true;
   }
 
-    if (isLast) {
-      if (mounted) Navigator.of(context).popUntil((route) => route.isFirst);
-    } else {
-      if (mounted) {
+  void _relacherVerrou() {
+    _enregistrementGlobalEnCours = false;
+    if (!mounted) {
+      _isSaving = false;
+      _actionEnCours = null;
+      return;
+    }
+    setState(() {
+      _isSaving = false;
+      _actionEnCours = null;
+    });
+  }
+
+  /// Enregistre la photo [index] si elle ne l'a pas déjà été.
+  Future<void> _enregistrerPhoto(int index, List<String> categories) async {
+    if (_indexDejaEnregistres.contains(index)) return;
+    // On réserve l'index AVANT l'await : deux appels concurrents ne peuvent
+    // plus écrire la même photo deux fois.
+    _indexDejaEnregistres.add(index);
+
+    try {
+      final String? localPath = await _sauvegarderFichierEnLocal(widget.photos[index]);
+      if (localPath == null) {
+        // Échec : on libère l'index pour permettre une nouvelle tentative.
+        _indexDejaEnregistres.remove(index);
+        return;
+      }
+
+      final nouvellePhoto = NoteSourire(
+        text: null,
+        photoPath: localPath,
+        themeLabel: '',
+        colorLabel: SourireTheme.getRandomPhoto().label,
+        categories: categories.isEmpty ? ["unclassified"] : List<String>.from(categories),
+        date: DateTime.now(),
+      );
+      _databaseService.insertNote(nouvellePhoto);
+      preloadHistoriqueImage(localPath); // volontairement SANS await
+    } catch (e) {
+      _indexDejaEnregistres.remove(index);
+      rethrow;
+    }
+  }
+
+  Future<void> _validerOuSuivant() async {
+    if (!_prendreVerrou('validate')) return;
+
+    try {
+      await _enregistrerPhoto(widget.currentIndex, _selectedCategories);
+      await NotificationService.planifierRappelSouvenirs();
+
+      if (!mounted) return;
+
+      if (isLast) {
+        Navigator.of(context).popUntil((route) => route.isFirst);
+      } else {
         Navigator.push(
           context,
           MaterialPageRoute(
@@ -122,36 +194,45 @@ class _ScreenCategorisationPhotoState extends State<ScreenCategorisationPhoto> {
             ),
           ),
         ).then((_) {
-          // Permet de restaurer l'état du bouton si l'utilisateur fait un retour arrière
-          if (mounted) setState(() => _isSaving = false);
+          // Restaure l'état du bouton si l'utilisateur fait un retour arrière.
+          if (mounted) {
+            setState(() {
+              _isSaving = false;
+              _actionEnCours = null;
+            });
+          }
         });
       }
+    } catch (e) {
+      debugPrint("Échec de la validation : $e");
+      _relacherVerrou();
+      return;
+    } finally {
+      // Le verrou global est toujours relâché : l'écran suivant (ou l'écran
+      // d'accueil) doit pouvoir travailler. Le verrou d'instance, lui, reste
+      // actif tant qu'on n'est pas revenu sur cet écran.
+      _enregistrementGlobalEnCours = false;
     }
   }
 
-  void _passerTouteLaCategorisation() async {
-    if (_isSaving) return;
-    setState(() => _isSaving = true);
+  Future<void> _passerTouteLaCategorisation() async {
+    if (!_prendreVerrou('skip')) return;
 
-    for (int i = widget.currentIndex; i < widget.photos.length; i++) {
-      final String? localPath = await _sauvegarderFichierEnLocal(widget.photos[i]);
-      
-      if (localPath != null) {
-        final photoSansCategorie = NoteSourire(
-          text: null,
-          photoPath: localPath, 
-          themeLabel: '', 
-          colorLabel: SourireTheme.getRandomPhoto().label,
-          categories: ["unclassified"],
-          date: DateTime.now(),
-        );
-        _databaseService.insertNote(photoSansCategorie);
-        preloadHistoriqueImage(localPath); // ← ajouté
+    try {
+      for (int i = widget.currentIndex; i < widget.photos.length; i++) {
+        await _enregistrerPhoto(i, const <String>[]);
       }
-    }
 
-    await NotificationService.planifierRappelSouvenirs();
-    if (mounted) Navigator.of(context).popUntil((route) => route.isFirst);
+      await NotificationService.planifierRappelSouvenirs();
+
+      if (mounted) Navigator.of(context).popUntil((route) => route.isFirst);
+    } catch (e) {
+      debugPrint("Échec du passage de la catégorisation : $e");
+      _relacherVerrou();
+      return;
+    } finally {
+      _enregistrementGlobalEnCours = false;
+    }
   }
 
   void _soumettreNouvelleCategorie() {
@@ -269,9 +350,14 @@ class _ScreenCategorisationPhotoState extends State<ScreenCategorisationPhoto> {
     : (currentThemeMode == ThemeMode.dark);
 
           return Scaffold(
-            backgroundColor: isDarkMode ? darkBg : white, 
-            resizeToAvoidBottomInset: false, 
-            body: SafeArea(
+            backgroundColor: isDarkMode ? darkBg : white,
+            resizeToAvoidBottomInset: false,
+            // Pendant l'enregistrement, plus AUCUN pointeur n'est accepté sur
+            // l'écran : ni les boutons, ni le chevron retour, ni les cases à
+            // cocher. C'est la garantie ultime contre les taps en rafale.
+            body: AbsorbPointer(
+              absorbing: _isSaving,
+              child: SafeArea(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 30),
                 child: LayoutBuilder(
@@ -453,24 +539,23 @@ ClipRRect(
                                   child: BtnCategorisation(
                                     text: localizations.btnSkip,
                                     isSecondary: true,
-                                    isActive: !_isSaving, // Se grise et bloque les clics si en cours d'enregistrement
-                                    onTap: () {
-                                      if (!_isSaving) _passerTouteLaCategorisation();
-                                    },
+                                    // Se grise et bloque les clics si un enregistrement est en cours
+                                    isActive: !_isSaving,
+                                    isLoading: _isSaving && _actionEnCours == 'skip',
+                                    onTap: _passerTouteLaCategorisation,
                                   ),
                                 ),
                                 const SizedBox(width: 20),
                                 // BOUTON VALIDER / SUIVANT
                                 Expanded(
                                   child: BtnCategorisation(
-                                    text: isLast 
-                                        ? localizations.btnValidate 
+                                    text: isLast
+                                        ? localizations.btnValidate
                                         : (localizations.localeName == 'fr' ? "Suivant" : "Next"),
                                     isActive: isValidateActive,
+                                    isLoading: _isSaving && _actionEnCours == 'validate',
                                     isSecondary: false,
-                                    onTap: () {
-                                      if (!_isSaving && isValidateActive) _validerOuSuivant();
-                                    },
+                                    onTap: _validerOuSuivant,
                                   ),
                                 ),
                               ],
@@ -483,6 +568,7 @@ ClipRRect(
                   },
                 ),
               ),
+            ),
             ),
           );
         },

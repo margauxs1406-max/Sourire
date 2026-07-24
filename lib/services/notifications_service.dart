@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:timezone/data/latest_all.dart' as tz;
+// La base IANA est chargée par TimezoneService, plus besoin de l'importer ici.
 import 'package:timezone/timezone.dart' as tz;
 import 'package:sourire/theme/user_prefs.dart';
-import 'package:sourire/services/database_service.dart'; 
+import 'package:sourire/services/database_service.dart';
+import 'package:sourire/services/timezone_service.dart';
 import 'package:sourire/l10n/app_localizations.dart';
 import 'package:sourire/l10n/app_localizations_en.dart';
 import 'package:sourire/l10n/app_localizations_fr.dart';
@@ -21,15 +22,14 @@ class NotificationService {
   }
 
   static Future<void> init() async {
-    tz.initializeTimeZones();
-    
-    // Correction Android : Utiliser l'heure locale de l'appareil pour éviter les décalages du Doze Mode.
-    final String timeZoneName = DateTime.now().timeZoneName;
-    try {
-      tz.setLocalLocation(tz.getLocation(timeZoneName));
-    } catch (_) {
-      tz.setLocalLocation(tz.getLocation('Pacific/Noumea'));
-    }
+    // Le fuseau horaire est géré par TimezoneService (appelé depuis main()
+    // avant cette méthode ; l'appel ci-dessous est idempotent et sert de filet).
+    //
+    // Ne PAS le régler ici « à la main » : l'ancienne détection reposait sur
+    // DateTime.now().timeZoneName, qui renvoie une ABRÉVIATION ("CEST",
+    // "GMT+2", "+11") et non un identifiant IANA. tz.getLocation() échouait
+    // donc toujours, et le catch retombait sur un fuseau codé en dur.
+    await TimezoneService.initialiser();
 
     final localizations = _obtenirTraductions();
 
@@ -118,6 +118,20 @@ class NotificationService {
       await planifierRappelSouvenirs();
     } catch (e) {
       debugPrint("Erreur lors de la planification des rappels : $e");
+    }
+  }
+
+  /// Replanifie les deux rappels sur le fuseau horaire courant.
+  ///
+  /// Appelée quand l'appareil change de fuseau : les notifications déjà
+  /// programmées l'ont été en tz.TZDateTime sur l'ancienne zone et se
+  /// déclencheraient à la mauvaise heure locale.
+  static Future<void> replanifierTout() async {
+    try {
+      await planifierRappelGratitude();
+      await planifierRappelSouvenirs();
+    } catch (e) {
+      debugPrint("Erreur lors de la replanification des rappels : $e");
     }
   }
 

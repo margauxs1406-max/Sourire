@@ -86,7 +86,7 @@ const List<SemaineTest> semainesTest = [
 
 /// Date de démarrage de la campagne de test — LA MÊME POUR TOUS LES
 /// TESTEURS. Ajuste-la à la vraie date de lancement de ton programme.
-final DateTime dateDebutCampagneTest = DateTime(2026, 7, 27);
+final DateTime dateDebutCampagneTest = DateTime(2026, 7, 26);
 
 int semaineActuelle() {
   final int joursEcoules = DateTime.now().difference(dateDebutCampagneTest).inDays;

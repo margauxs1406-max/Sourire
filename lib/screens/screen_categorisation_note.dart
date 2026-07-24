@@ -33,9 +33,30 @@ class _ScreenCategorisationNoteState extends State<ScreenCategorisationNote> {
   final List<String> _selectedCategories = [];
   final TextEditingController _newCategoryController = TextEditingController();
   bool _isAddingNew = false;
-  
-  // MODIFICATION : Sécurité anti-double clic
+
+  // --- SÉCURITÉ ANTI DOUBLE-TAP ---------------------------------------------
+  // 1) Verrou d'instance, posé de façon SYNCHRONE avant tout await.
   bool _isSaving = false;
+
+  // 2) Action en cours ('skip' ou 'validate') pour n'afficher l'indicateur de
+  //    chargement que sur le bouton réellement pressé.
+  String? _actionEnCours;
+
+  // 3) Verrou global : screen_new_note peut empiler plusieurs instances de cet
+  //    écran si son bouton Valider est tapé en rafale. Le verrou d'instance ne
+  //    couvrirait pas ce cas.
+  static bool _enregistrementGlobalEnCours = false;
+
+  // 4) Cette note a-t-elle déjà été écrite en base par cette instance ?
+  bool _noteDejaEnregistree = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Filet de sécurité : on ne veut jamais qu'un verrou global resté bloqué
+    // (crash, cas limite) empêche définitivement l'enregistrement.
+    _enregistrementGlobalEnCours = false;
+  }
 
   @override
   void dispose() {
@@ -56,67 +77,69 @@ class _ScreenCategorisationNoteState extends State<ScreenCategorisationNote> {
     }
   }
 
-  void _validerNote() async {
-    if (_isSaving) return; // Sécurité supplémentaire
+  /// Prend le verrou de façon SYNCHRONE (aucun await avant l'affectation).
+  /// Retourne false si un enregistrement est déjà en cours : le tap est ignoré.
+  bool _prendreVerrou(String action) {
+    if (_isSaving || _noteDejaEnregistree || _enregistrementGlobalEnCours) {
+      return false;
+    }
+    _enregistrementGlobalEnCours = true;
+    _isSaving = true;
+    _actionEnCours = action;
+    // setState sert uniquement au rafraîchissement visuel : les verrous sont
+    // déjà posés au-dessus, ils ne dépendent pas du cycle de rendu.
+    setState(() {});
+    return true;
+  }
 
+  void _relacherVerrou() {
+    _enregistrementGlobalEnCours = false;
+    if (!mounted) {
+      _isSaving = false;
+      _actionEnCours = null;
+      return;
+    }
     setState(() {
-      _isSaving = true; // Bloque immédiatement l'accès
+      _isSaving = false;
+      _actionEnCours = null;
     });
+  }
+
+  Future<void> _enregistrerNote(List<String> categories, String action) async {
+    if (!_prendreVerrou(action)) return;
 
     try {
       final nouvelleNote = NoteSourire(
         text: widget.note,
-        themeLabel: widget.themeVisuel.id, 
-        colorLabel: widget.theme.label,   
-        categories: _selectedCategories,
+        themeLabel: widget.themeVisuel.id,
+        colorLabel: widget.theme.label,
+        categories: categories,
         date: DateTime.now(),
       );
       _databaseService.insertNote(nouvelleNote);
-      
+      _noteDejaEnregistree = true;
+
       // RECALCULE LA PROCHAINE NOTIFICATION AVEC LE NOUVEAU SOUVENIR DISPONIBLE
       await NotificationService.planifierRappelSouvenirs();
-      
+
       if (mounted) {
         Navigator.of(context).popUntil((route) => route.isFirst);
       }
     } catch (e) {
-      // En cas d'erreur BDD, on débloque l'UI
-      setState(() {
-        _isSaving = false;
-      });
+      // En cas d'erreur BDD, on débloque l'UI pour permettre une 2e tentative.
+      debugPrint("Échec de l'enregistrement de la note : $e");
+      _noteDejaEnregistree = false;
+      _relacherVerrou();
+    } finally {
+      _enregistrementGlobalEnCours = false;
     }
   }
 
-  void _passerCategorisation() async {
-    if (_isSaving) return; // Sécurité supplémentaire
+  Future<void> _validerNote() =>
+      _enregistrerNote(List<String>.from(_selectedCategories), 'validate');
 
-    setState(() {
-      _isSaving = true; // Bloque immédiatement l'accès
-    });
-
-    try {
-      final nouvelleNote = NoteSourire(
-        text: widget.note,
-        themeLabel: widget.themeVisuel.id, 
-        colorLabel: widget.theme.label,   
-        categories: ["unclassified"],
-        date: DateTime.now(),
-      );
-      _databaseService.insertNote(nouvelleNote);
-      
-      // RECALCULE LA PROCHAINE NOTIFICATION AVEC LE NOUVEAU SOUVENIR DISPONIBLE
-      await NotificationService.planifierRappelSouvenirs();
-      
-      if (mounted) {
-        Navigator.of(context).popUntil((route) => route.isFirst);
-      }
-    } catch (e) {
-      // En cas d'erreur BDD, on débloque l'UI
-      setState(() {
-        _isSaving = false;
-      });
-    }
-  }
+  Future<void> _passerCategorisation() =>
+      _enregistrerNote(<String>["unclassified"], 'skip');
 
   void _soumettreNouvelleCategorie() {
     final text = _newCategoryController.text.trim();
@@ -229,12 +252,19 @@ class _ScreenCategorisationNoteState extends State<ScreenCategorisationNote> {
           final bool isDarkMode = currentThemeMode == ThemeMode.system
     ? (MediaQuery.of(context).platformBrightness == Brightness.dark)
     : (currentThemeMode == ThemeMode.dark);
-          final bool isValidateActive = _selectedCategories.isNotEmpty;
+          // Le bouton Valider n'est cliquable que s'il y a au moins une
+          // catégorie ET qu'aucun enregistrement n'est en cours.
+          final bool isValidateActive = _selectedCategories.isNotEmpty && !_isSaving;
 
           return Scaffold(
             backgroundColor: isDarkMode ? darkBg : white,
-            resizeToAvoidBottomInset: false, 
-            body: SafeArea(
+            resizeToAvoidBottomInset: false,
+            // Pendant l'enregistrement, plus AUCUN pointeur n'est accepté sur
+            // l'écran : ni les boutons, ni le chevron retour, ni les cases à
+            // cocher. C'est la garantie ultime contre les taps en rafale.
+            body: AbsorbPointer(
+              absorbing: _isSaving,
+              child: SafeArea(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 30),
                 child: LayoutBuilder(
@@ -402,42 +432,33 @@ class _ScreenCategorisationNoteState extends State<ScreenCategorisationNote> {
                               crossAxisAlignment: CrossAxisAlignment.center,
                               children: [
                                 // BOUTON PASSER
-Expanded(
-  child: BtnCategorisationDynamique(
-    text: localizations.btnSkip,
-    isSecondary: true,
-    themeColor: widget.theme.main,
-    isActive: !_isSaving, // Devient opaque/inactif si un enregistrement est en cours
-    onTap: () {
-      if (!_isSaving) _passerCategorisation();
-    },
-  ),
-),
-const SizedBox(width: 20),
-// BOUTON VALIDER
-Expanded(
-  child: isValidateActive 
-    ? BtnCategorisationDynamique(
-        text: localizations.btnValidate,
-        isSecondary: false,
-        themeColor: widget.theme.main,
-        isActive: !_isSaving, // Devient opaque/inactif si un enregistrement est en cours
-        onTap: () {
-          if (!_isSaving) _validerNote();
-        },
-      )
-    : Opacity(
-        opacity: 0.5,
-        child: AbsorbPointer(
-          child: BtnCategorisationDynamique(
-            text: localizations.btnValidate,
-            isSecondary: false,
-            themeColor: widget.theme.main,
-            onTap: () {},
-          ),
-        ),
-      ),
-),
+                                Expanded(
+                                  child: BtnCategorisationDynamique(
+                                    text: localizations.btnSkip,
+                                    isSecondary: true,
+                                    themeColor: widget.theme.main,
+                                    // Devient opaque/inactif si un enregistrement est en cours
+                                    isActive: !_isSaving,
+                                    isLoading: _isSaving && _actionEnCours == 'skip',
+                                    onTap: _passerCategorisation,
+                                  ),
+                                ),
+                                const SizedBox(width: 20),
+                                // BOUTON VALIDER
+                                // Un seul widget quel que soit l'état : plus de
+                                // bascule Opacity/AbsorbPointer, qui recréait le
+                                // bouton (et perdait son état d'appui) à chaque
+                                // changement de sélection.
+                                Expanded(
+                                  child: BtnCategorisationDynamique(
+                                    text: localizations.btnValidate,
+                                    isSecondary: false,
+                                    themeColor: widget.theme.main,
+                                    isActive: isValidateActive,
+                                    isLoading: _isSaving && _actionEnCours == 'validate',
+                                    onTap: _validerNote,
+                                  ),
+                                ),
                               ],
                             ),
                           ),
@@ -448,6 +469,7 @@ Expanded(
                   },
                 ),
               ),
+            ),
             ),
           );
         },

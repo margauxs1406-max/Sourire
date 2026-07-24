@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart'; 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart'; 
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -10,10 +9,9 @@ import 'package:sourire/screens/screen_lock.dart';
 import 'package:sourire/theme/tokens.dart';
 import 'package:sourire/theme/user_prefs.dart';
 import 'package:sourire/services/notifications_service.dart';
-import 'package:sourire/models/note_model.dart';      
-import 'package:timezone/data/latest.dart' as tz; 
-import 'package:timezone/timezone.dart' as tz;      
-import 'package:sourire/theme/theme_service.dart'; 
+import 'package:sourire/models/note_model.dart';
+import 'package:sourire/services/timezone_service.dart';
+import 'package:sourire/theme/theme_service.dart';
 import 'package:sourire/services/database_service.dart';
 import 'package:sourire/widgets/bocal_preloader.dart';
 
@@ -33,9 +31,14 @@ void main() async {
     DeviceOrientation.portraitDown,
   ]);
 
-  await UserPrefs.init(); 
-  tz.initializeTimeZones();
-  tz.setLocalLocation(tz.getLocation('Pacific/Noumea'));
+  await UserPrefs.init();
+
+  // Fuseau horaire de l'APPAREIL, lu via la couche native (identifiant IANA).
+  // Doit être fait avant NotificationService.init(), qui planifie des rappels
+  // en tz.TZDateTime : sans ça, tous les utilisateurs hors du fuseau codé en
+  // dur recevaient leurs rappels décalés.
+  await TimezoneService.initialiser();
+
   ThemeService.chargerThemeSauvegarde();
 
   if (!UserPrefs.biomatrieActive && UserPrefs.password.isEmpty) {
@@ -169,6 +172,13 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
     }
 
     if (state == AppLifecycleState.resumed) {
+      // Le fuseau a pu changer pendant que l'app était en arrière-plan :
+      // voyage, changement d'heure, réglage manuel de l'horloge système.
+      // On resynchronise AVANT tout autre traitement, et indépendamment du
+      // verrou de sécurité — sinon un utilisateur qui voyage garderait des
+      // rappels calés sur son fuseau de départ.
+      _resynchroniserFuseauHoraire();
+
       if (!UserPrefs.biomatrieActive && UserPrefs.password.isEmpty) return;
 
       // Si le callback de notification est déjà en train de s'exécuter, on n'applique pas le verrou standard
@@ -186,6 +196,23 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
         }
         _timeWhenPaused = null;
       }
+    }
+  }
+
+  /// Recale le fuseau sur celui de l'appareil et, s'il a changé, replanifie
+  /// les rappels déjà programmés (qui pointaient sur l'ancien fuseau).
+  Future<void> _resynchroniserFuseauHoraire() async {
+    try {
+      final bool fuseauModifie = await TimezoneService.resynchroniser();
+      if (fuseauModifie) {
+        debugPrint(
+          "=== 🌍 Fuseau horaire modifié (${TimezoneService.identifiantActuel}) "
+          "→ replanification des rappels ===",
+        );
+        await NotificationService.replanifierTout();
+      }
+    } catch (e) {
+      debugPrint("Erreur lors de la resynchronisation du fuseau horaire : $e");
     }
   }
 

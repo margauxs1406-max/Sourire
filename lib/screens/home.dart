@@ -160,6 +160,9 @@ void _verifierEtDeclencherSouvenir() async {
         debugPrint("===> HOME : 🎉 Affichage propre du bocal.");
         // Consommation immédiate de l'ID pour éviter les double-ouvertures
         await UserPrefs.setSouvenirNotificationId(-1);
+        // Le `mounted` testé plus haut date d'AVANT cet await : l'écran a pu
+        // être démonté entre-temps. On revérifie avant de toucher au context.
+        if (!mounted) return;
         afficherSouvenirBocal(context, souvenir);
       }
     }
@@ -417,6 +420,10 @@ void _verifierEtDeclencherSouvenir() async {
       final int photosAutoriseesRestantes = UserPrefs.isPremium 
           ? 10 
           : (limiteMaximaleGratuite - nombrePhotosActuelles);
+
+      // getAllNotesAsync() ci-dessus est un await : l'écran a pu être démonté
+      // depuis. On revérifie avant de passer le context au sélecteur.
+      if (!context.mounted) return;
 
       final List<AssetEntity>? result = await AssetPicker.pickAssets(
         context,
