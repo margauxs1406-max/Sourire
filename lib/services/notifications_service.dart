@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 import 'package:sourire/theme/user_prefs.dart';
@@ -82,7 +83,41 @@ class NotificationService {
       );
       await androidPlugin.createNotificationChannel(channelSouvenirs);
 
-      await androidPlugin.requestNotificationsPermission();
+      // La demande de permission elle-même se fait désormais UNIQUEMENT
+      // dans demanderPermissionsEtPlanifier() (appelée après runApp()) —
+      // plus de doublon ici, et surtout, init() ne demande plus jamais
+      // aucune permission (donc jamais bloquant avant l'affichage de l'app).
+    }
+  }
+
+  /// Demande les permissions nécessaires (notification + alarme exacte),
+  /// PUIS planifie les rappels. À appeler UNIQUEMENT après le premier
+  /// affichage de l'app (jamais avant runApp()) — la permission d'alarme
+  /// exacte peut ouvrir un véritable écran de réglages système sur
+  /// certaines versions d'Android, ce qui bloquerait indéfiniment le
+  /// démarrage si c'était fait avant que l'app ne soit affichée.
+  static Future<void> demanderPermissionsEtPlanifier() async {
+    try {
+      if (await Permission.notification.isDenied) {
+        await Permission.notification.request();
+      }
+      final statusExact = await Permission.scheduleExactAlarm.status;
+      if (statusExact.isDenied || statusExact.isPermanentlyDenied) {
+        await Permission.scheduleExactAlarm.request();
+      }
+    } catch (e) {
+      debugPrint("Erreur lors de la demande de permissions notifications : $e");
+    }
+
+    // Peu importe la réponse de l'utilisateur (accepté, refusé, ignoré),
+    // on tente quand même de planifier — si la permission est refusée,
+    // les notifications ne s'afficheront simplement pas, sans jamais
+    // bloquer le reste de l'app.
+    try {
+      await planifierRappelGratitude();
+      await planifierRappelSouvenirs();
+    } catch (e) {
+      debugPrint("Erreur lors de la planification des rappels : $e");
     }
   }
 
