@@ -2,7 +2,7 @@ name: sourire
 description: "A new Flutter project."
 publish_to: 'none'
 
-version: 1.0.0+10
+version: 1.0.0+11
 
 environment:
   sdk: ^3.11.5
@@ -19,11 +19,11 @@ dependencies:
   flutter_localizations:
     sdk: flutter
   tutorial_coach_mark: ^1.3.3
-  device_preview: ^1.3.1
   # AJOUT : Indispensable pour lire et colorer vos icônes SVG
   flutter_svg: ^2.0.10+1
   flutter_local_notifications: ^17.0.0 # Vérifie la dernière version stable
   timezone: ^0.9.4
+  flutter_timezone: ^5.1.0 # Fuseau horaire IANA réel de l'appareil (rappels à la bonne heure)
   permission_handler: ^11.3.1 # <-- AJOUTE CETTE LIGNE
   image: ^4.8.0
   shared_preferences: ^2.3.5 # <-- AJOUT : Stockage persistant des réglages
