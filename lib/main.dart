@@ -13,7 +13,6 @@ import 'package:sourire/services/notifications_service.dart';
 import 'package:sourire/models/note_model.dart';      
 import 'package:timezone/data/latest.dart' as tz; 
 import 'package:timezone/timezone.dart' as tz;      
-import 'package:permission_handler/permission_handler.dart';
 import 'package:sourire/theme/theme_service.dart'; 
 import 'package:sourire/services/database_service.dart';
 import 'package:sourire/widgets/bocal_preloader.dart';
@@ -50,19 +49,17 @@ void main() async {
   );
   
   ThemeService.themeVisuelNotifier.value = themeSauvegarde;
+
+  // IMPORTANT : NotificationService.init() se contente de préparer le
+  // plugin et de créer les canaux Android — ça ne demande AUCUNE
+  // permission et ne peut donc jamais bloquer le lancement. Toutes les
+  // vraies DEMANDES de permission (notification simple + alarme exacte,
+  // qui peut ouvrir un écran de réglages système complet) sont désormais
+  // faites APRÈS l'affichage de l'app (voir MyApp.initState ci-dessous),
+  // pour ne jamais empêcher runApp() de s'exécuter si l'utilisateur
+  // refuse, tarde à répondre, ou revient en arrière sans répondre.
   await NotificationService.init();
 
-  if (await Permission.notification.isDenied) {
-    await Permission.notification.request();
-  }
-  final statusExact = await Permission.scheduleExactAlarm.status;
-  if (statusExact.isDenied || statusExact.isPermanentlyDenied) {
-    await Permission.scheduleExactAlarm.request();
-  }
-
-  await NotificationService.planifierRappelGratitude();
-  await NotificationService.planifierRappelSouvenirs();
-  
   runApp(const MyApp());
 }
 
@@ -93,6 +90,12 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
         _navigationNotificationEnCours = true;
         _analyserPayload(payload);
       });
+
+      // Demande des permissions + planification des rappels — APRÈS le
+      // premier affichage de l'app, jamais avant. L'app reste
+      // pleinement utilisable que l'utilisateur accepte, refuse, ou
+      // ignore ces demandes.
+      NotificationService.demanderPermissionsEtPlanifier();
     });
   }
 
