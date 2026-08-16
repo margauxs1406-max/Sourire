@@ -7,6 +7,13 @@ class NoteSourire {
   final List<String> categories;
   final DateTime date;
 
+  /// Souvenir d'amorçage proposé à l'installation.
+  ///
+  /// Ce sont de vrais souvenirs — tirables, visibles dans l'historique,
+  /// supprimables — mais ils ne comptent ni dans la limite gratuite ni dans
+  /// les paliers de gamification : l'utilisateur ne les a pas écrits.
+  final bool estAmorce;
+
   NoteSourire({
     this.id,
     this.text,
@@ -15,6 +22,7 @@ class NoteSourire {
     required this.colorLabel, 
     required this.categories,
     required this.date,
+    this.estAmorce = false,
   });
 
   // --- COPIE / CONVERSION POUR SQLITE ---
@@ -35,6 +43,7 @@ class NoteSourire {
       date: map['date'] != null 
           ? DateTime.parse(map['date'] as String) 
           : DateTime.now(),
+      estAmorce: (map['estAmorce'] as int? ?? 0) == 1,
     );
   }
 
@@ -50,6 +59,7 @@ class NoteSourire {
       'categories': categories.join(','),
       // On stocke la date au format texte standardisé ISO8601
       'date': date.toIso8601String(),
+      'estAmorce': estAmorce ? 1 : 0,
     };
   }
 
@@ -62,6 +72,7 @@ class NoteSourire {
     String? colorLabel,      
     List<String>? categories,
     DateTime? date,
+    bool? estAmorce,
   }) {
     return NoteSourire(
       id: id ?? this.id,
@@ -71,6 +82,7 @@ class NoteSourire {
       colorLabel: colorLabel ?? this.colorLabel,
       categories: categories ?? this.categories,
       date: date ?? this.date,
+      estAmorce: estAmorce ?? this.estAmorce,
     );
   }
 }

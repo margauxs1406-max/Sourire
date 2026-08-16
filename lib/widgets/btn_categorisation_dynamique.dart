@@ -85,7 +85,7 @@ class _BtnCategorisationDynamiqueState
                 ? 0.70
                 : 1.0;
 
-        final Color couleurActive = widget.themeColor.withOpacity(opaciteEtat);
+        final Color couleurActive = widget.themeColor.withValues(alpha: opaciteEtat);
 
         Color couleurContenu;
         Color couleurFond;
@@ -99,7 +99,7 @@ class _BtnCategorisationDynamiqueState
           couleurContenu = couleurActive;
           couleurBordure = couleurActive;
           couleurFond = estEnfonce
-              ? widget.themeColor.withOpacity(isDarkMode ? 0.16 : 0.10)
+              ? widget.themeColor.withValues(alpha: isDarkMode ? 0.16 : 0.10)
               : (isDarkMode ? Colors.transparent : white);
         }
 

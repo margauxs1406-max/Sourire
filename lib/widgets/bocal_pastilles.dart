@@ -10,6 +10,28 @@ import '../services/pastille_physics.dart';
 import 'package:sourire/theme/tokens.dart';
 import 'package:sourire/theme/user_prefs.dart';
 
+/// Part de saturation retirée aux billes du bocal.
+///
+/// Les couleurs de l'app ont été choisies très vives pour percer l'ancien
+/// aplat blanc du bocal. Le verre étant devenu transparent, elles n'ont plus
+/// rien à percer et virent au criard. On les adoucit donc — ICI SEULEMENT :
+/// les notes, l'historique et les images partagées gardent les couleurs de
+/// marque intactes.
+///
+/// La luminosité n'est pas touchée : la désaturer aussi ternirait les billes
+/// au lieu de les calmer.
+const double desaturationBilles = 0.4;
+
+/// Couleur d'une bille : la couleur du souvenir, légèrement désaturée.
+Color _couleurBille(String? colorLabel) {
+  final HSLColor hsl = HSLColor.fromColor(SourireTheme.fromLabel(colorLabel).main);
+  return hsl
+      .withSaturation(
+        (hsl.saturation * (1 - desaturationBilles)).clamp(0.0, 1.0),
+      )
+      .toColor();
+}
+
 /// Couche de pastilles à insérer DANS ton Stack existant (entre l'ombre
 /// et l'image du bocal), en Positioned.fill, pour occuper exactement
 /// bocalWidth x bocalHeight.
@@ -66,7 +88,7 @@ class BocalPastilles extends StatefulWidget {
 
   const BocalPastilles({
     super.key,
-    this.capaciteBocal = 50,
+    this.capaciteBocal = 45,
     this.offsetBocal = 0,
     this.onBocalPlein,
     this.animerDemarrage = false,
@@ -81,6 +103,12 @@ class _BocalPastillesState extends State<BocalPastilles> with SingleTickerProvid
   static const double zoneLeft = 0.18;
   static const double zoneRight = 0.82;
   static const double zoneBottom = 0.89;
+
+  /// Profondeur du creux du fond, en fraction de la hauteur — voir
+  /// `ordonneeDuFond` dans pastille_physics.dart. Le placement initial doit
+  /// utiliser la MÊME valeur que la physique, sinon le tas naîtrait plat
+  /// avant de se réarranger sous les yeux de l'utilisateur.
+  static const double creuxFond = 0.035;
   static const double zoneTop = 0.15;
   static const double maxInsetFraction = 0.33;
   static const double taperT = 0.38;
@@ -123,6 +151,7 @@ class _BocalPastillesState extends State<BocalPastilles> with SingleTickerProvid
       zoneRight: zoneRight,
       zoneTop: zoneTop,
       zoneBottom: zoneBottom,
+      creuxFond: creuxFond,
       maxInsetFraction: maxInsetFraction,
       taperT: taperT,
     );
@@ -203,6 +232,16 @@ class _BocalPastillesState extends State<BocalPastilles> with SingleTickerProvid
     final double zoneWidth = (zoneRight - zoneLeft) * width;
     final double zoneTopPx = zoneTop * height;
     final double zoneBottomPx = zoneBottom * height;
+    final double creuxPx = creuxFond * height;
+
+    /// Fond du bocal sous l'abscisse [x] : la même parabole que la physique.
+    double solA(double x) => ordonneeDuFond(
+          x: x,
+          zoneLeftPx: zoneLeft * width,
+          zoneRightPx: zoneRight * width,
+          fondPlatPx: zoneBottomPx,
+          creuxPx: creuxPx,
+        );
 
     final int resolution = max(10, (zoneWidth / (pastilleSize * 0.5)).floor());
     final double colWidth = zoneWidth / resolution;
@@ -238,13 +277,16 @@ class _BocalPastillesState extends State<BocalPastilles> with SingleTickerProvid
         final double minX = zoneLeft * width + inset + radius;
         final double maxX = zoneRight * width - inset - radius;
         dx = dx.clamp(minX, maxX);
-        dy = dy.clamp(zoneTopPx + radius, zoneBottomPx - radius);
+        dy = dy.clamp(zoneTopPx + radius, solA(dx) - radius);
 
         // Met à jour la carte de hauteur locale pour que les souvenirs
         // NON sauvegardés (nouveaux) tiennent compte de cette bille lors
         // de leur propre placement "tas de sable" juste en dessous.
         final int colApprox = (((dx - zoneLeft * width) / colWidth).floor()).clamp(0, resolution - 1);
-        heightMap[colApprox] = max(heightMap[colApprox], zoneBottomPx - dy + radius * 0.32);
+        // La hauteur du tas se mesure au-dessus du FOND LOCAL, pas d'une
+        // horizontale : sinon les colonnes du centre paraîtraient déjà
+        // remplies alors que le fond y descend plus bas.
+        heightMap[colApprox] = max(heightMap[colApprox], solA(dx) - dy + radius * 0.32);
       } else {
         // Pas de position connue (souvenir jamais encore affiché) :
         // algorithme "tas de sable" habituel.
@@ -261,8 +303,8 @@ class _BocalPastillesState extends State<BocalPastilles> with SingleTickerProvid
 
         final double jitterX = (rnd.nextDouble() - 0.5) * colWidth * 0.6;
         final double centerX = zoneLeft * width + (bestCol + 0.5) * colWidth + jitterX;
-        dy = zoneBottomPx - bestHeight - radius;
-        dy = dy.clamp(zoneTopPx + radius, zoneBottomPx - radius);
+        dy = solA(centerX) - bestHeight - radius;
+        dy = dy.clamp(zoneTopPx + radius, solA(centerX) - radius);
 
         final double t = ((dy - zoneTopPx) / (zoneBottomPx - zoneTopPx)).clamp(0.0, 1.0);
         final double inset = _insetAt(t, zoneWidth);
@@ -278,7 +320,7 @@ class _BocalPastillesState extends State<BocalPastilles> with SingleTickerProvid
         x: dx,
         y: dy,
         radius: radius,
-        baseColor: SourireTheme.fromLabel(note.colorLabel).main,
+        baseColor: _couleurBille(note.colorLabel),
         zLayer: rnd.nextInt(3),
       ));
       _idsConnus.add(seed);
@@ -316,7 +358,7 @@ class _BocalPastillesState extends State<BocalPastilles> with SingleTickerProvid
       x: startX,
       y: startY,
       radius: radius,
-      baseColor: SourireTheme.fromLabel(note.colorLabel).main,
+      baseColor: _couleurBille(note.colorLabel),
       vx: (rnd.nextDouble() - 0.5) * 40,
       zLayer: rnd.nextInt(3),
     ));
@@ -443,8 +485,8 @@ class _BocalPastillesState extends State<BocalPastilles> with SingleTickerProvid
           height: zoneHeightPx / bandes,
           child: Container(
             decoration: BoxDecoration(
-              color: Colors.red.withOpacity(0.12),
-              border: Border.all(color: Colors.red.withOpacity(0.5), width: 0.5),
+              color: Colors.red.withValues(alpha: 0.12),
+              border: Border.all(color: Colors.red.withValues(alpha: 0.5), width: 0.5),
             ),
           ),
         ),
@@ -510,7 +552,7 @@ class _PastillesPainter extends CustomPainter {
       canvas.drawCircle(Offset.zero, rayonAffiche, fillPaint);
 
       final Paint borderPaint = Paint()
-        ..color = shade.withOpacity(0.6)
+        ..color = shade.withValues(alpha: 0.6)
         ..style = PaintingStyle.stroke
         ..strokeWidth = 0.5;
       canvas.drawCircle(Offset.zero, rayonAffiche, borderPaint);

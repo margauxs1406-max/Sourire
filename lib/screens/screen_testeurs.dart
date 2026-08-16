@@ -72,12 +72,16 @@ const List<SemaineTest> semainesTest = [
     numero: 4,
     titre: 'Semaine 4 — Bilan global',
     scenario:
-        'Dernière semaine : reviens sur ton expérience globale avec l\'application '
-        'depuis le début du test.',
+        'Dernière semaine, prolongée jusqu\'au 26 août : reviens sur ton '
+        'expérience globale avec l\'application depuis le début du test. '
+        'Teste aussi la nouvelle fonctionnalité de partage : ouvre un souvenir, '
+        'appuie sur le bouton de partage et envoie-le où tu veux.',
     questions: [
       'Recommanderais-tu cette application à un proche ?',
-      'Quelles fonctionnalités as-tu préférée ?',
-      'Quelles fonctionnalités te semblent encore à améliorer en priorité ?'
+      'Quelles fonctionnalités as-tu préférées ?',
+      'Quelles fonctionnalités te semblent encore à améliorer en priorité ?',
+      'Le partage d\'un souvenir a-t-il bien fonctionné, et le rendu de l\'image te plaît-il ?',
+      'Que penses-tu du nouveau design de l\'application ?',
       'Serais-tu prêt.e à payer 0,99€/mois pour disposer de l\'application ?',
     ],
     lienTally: 'https://tally.so/r/J9YGgd',
@@ -88,11 +92,18 @@ const List<SemaineTest> semainesTest = [
 /// TESTEURS. Ajuste-la à la vraie date de lancement de ton programme.
 final DateTime dateDebutCampagneTest = DateTime(2026, 7, 26);
 
+/// Fin de campagne. La 4e semaine est PROLONGÉE jusqu'au 26 août inclus :
+/// au rythme de sept jours elle se serait terminée le 22.
+final DateTime dateFinCampagneTest = DateTime(2026, 8, 26, 23, 59, 59);
+
 int semaineActuelle() {
-  final int joursEcoules = DateTime.now().difference(dateDebutCampagneTest).inDays;
-  if (joursEcoules < 0) return 0; // La campagne n'a pas encore commencé
-  final int semaine = (joursEcoules ~/ 7) + 1;
-  return semaine > 4 ? 5 : semaine; // 5 = campagne terminée
+  final DateTime maintenant = DateTime.now();
+  if (maintenant.isBefore(dateDebutCampagneTest)) return 0; // pas encore commencé
+  if (maintenant.isAfter(dateFinCampagneTest)) return 5;    // campagne terminée
+
+  final int semaine = (maintenant.difference(dateDebutCampagneTest).inDays ~/ 7) + 1;
+  // Tout ce qui dépasse la 4e semaine reste la 4e, jusqu'à la date de fin.
+  return semaine > 4 ? 4 : semaine;
 }
 
 class ScreenTesteurs extends StatelessWidget {
@@ -149,10 +160,12 @@ class ScreenTesteurs extends StatelessWidget {
             ? (MediaQuery.of(context).platformBrightness == Brightness.dark)
             : (currentMode == ThemeMode.dark);
 
-        final Color bgColor = isDark ? darkBg : white;
+        final Color bgColor = isDark ? darkBg : lightOrange;
         final Color textColor = isDark ? white : black;
-        final Color headerBgColor = isDark ? darkSurface : white;
-        final Color cardColor = isDark ? darkSurface : const Color(0xFFF5F5F5);
+        final Color headerBgColor = isDark ? darkSurface : lightOrange;
+        // Carte blanche sur fond chaud : elle se lit comme posée en relief.
+        // L'ancien gris F5F5F5 tirait au froid contre le lightOrange.
+        final Color cardColor = isDark ? darkSurface : white;
         final Color texteSecondaire = isDark ? lightGrey : grey;
 
         final double screenWidth = MediaQuery.of(context).size.width;

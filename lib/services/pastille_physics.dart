@@ -1,6 +1,46 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
+/// Ordonnée du fond du bocal à l'abscisse [x].
+///
+/// Le fond n'est pas plat. Sur le dessin du bocal, son dessous descend
+/// d'environ 3,8 % de la hauteur de l'image entre ses bords et son centre :
+/// c'est une ellipse vue en perspective, pas une ligne. Tant que les billes
+/// s'arrêtaient sur une horizontale, elles laissaient l'ovale du fond
+/// entièrement découvert — le tas flottait au-dessus du bocal au lieu d'y
+/// reposer.
+///
+/// On reprend donc la même parabole : les billes du centre descendent de
+/// [creuxPx], celles des bords restent sur la ligne d'origine.
+double ordonneeDuFond({
+  required double x,
+  required double zoneLeftPx,
+  required double zoneRightPx,
+  required double fondPlatPx,
+  required double creuxPx,
+}) {
+  final double demiLargeur = (zoneRightPx - zoneLeftPx) / 2;
+  if (demiLargeur <= 0) return fondPlatPx;
+  final double milieu = (zoneLeftPx + zoneRightPx) / 2;
+  final double u = ((x - milieu) / demiLargeur).clamp(-1.0, 1.0);
+  return fondPlatPx + creuxPx * (1 - u * u);
+}
+
+/// Pente du fond à l'abscisse [x] (dy/dx). Négative à droite du centre,
+/// positive à gauche : elle pointe toujours vers le creux.
+double penteDuFond({
+  required double x,
+  required double zoneLeftPx,
+  required double zoneRightPx,
+  required double creuxPx,
+}) {
+  final double demiLargeur = (zoneRightPx - zoneLeftPx) / 2;
+  if (demiLargeur <= 0) return 0;
+  final double milieu = (zoneLeftPx + zoneRightPx) / 2;
+  final double u = ((x - milieu) / demiLargeur).clamp(-1.0, 1.0);
+  return -2 * creuxPx * u / demiLargeur;
+}
+
 /// Une bille physique : position, vitesse, rotation visuelle, couleur.
 class Pastille {
   final Object id;
@@ -98,6 +138,10 @@ class PastillePhysicsWorld {
   final double maxInsetFraction;
   final double taperT;
 
+  /// Profondeur du creux du fond, en fraction de la hauteur de la zone.
+  /// Mesurée sur le dessin du bocal : mettre 0 rend le fond plat comme avant.
+  final double creuxFond;
+
   double width = 0;
   double height = 0;
 
@@ -108,7 +152,17 @@ class PastillePhysicsWorld {
     this.zoneBottom = 0.89,
     this.maxInsetFraction = 0.33,
     this.taperT = 0.38,
+    this.creuxFond = 0.035,
   });
+
+  /// Ordonnée du fond sous l'abscisse [x], dans le repère courant.
+  double solY(double x) => ordonneeDuFond(
+        x: x,
+        zoneLeftPx: zoneLeft * width,
+        zoneRightPx: zoneRight * width,
+        fondPlatPx: zoneBottom * height,
+        creuxPx: creuxFond * height,
+      );
 
   void updateBounds(double newWidth, double newHeight) {
     width = newWidth;
@@ -179,7 +233,38 @@ class PastillePhysicsWorld {
       }
     }
 
-    // 3. Rotation visuelle + mise en sommeil des billes quasi immobiles
+    // 3. Glissement sur le fond courbe.
+    //
+    //    Une bille posée sur le flanc du creux doit rejoindre doucement le
+    //    centre, comme elle le ferait au fond d'un vrai bocal. Sans cette
+    //    composante, le fond courbe ne serait qu'un décalage vertical : le
+    //    tas garderait sa ligne droite, simplement posée plus bas.
+    //
+    //    Calculé ICI et pas dans la résolution des collisions, qui est
+    //    rejouée quatre fois par frame et n'a pas accès à dt.
+    if (creuxFond > 0) {
+      final double creuxPx = creuxFond * height;
+      for (final p in pastilles) {
+        final double sol = ordonneeDuFond(
+          x: p.x,
+          zoneLeftPx: zoneLeftPx,
+          zoneRightPx: zoneRightPx,
+          fondPlatPx: zoneBottomPx,
+          creuxPx: creuxPx,
+        );
+        // Uniquement les billes réellement en appui sur le fond.
+        if (p.y < sol - p.radius - 1.5) continue;
+        final double pente = penteDuFond(
+          x: p.x,
+          zoneLeftPx: zoneLeftPx,
+          zoneRightPx: zoneRightPx,
+          creuxPx: creuxPx,
+        );
+        p.vx += gravityY * gravityMagnitude * pente * glissementFond * dt;
+      }
+    }
+
+    // 4. Rotation visuelle + mise en sommeil des billes quasi immobiles
     // + plafond de vitesse (filet de sécurité anti-emballement)
     for (final p in pastilles) {
       final double vitesse = math.sqrt(p.vx * p.vx + p.vy * p.vy);
@@ -202,7 +287,15 @@ class PastillePhysicsWorld {
     final double minX = zoneLeftPx + inset + p.radius;
     final double maxX = zoneRightPx - inset - p.radius;
     final double minY = zoneTopPx + p.radius;
-    final double maxY = zoneBottomPx - p.radius;
+    final double creuxPx = creuxFond * height;
+    final double maxY = ordonneeDuFond(
+          x: p.x,
+          zoneLeftPx: zoneLeftPx,
+          zoneRightPx: zoneRightPx,
+          fondPlatPx: zoneBottomPx,
+          creuxPx: creuxPx,
+        ) -
+        p.radius;
 
     if (p.x < minX) {
       final double vitesseImpact = -p.vx;
@@ -224,6 +317,11 @@ class PastillePhysicsWorld {
       p.vy = vitesseImpact > vitesseSeuilRebond ? -vitesseImpact * restitutionParoi : 0.0;
     }
   }
+
+  /// Part de l'accélération tangentielle réellement appliquée au glissement
+  /// sur le fond courbe. Volontairement faible : on cherche un tassement lent
+  /// vers le centre, pas des billes qui dévalent la pente.
+  static const double glissementFond = 0.35;
 
   void _resoudreCollisionPaire(Pastille a, Pastille b) {
     final double dx = b.x - a.x;

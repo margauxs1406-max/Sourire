@@ -14,7 +14,7 @@ Future<void> afficherPopupPalier(
 }) async {
   await showDialog(
     context: context,
-    barrierColor: Colors.black.withOpacity(0.45),
+    barrierColor: Colors.black.withValues(alpha: 0.45),
     builder: (context) => PopupPalier(palier: palier, isDark: isDark),
   );
 }
@@ -66,7 +66,7 @@ class PopupPalier extends StatelessWidget {
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.25),
+                    color: Colors.black.withValues(alpha: 0.25),
                     blurRadius: 20,
                     offset: const Offset(0, 8),
                   ),
@@ -86,10 +86,11 @@ class PopupPalier extends StatelessWidget {
                   Text(
                     texte.name,
                     textAlign: TextAlign.center,
-                    style: TextStyle(
+                    style: styleTitreRecit.copyWith(
                       color: couleurTitre,
-                      fontWeight: FontWeight.bold,
-                      fontSize: (dialogWidth * 0.075).clamp(18.0, 26.0),
+                      // Une serif a besoin de plus de corps : on monte le coefficient
+                      // avant de repasser par tailleLora.
+                      fontSize: tailleLora((dialogWidth * 0.085).clamp(20.0, 28.0)),
                       height: 1.15,
                     ),
                   ),
@@ -98,10 +99,9 @@ class PopupPalier extends StatelessWidget {
                   Text(
                     texte.phrase,
                     textAlign: TextAlign.center,
-                    style: TextStyle(
+                    style: styleSecondaire.copyWith(
                       color: couleurTexte,
                       fontSize: (dialogWidth * 0.05).clamp(14.0, 18.0),
-                      height: 1.4,
                     ),
                   ),
                   SizedBox(height: dialogWidth * 0.08),
@@ -117,7 +117,7 @@ class PopupPalier extends StatelessWidget {
                       onPressed: () => Navigator.of(context).pop(),
                       child: Text(
                         l10n.btnContinuerPalier,
-                        style: const TextStyle(color: white, fontWeight: FontWeight.bold, fontSize: 15),
+                        style: styleCorps.copyWith(color: white, fontWeight: FontWeight.bold),
                       ),
                     ),
                   ),

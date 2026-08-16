@@ -72,8 +72,8 @@ class _ScreenNewNoteState extends State<ScreenNewNote> {
             : (currentThemeMode == ThemeMode.dark);
         
         final Color iconColor = isDarkMode 
-            ? Colors.white.withOpacity(0.25) 
-            : widget.couleur.main.withOpacity(widget.themeVisuel.noteIconOpacity);
+            ? Colors.white.withValues(alpha: 0.25) 
+            : widget.couleur.main.withValues(alpha: widget.themeVisuel.noteIconOpacity);
 
         return Scaffold(
           backgroundColor: isDarkMode ? darkBg : white,
@@ -121,7 +121,7 @@ class _ScreenNewNoteState extends State<ScreenNewNote> {
                                   borderRadius: BorderRadius.circular(radiusDefault),
                                   boxShadow: isDarkMode ? null : shadowDrop,
                                   border: Border.all(
-                                    color: isDarkMode ? darkSeparateur : widget.couleur.main.withOpacity(0.2),
+                                    color: isDarkMode ? darkSeparateur : widget.couleur.main.withValues(alpha: 0.2),
                                     width: 1.5,
                                   ),
                                 ),
@@ -176,14 +176,14 @@ class _ScreenNewNoteState extends State<ScreenNewNote> {
                                                   cursorColor: isDarkMode ? Colors.white : widget.couleur.main,
                                                   style: styleNoteLarge.copyWith(
                                                     color: isDarkMode ? Colors.white : widget.couleur.main,
-                                                    fontSize: responsiveFontSize,
+                                                    fontSize: tailleLora(responsiveFontSize),
                                                     height: 1.2,
                                                   ),
                                                   decoration: InputDecoration(
                                                     hintText: AppLocalizations.of(context)!.writeHappyThought(accordAffiche),
                                                     hintStyle: styleNoteLarge.copyWith(
-                                                      color: isDarkMode ? Colors.white38 : widget.couleur.main.withOpacity(0.3),
-                                                      fontSize: responsiveFontSize,
+                                                      color: isDarkMode ? Colors.white38 : widget.couleur.main.withValues(alpha: 0.3),
+                                                      fontSize: tailleLora(responsiveFontSize),
                                                       height: 1.2,
                                                     ),
                                                     border: InputBorder.none,
@@ -223,7 +223,9 @@ class _ScreenNewNoteState extends State<ScreenNewNote> {
                             return BtnAction(
                               text: AppLocalizations.of(context)!.btnValidate,
                               isActive: canValidate,
-                              color: widget.couleur.main,
+                              // Le orange de la marque, pas la couleur tirée au
+                              // sort : seule la note elle-même se colore.
+                              color: orange,
                               onTap: () {
                                 Navigator.push(
                                   context,

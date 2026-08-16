@@ -45,10 +45,13 @@ class ItemCategorie extends StatelessWidget {
             child: Text(
               label,
               style: styleCategorie.copyWith(
-                fontSize: adaptiveFontSize, // <-- APPLICATION DE LA TAILLE RESPONSIVE
-                color: isSelected 
-                    ? color 
-                    : (isDarkMode ? Colors.white70 : grey), 
+                fontSize: adaptiveFontSize,
+                // Même graisse que « Nouvelle catégorie » au repos ; la
+                // sélection se marque par le demi-gras ET la couleur.
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                color: isSelected
+                    ? color
+                    : (isDarkMode ? Colors.white70 : grey),
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,

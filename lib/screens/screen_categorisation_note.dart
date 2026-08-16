@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:sourire/main.dart';
 import 'package:sourire/models/theme_app.dart';
 import 'package:sourire/theme/tokens.dart';
-import 'package:sourire/widgets/btn_categorisation_dynamique.dart';
+import 'package:sourire/widgets/btn_categorisation.dart';
 import 'package:sourire/widgets/item_categorie.dart';
 import 'package:sourire/widgets/logo_sourire.dart';
+import 'package:sourire/widgets/souvenir_historique.dart';
 import 'package:sourire/widgets/btn_chevron_gauche.dart';
 import 'package:sourire/services/database_service.dart';
 import 'package:sourire/models/note_model.dart';
@@ -49,6 +50,17 @@ class _ScreenCategorisationNoteState extends State<ScreenCategorisationNote> {
 
   // 4) Cette note a-t-elle déjà été écrite en base par cette instance ?
   bool _noteDejaEnregistree = false;
+
+  /// Copie éphémère du souvenir, uniquement pour l'aperçu affiché à droite du
+  /// titre. Construite une seule fois : rien ici ne doit dépendre d'un
+  /// `DateTime.now()` réévalué à chaque rebuild.
+  late final NoteSourire _apercu = NoteSourire(
+    text: widget.note,
+    themeLabel: widget.themeVisuel.id,
+    colorLabel: widget.theme.label,
+    categories: const [],
+    date: DateTime.now(),
+  );
 
   @override
   void initState() {
@@ -173,7 +185,7 @@ class _ScreenCategorisationNoteState extends State<ScreenCategorisationNote> {
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
               title: Text(
                 localizations.titleDeleteModal,
-                style: TextStyle(color: isDarkMode ? Colors.white : Colors.black, fontSize: 18, fontWeight: FontWeight.bold),
+                style: styleTitreAction.copyWith(color: texteFort(isDarkMode)),
               ),
               content: customList.isEmpty
                   ? Padding(
@@ -214,7 +226,7 @@ class _ScreenCategorisationNoteState extends State<ScreenCategorisationNote> {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(context),
-                  child: Text(localizations.btnClose, style: TextStyle(color: widget.theme.main, fontWeight: FontWeight.bold)),
+                  child: Text(localizations.btnClose, style: TextStyle(color: orange, fontWeight: FontWeight.bold)),
                 ),
               ],
             );
@@ -231,9 +243,17 @@ class _ScreenCategorisationNoteState extends State<ScreenCategorisationNote> {
     final localizations = AppLocalizations.of(context)!;
     final String labelNouvelleCategorie = localizations.btnNewCategory;
 
+    // Ces bandeaux sont posés en Positioned : leur hauteur ne peut pas être un
+    // simple plancher. On l'indexe donc sur le facteur d'agrandissement du
+    // texte du système, borné à 1,6 pour qu'un réglage extrême ne mange pas
+    // toute la liste de catégories.
+    final double echelleTexte =
+        MediaQuery.textScalerOf(context).scale(1.0).clamp(1.0, 1.6);
     const double topBarHeight = 60.0; 
-    const double titleHeight = 90.0; 
-    const double bottomBarHeight = 110.0; 
+    // 120 et non 90 : c'est la hauteur qu'il faut pour loger l'aperçu de
+    // 80 px à droite du titre, comme dans l'écran de recatégorisation.
+    final double titleHeight = 120.0 * echelleTexte;
+    final double bottomBarHeight = 110.0 * echelleTexte;
 
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
@@ -305,14 +325,32 @@ class _ScreenCategorisationNoteState extends State<ScreenCategorisationNote> {
                           child: Container(
                             color: isDarkMode ? darkBg : white,
                             padding: const EdgeInsets.only(top: 15, bottom: 10),
-                            alignment: Alignment.topLeft,
-                            child: Text(
-                              localizations.categoryQuestion, 
-                              style: styleNoteLarge.copyWith(
-                                color: isDarkMode ? Colors.white : widget.theme.main,
-                                fontSize: screenWidth < 360 ? 18 : 22,
-                                height: 1.2,
-                              ),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    localizations.categoryQuestion,
+                                    style: styleTitreLora.copyWith(
+                                      color: isDarkMode ? Colors.white : orange,
+                                      fontSize: tailleLora(screenWidth < 360 ? 18 : 22),
+                                      height: 1.2,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 15),
+                                // Aperçu du souvenir en cours d'écriture, comme
+                                // dans l'écran de recatégorisation. Le souvenir
+                                // n'existe pas encore en base : on en fabrique
+                                // une copie éphémère, uniquement pour l'affichage.
+                                SizedBox(
+                                  width: 80,
+                                  height: 80,
+                                  child: WidgetSouvenirHistorique(
+                                    souvenir: _apercu,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ),
@@ -343,7 +381,7 @@ class _ScreenCategorisationNoteState extends State<ScreenCategorisationNote> {
                                         child: TextField(
                                           controller: _newCategoryController,
                                           autofocus: true,
-                                          cursorColor: widget.theme.main,
+                                          cursorColor: orange,
                                           style: TextStyle(
                                             color: isDarkMode ? Colors.white : Colors.grey[600],
                                             fontSize: adaptiveFontSize,
@@ -355,16 +393,16 @@ class _ScreenCategorisationNoteState extends State<ScreenCategorisationNote> {
                                               fontSize: adaptiveFontSize,
                                             ),
                                             suffixIcon: IconButton(
-                                              icon: Icon(Icons.check, color: widget.theme.main),
+                                              icon: Icon(Icons.check, color: orange),
                                               onPressed: _soumettreNouvelleCategorie,
                                             ),
                                             border: OutlineInputBorder(
                                               borderRadius: BorderRadius.circular(15),
-                                              borderSide: BorderSide(color: widget.theme.main),
+                                              borderSide: BorderSide(color: orange),
                                             ),
                                             focusedBorder: OutlineInputBorder(
                                               borderRadius: BorderRadius.circular(15),
-                                              borderSide: BorderSide(color: widget.theme.main, width: 2),
+                                              borderSide: BorderSide(color: orange, width: 2),
                                             ),
                                           ),
                                           onSubmitted: (_) => _soumettreNouvelleCategorie(),
@@ -375,7 +413,7 @@ class _ScreenCategorisationNoteState extends State<ScreenCategorisationNote> {
                                     return BoutonActionCategorie(
                                       label: labelNouvelleCategorie,
                                       icon: Icons.add,
-                                      color: widget.theme.main,
+                                      color: orange,
                                       hasCircle: true,
                                       isDarkMode: isDarkMode,
                                       useThemeStyleForText: false,
@@ -391,7 +429,7 @@ class _ScreenCategorisationNoteState extends State<ScreenCategorisationNote> {
                                     return BoutonActionCategorie(
                                       label: localizations.btnDeleteCategories,
                                       icon: Icons.delete_outline,
-                                      color: widget.theme.main,
+                                      color: orange,
                                       hasCircle: false,
                                       isDarkMode: isDarkMode,
                                       useThemeStyleForText: true,
@@ -403,7 +441,7 @@ class _ScreenCategorisationNoteState extends State<ScreenCategorisationNote> {
                                   return ItemCategorie(
                                     label: _getCategoryDisplayLabel(categoryKey, context),
                                     isSelected: _selectedCategories.contains(categoryKey),
-                                    color: widget.theme.main,
+                                    color: orange,
                                     isDarkMode: isDarkMode,
                                     onSelectionChanged: (val) {
                                       setState(() {
@@ -433,10 +471,9 @@ class _ScreenCategorisationNoteState extends State<ScreenCategorisationNote> {
                               children: [
                                 // BOUTON PASSER
                                 Expanded(
-                                  child: BtnCategorisationDynamique(
+                                  child: BtnCategorisation(
                                     text: localizations.btnSkip,
                                     isSecondary: true,
-                                    themeColor: widget.theme.main,
                                     // Devient opaque/inactif si un enregistrement est en cours
                                     isActive: !_isSaving,
                                     isLoading: _isSaving && _actionEnCours == 'skip',
@@ -450,10 +487,9 @@ class _ScreenCategorisationNoteState extends State<ScreenCategorisationNote> {
                                 // bouton (et perdait son état d'appui) à chaque
                                 // changement de sélection.
                                 Expanded(
-                                  child: BtnCategorisationDynamique(
+                                  child: BtnCategorisation(
                                     text: localizations.btnValidate,
                                     isSecondary: false,
-                                    themeColor: widget.theme.main,
                                     isActive: isValidateActive,
                                     isLoading: _isSaving && _actionEnCours == 'validate',
                                     onTap: _validerNote,

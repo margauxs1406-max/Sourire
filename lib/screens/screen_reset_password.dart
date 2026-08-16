@@ -113,10 +113,9 @@ class _ScreenResetPasswordState extends State<ScreenResetPassword> {
                                 child: Text(
                                   txtTitle,
                                   textAlign: TextAlign.left,
-                                  style: TextStyle(
-                                    fontSize: adaptiveTitleSize, 
-                                    color: white, 
-                                    fontFamily: 'Lobster Two',
+                                  style: styleTitreLora.copyWith(
+                                    fontSize: tailleLora(adaptiveTitleSize),
+                                    color: white,
                                   ),
                                 ),
                               ),
@@ -183,13 +182,13 @@ class _ScreenResetPasswordState extends State<ScreenResetPassword> {
   InputDecoration _inputDecoration(String hint, bool isDark, bool obscure, VoidCallback onToggle) {
     return InputDecoration(
       hintText: hint,
-      hintStyle: TextStyle(color: isDark ? white.withOpacity(0.5) : Colors.black45),
+      hintStyle: TextStyle(color: isDark ? white.withValues(alpha: 0.5) : Colors.black45),
       filled: true,
       fillColor: isDark ? const Color(0xFF1E1E1E) : white,
       border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       suffixIcon: IconButton(
-        icon: Icon(obscure ? Icons.visibility_off : Icons.visibility, color: isDark ? white.withOpacity(0.6) : Colors.black45),
+        icon: Icon(obscure ? Icons.visibility_off : Icons.visibility, color: isDark ? white.withValues(alpha: 0.6) : Colors.black45),
         onPressed: onToggle,
       ),
     );

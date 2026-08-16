@@ -42,9 +42,20 @@ class DatabaseService {
 
     return await openDatabase(
       path,
-      version: 1,
+      version: 2,
       onCreate: _onCreate,
+      onUpgrade: _onUpgrade,
     );
+  }
+
+  /// Migrations de schéma. Les bases déjà installées chez les testeurs sont
+  /// en version 1 : on ne peut pas les recréer, seulement les compléter.
+  Future<void> _onUpgrade(Database db, int ancienne, int nouvelle) async {
+    if (ancienne < 2) {
+      await db.execute(
+        "ALTER TABLE notes ADD COLUMN estAmorce INTEGER NOT NULL DEFAULT 0",
+      );
+    }
   }
 
   // Création des deux tables nécessaires : notes et catégories personnalisées
@@ -57,7 +68,8 @@ class DatabaseService {
         themeLabel TEXT,
         colorLabel TEXT,
         categories TEXT,
-        date TEXT
+        date TEXT,
+        estAmorce INTEGER NOT NULL DEFAULT 0
       )
     ''');
 
@@ -144,6 +156,87 @@ class DatabaseService {
     return count ?? 0;
   }
 
+  // Compte TOUS les souvenirs, notes et photos confondues.
+  // C'est ce total qui est comparé à UserPrefs.limiteSouvenirsGratuits.
+  Future<int> getTotalNotesCount() async {
+    final db = await database;
+    // Les souvenirs d'amorçage sont exclus : ils n'ont pas été écrits par
+    // l'utilisateur, ils ne doivent pas entamer son quota gratuit.
+    final count = Sqflite.firstIntValue(
+      await db.rawQuery("SELECT COUNT(*) FROM notes WHERE estAmorce = 0"),
+    );
+    return count ?? 0;
+  }
+
+  /// Dépose les souvenirs d'amorçage dans un bocal vide.
+  ///
+  /// Sans effet si le bocal contient déjà quoi que ce soit : les testeurs
+  /// déjà installés ne verront rien apparaître. Ces souvenirs sont marqués
+  /// `estAmorce`, donc hors quota et hors paliers, mais restent de vrais
+  /// souvenirs — tirables, affichables, supprimables.
+  Future<void> amorcerBocal(List<String> textes, String themeId) async {
+    if (textes.isEmpty) return;
+    final db = await database;
+
+    final int dejaPresents =
+        Sqflite.firstIntValue(await db.rawQuery("SELECT COUNT(*) FROM notes")) ?? 0;
+    if (dejaPresents > 0) return;
+
+    final List<SourireTheme> couleurs =
+        List<SourireTheme>.from(SourireTheme.tousLesThemes)..shuffle();
+    final DateTime maintenant = DateTime.now();
+
+    final Batch batch = db.batch();
+    for (int i = 0; i < textes.length; i++) {
+      batch.insert('notes', {
+        'text': textes[i],
+        'photoPath': null,
+        'themeLabel': themeId,
+        'colorLabel': couleurs[i % couleurs.length].label,
+        'categories': 'unclassified',
+        // Dates légèrement décalées : sans ça l'historique les empile toutes
+        // sur la même minute.
+        'date': maintenant
+            .subtract(Duration(minutes: textes.length - i))
+            .toIso8601String(),
+        'estAmorce': 1,
+      });
+    }
+
+    await batch.commit(noResult: true);
+    debugPrint("--- BDD SQL : ${textes.length} souvenirs d'amorçage déposés ---");
+    _notifierChangement();
+  }
+
+  /// Catégories créées par l'utilisateur, sans les catégories système.
+  /// Utilisé par l'export : les catégories système existent déjà partout.
+  Future<List<String>> getCategoriesPersonnalisees() async {
+    final toutes = await _fetchCategoriesFromDb();
+    return toutes.where((c) => !_systemCategories.contains(c)).toList();
+  }
+
+  /// Réinsère des souvenirs venant d'une archive de sauvegarde.
+  ///
+  /// Les doublons ont déjà été écartés par SauvegardeService : ici on écrit,
+  /// on ne juge pas. Une seule transaction pour ne pas rafraîchir l'interface
+  /// des centaines de fois.
+  Future<void> insererSouvenirsImportes(List<NoteSourire> souvenirs) async {
+    if (souvenirs.isEmpty) return;
+    final db = await database;
+
+    final Batch batch = db.batch();
+    for (final NoteSourire souvenir in souvenirs) {
+      final Map<String, dynamic> ligne = souvenir.toMap();
+      // L'id est réattribué par SQLite : celui de l'archive n'a aucun sens ici.
+      ligne.remove('id');
+      batch.insert('notes', ligne);
+    }
+    await batch.commit(noResult: true);
+
+    debugPrint("--- BDD SQL : ${souvenirs.length} souvenir(s) réimporté(s) ---");
+    _notifierChangement();
+  }
+
   // --- LES MÉTHODES CRUD MODIFIÉES POUR ACCÉDER À LA BDD ---
 
   // 1. Ajouter une catégorie
@@ -161,7 +254,7 @@ class DatabaseService {
         {'name': formattedName},
         conflictAlgorithm: ConflictAlgorithm.ignore,
       );
-      print("--- BDD SQL : Nouvelle catégorie ajoutée : $formattedName ---");
+      debugPrint("--- BDD SQL : Nouvelle catégorie ajoutée : $formattedName ---");
       _notifierChangementCategories();
     }
   }
@@ -194,7 +287,7 @@ class DatabaseService {
         );
       }
     }
-    print("--- BDD SQL : Catégorie supprimée : $categoryKey et souvenirs mis à jour ---");
+    debugPrint("--- BDD SQL : Catégorie supprimée : $categoryKey et souvenirs mis à jour ---");
     _notifierChangementCategories();
     _notifierChangement();
   }
@@ -213,10 +306,11 @@ class DatabaseService {
       'colorLabel': note.colorLabel,
       'categories': categoriesFinales.join(','),
       'date': note.date.toIso8601String(),
+      'estAmorce': note.estAmorce ? 1 : 0,
     };
 
     await db.insert('notes', rawNote);
-    print("--- BDD SQL : Note sauvegardée ---");
+    debugPrint("--- BDD SQL : Note sauvegardée ---");
     _notifierChangement();
   }
 
@@ -258,7 +352,7 @@ class DatabaseService {
       final String pathEnregistrer = Platform.isIOS ? basename(cleanPath) : cleanPath;
 
       final randomLabel = SourireTheme.getRandomPhoto().label;
-print("--- DEBUG couleur photo choisie : $randomLabel ---");
+debugPrint("--- DEBUG couleur photo choisie : $randomLabel ---");
 
 batch.insert('notes', {
   'text': null,
@@ -271,7 +365,7 @@ batch.insert('notes', {
     }
 
     await batch.commit(noResult: true);
-    print("--- BDD SQL : ${photoPaths.length} photo(s) sauvegardée(s) de manière résiliente ---");
+    debugPrint("--- BDD SQL : ${photoPaths.length} photo(s) sauvegardée(s) de manière résiliente ---");
     _notifierChangement();
   }
 
@@ -285,7 +379,7 @@ batch.insert('notes', {
   }
 
   await batch.commit(noResult: true);
-  print("--- BDD SQL : ${notesASupprimer.length} élément(s) supprimé(s) ---");
+  debugPrint("--- BDD SQL : ${notesASupprimer.length} élément(s) supprimé(s) ---");
   _notifierChangement();
 }
 
@@ -300,10 +394,10 @@ batch.insert('notes', {
     );
 
     if (rowsAffected != 0) {
-      print("--- BDD SQL : Souvenir ${noteModifiee.id} mis à jour ---");
+      debugPrint("--- BDD SQL : Souvenir ${noteModifiee.id} mis à jour ---");
       _notifierChangement();
     } else {
-      print("--- BDD ERREUR : Souvenir introuvable pour la mise à jour ---");
+      debugPrint("--- BDD ERREUR : Souvenir introuvable pour la mise à jour ---");
     }
   }
 }

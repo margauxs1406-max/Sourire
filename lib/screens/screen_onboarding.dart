@@ -104,9 +104,20 @@ class _ScreenOnboardingState extends State<ScreenOnboarding> {
     return false;
   }
 
+  /// Mode sombre courant. Recalculé à chaque build : `MyApp.themeNotifier`
+  /// pilote le `themeMode` du MaterialApp, dont tout changement reconstruit
+  /// cet écran — pas besoin d'un ValueListenableBuilder de plus.
+  bool get _sombre {
+    final ThemeMode mode = MyApp.themeNotifier.value;
+    if (mode == ThemeMode.system) {
+      return MediaQuery.platformBrightnessOf(context) == Brightness.dark;
+    }
+    return mode == ThemeMode.dark;
+  }
+
   @override
   Widget build(BuildContext context) {
-    dynamic localizations = AppLocalizations.of(context); 
+    final AppLocalizations? localizations = AppLocalizations.of(context);
 
     final ScrollPhysics pagePhysics = _validerEtapeActuelle() 
         ? const BouncingScrollPhysics() 
@@ -122,7 +133,7 @@ class _ScreenOnboardingState extends State<ScreenOnboarding> {
       }
     } else if (_currentStep == 5) {
       try {
-        boutonTexte = localizations?.onboardingBtnPhfValidate ?? "Valider";
+        boutonTexte = localizations?.onboardingBtnValidate ?? "Valider";
       } catch(_) {
         boutonTexte = "Valider";
       }
@@ -135,7 +146,8 @@ class _ScreenOnboardingState extends State<ScreenOnboarding> {
     }
 
     return Scaffold(
-      backgroundColor: orange,
+      // Fond clair, en cohérence avec la home.
+      backgroundColor: _sombre ? darkBg : lightOrange,
       resizeToAvoidBottomInset: true, 
       body: SafeArea(
         child: Column(
@@ -150,14 +162,14 @@ class _ScreenOnboardingState extends State<ScreenOnboarding> {
                       width: 48,
                       child: _currentStep > 0
                           ? IconButton(
-                              icon: const Icon(Icons.arrow_back_ios_new, color: white, size: 22),
+                              icon: const Icon(Icons.arrow_back_ios_new, color: orange, size: 22),
                               onPressed: _revenirEnArriere,
                             )
                           : const SizedBox.shrink(),
                     ),
                     const Expanded(
                       child: Center(
-                        child: LogoSourire(color: white),
+                        child: LogoSourire(color: orange),
                       ),
                     ),
                     const SizedBox(width: 48), 
@@ -179,8 +191,8 @@ class _ScreenOnboardingState extends State<ScreenOnboarding> {
                       height: 16,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: isSelected ? white : Colors.transparent,
-                        border: Border.all(color: white, width: 2),
+                        color: isSelected ? orange : Colors.transparent,
+                        border: Border.all(color: orange, width: 2),
                       ),
                     );
                   }),
@@ -237,17 +249,28 @@ class _ScreenOnboardingState extends State<ScreenOnboarding> {
   }
 
   Widget _buildEtapeLangue() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 30),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildLangueButton("Français", "fr", const Locale('fr', 'FR')),
-          const SizedBox(height: 14),
-          _buildLangueButton("English", "en", const Locale('en', 'US')),
-        ],
-      ),
+    // Scrollable et non figée : à la fermeture du clavier, la hauteur
+    // disponible passe brièvement sous celle du contenu. Une Column rigide y
+    // affichait la bande jaune et noire de débordement.
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
+          padding: const EdgeInsets.symmetric(horizontal: 30),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minHeight: constraints.maxHeight),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildLangueButton("Français", "fr", const Locale('fr', 'FR')),
+                const SizedBox(height: 14),
+                _buildLangueButton("English", "en", const Locale('en', 'US')),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -262,18 +285,25 @@ class _ScreenOnboardingState extends State<ScreenOnboarding> {
         MyApp.localeNotifier.value = locale; 
       },
       child: Container(
-        height: 55,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
+        // Plancher et non hauteur figée : au réglage d'accessibilité maximum,
+        // le libellé dépasserait des 55 px et Flutter afficherait sa bande de
+        // débordement. La carte s'étire désormais au lieu de rogner.
+        constraints: const BoxConstraints(minHeight: 55),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color: white,
+          color: _sombre ? darkSurface : white,
           borderRadius: BorderRadius.circular(8),
+          // Sans ombre, ces cartes blanches se fondraient dans le lightOrange.
+          // En sombre l'ombre ne sert plus à rien : c'est le contraste de la
+          // surface qui détache la carte.
+          boxShadow: _sombre ? null : shadowSoft,
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
               label,
-              style: const TextStyle(fontSize: 16, color: black, fontWeight: FontWeight.w500),
+              style: styleCorps.copyWith(color: texteFort(_sombre)),
             ),
             Container(
               width: 22,
@@ -292,7 +322,7 @@ class _ScreenOnboardingState extends State<ScreenOnboarding> {
   }
 
   // --- ÉTAPE 1 : BIENVENUE ---
-  Widget _buildEtapeBienvenue(localizations) {
+  Widget _buildEtapeBienvenue(AppLocalizations? localizations) {
     String msg = "Bienvenue dans ton\nespace personnel conçu\npour te redonner le\nsourire !";
     try {
       msg = localizations?.onboardingWelcomeMessage ?? msg;
@@ -301,29 +331,39 @@ class _ScreenOnboardingState extends State<ScreenOnboarding> {
     // Calcul de la taille de police adaptative pour le message de bienvenue (Base 32 sur écran standard de 375px)
     final double adaptiveWelcomeSize = (MediaQuery.of(context).size.width * 0.075).clamp(24.0, 40.0);
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 30),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Text(
-            msg,
-            style: TextStyle(
-              fontSize: adaptiveWelcomeSize, 
-              color: white, 
-              fontFamily: 'Lobster Two',
-              height: 1.3,
+    // Scrollable et non figée : à la fermeture du clavier, la hauteur
+    // disponible passe brièvement sous celle du contenu. Une Column rigide y
+    // affichait la bande jaune et noire de débordement.
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
+          padding: const EdgeInsets.symmetric(horizontal: 30),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minHeight: constraints.maxHeight),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Text(
+                  msg,
+                  style: styleTitreLora.copyWith(
+                    fontSize: tailleLora(adaptiveWelcomeSize),
+                    color: orange,
+                    height: 1.3,
+                  ),
+                  textAlign: TextAlign.left,
+                ),
+              ],
             ),
-            textAlign: TextAlign.left,
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 
   // --- ÉTAPE 2 : LE PRÉNOM ---
-  Widget _buildEtapePrenom(localizations) {
+  Widget _buildEtapePrenom(AppLocalizations? localizations) {
     String question = "Comment t'appelles-tu ?";
     String hint = "Prénom";
     try {
@@ -344,35 +384,92 @@ class _ScreenOnboardingState extends State<ScreenOnboarding> {
               minHeight: constraints.maxHeight,
             ),
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: 10),
-                Text(
-                  question,
-                  style: TextStyle(fontSize: adaptiveTitleSize, color: white, fontFamily: 'Lobster Two'),
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 10),
+                    Text(
+                      question,
+                      style: styleTitreLora.copyWith(fontSize: tailleLora(adaptiveTitleSize), color: orange),
+                    ),
+                    const SizedBox(height: 14),
+                    // Les champs sont blancs sur un fond lightOrange : une ombre
+                    // très légère leur redonne un contour.
+                    DecoratedBox(
+                      decoration: BoxDecoration(
+                        borderRadius: const BorderRadius.all(Radius.circular(8)),
+                        boxShadow: _sombre ? null : shadowSoft,
+                      ),
+                      child: TextField(
+                        controller: _prenomController,
+                        textCapitalization: TextCapitalization.words,
+                        onChanged: (valeur) {
+                          setState(() {
+                            UserPrefs.prenom = valeur.trim();
+                          });
+                        },
+                        style: TextStyle(color: texteFort(_sombre)),
+                        decoration: InputDecoration(
+                          hintText: hint,
+                          hintStyle: TextStyle(color: texteDoux(_sombre)),
+                          filled: true,
+                          fillColor: _sombre ? darkSurface : white,
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 30),
+                  ],
                 ),
-                const SizedBox(height: 14),
-                TextField(
-                  controller: _prenomController,
-                  textCapitalization: TextCapitalization.words,
-                  onChanged: (valeur) {
-                    setState(() {
-                      UserPrefs.prenom = valeur.trim();
-                    });
-                  },
-                  style: const TextStyle(color: black),
-                  decoration: InputDecoration(
-                    hintText: hint,
-                    hintStyle: const TextStyle(color: grey),
-                    filled: true,
-                    fillColor: white,
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                  ),
-                ),
-                const SizedBox(height: 30),
-              ],
+            ),
+          );
+        },
+      );
+    }
+
+    // --- ÉTAPE 3 : LE GENRE ---
+    Widget _buildEtapeGenre(AppLocalizations? localizations) {
+      String question = "Comment dois-je m'adresser à toi ?";
+      String male = "Au masculin";
+      String female = "Au féminin";
+      String none = "En écriture inclusive";
+      try {
+        question = localizations?.onboardingQuestionGender ?? question;
+        male = localizations?.onboardingGenderMale ?? male;
+        female = localizations?.onboardingGenderFemale ?? female;
+        none = localizations?.onboardingGenderNone ?? none;
+      } catch(_) {}
+
+      final double adaptiveTitleSize = (MediaQuery.of(context).size.width * 0.064).clamp(18.0, 30.0);
+
+      // Scrollable et non figée : à la fermeture du clavier, la hauteur
+      // disponible passe brièvement sous celle du contenu. Une Column rigide y
+      // affichait la bande jaune et noire de débordement.
+      return LayoutBuilder(
+        builder: (context, constraints) {
+          return SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
+            padding: const EdgeInsets.symmetric(horizontal: 30),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minHeight: constraints.maxHeight),
+              child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                question,
+                style: styleTitreLora.copyWith(fontSize: tailleLora(adaptiveTitleSize), color: orange),
+              ),
+              const SizedBox(height: 14),
+              _buildGenreButton(male, UserPrefs.genreMasculin),
+              const SizedBox(height: 14),
+              _buildGenreButton(female, UserPrefs.genreFeminin),
+              const SizedBox(height: 14),
+              // Genre neutre : l'accord bascule alors en écriture inclusive
+              // (« heureux·se ») partout dans l'app.
+              _buildGenreButton(none, UserPrefs.genreNeutre),
+            ],
             ),
           ),
         );
@@ -380,60 +477,38 @@ class _ScreenOnboardingState extends State<ScreenOnboarding> {
     );
   }
 
-  // --- ÉTAPE 3 : LE GENRE ---
-  Widget _buildEtapeGenre(localizations) {
-    String question = "Tu es...";
-    String male = "Un homme";
-    String female = "Une femme";
-    try {
-      question = localizations?.onboardingQuestionGender ?? question;
-      male = localizations?.onboardingGenderMale ?? male;
-      female = localizations?.onboardingGenderFemale ?? female;
-    } catch(_) {}
-
-    final double adaptiveTitleSize = (MediaQuery.of(context).size.width * 0.064).clamp(18.0, 30.0);
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 30),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            question,
-            style: TextStyle(fontSize: adaptiveTitleSize, color: white, fontFamily: 'Lobster Two'),
-          ),
-          const SizedBox(height: 14),
-          _buildGenreButton(male),
-          const SizedBox(height: 14),
-          _buildGenreButton(female),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildGenreButton(String genreLabel) {
-    bool isSelected = _selectedGenre == genreLabel;
+  /// [genreLabel] est le libellé affiché (traduit), [codeGenre] la valeur
+  /// réellement persistée ('f' / 'h') — pour que l'accord « heureux /
+  /// heureuse » ne dépende pas de la langue active au moment de l'onboarding.
+  Widget _buildGenreButton(String genreLabel, String codeGenre) {
+    bool isSelected = _selectedGenre == codeGenre;
     return InkWell(
       onTap: () {
         setState(() {
-          _selectedGenre = genreLabel;
-          UserPrefs.genre = genreLabel;
+          _selectedGenre = codeGenre;
+          UserPrefs.genre = codeGenre;
         });
       },
       child: Container(
-        height: 55,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
+        // Plancher et non hauteur figée : au réglage d'accessibilité maximum,
+        // le libellé dépasserait des 55 px et Flutter afficherait sa bande de
+        // débordement. La carte s'étire désormais au lieu de rogner.
+        constraints: const BoxConstraints(minHeight: 55),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color: white,
+          color: _sombre ? darkSurface : white,
           borderRadius: BorderRadius.circular(8),
+          // Sans ombre, ces cartes blanches se fondraient dans le lightOrange.
+          // En sombre l'ombre ne sert plus à rien : c'est le contraste de la
+          // surface qui détache la carte.
+          boxShadow: _sombre ? null : shadowSoft,
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
               genreLabel,
-              style: const TextStyle(fontSize: 16, color: black, fontWeight: FontWeight.w500),
+              style: styleCorps.copyWith(color: texteFort(_sombre)),
             ),
             Container(
               width: 22,
@@ -452,7 +527,7 @@ class _ScreenOnboardingState extends State<ScreenOnboarding> {
   }
 
   // --- ÉTAPE 4 : COMPTE + SÉCURITÉ ---
-  Widget _buildEtapeSecurite(localizations) {
+  Widget _buildEtapeSecurite(AppLocalizations? localizations) {
     String titre = "Sécurise tes données";
     String hintEmail = "Email";
     String emailValideTxt = "email valide";
@@ -482,136 +557,159 @@ class _ScreenOnboardingState extends State<ScreenOnboarding> {
               minHeight: constraints.maxHeight,
             ),
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: 10),
-                Text(
-                  titre,
-                  style: TextStyle(fontSize: adaptiveTitleSize, color: white, fontFamily: 'Lobster Two'),
-                ),
-                const SizedBox(height: 14),
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 10),
+                    Text(
+                      titre,
+                      style: styleTitreLora.copyWith(fontSize: tailleLora(adaptiveTitleSize), color: orange),
+                    ),
+                    const SizedBox(height: 14),
 
-                TextField(
-                  controller: _emailController,
-                  onChanged: (_) => setState(() {}),
-                  keyboardType: TextInputType.emailAddress,
-                  style: const TextStyle(color: black),
-                  decoration: InputDecoration(
-                    hintText: hintEmail,
-                    hintStyle: const TextStyle(color: grey),
-                    filled: true,
-                    fillColor: white,
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                  ),
-                ),
-                
-                if (emailSaisi.isNotEmpty) ...[
-                  const SizedBox(height: 6),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 4),
-                    child: Text(
-                      emailEstValide ? emailValideTxt : emailInvalideTxt,
-                      style: TextStyle(
-                        color: emailEstValide ? const Color(0xFF2E7D32) : const Color(0xFFD32F2F),
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
+                    DecoratedBox(
+                      decoration: BoxDecoration(
+                        borderRadius: const BorderRadius.all(Radius.circular(8)),
+                        boxShadow: _sombre ? null : shadowSoft,
+                      ),
+                      child: TextField(
+                        controller: _emailController,
+                        onChanged: (_) => setState(() {}),
+                        keyboardType: TextInputType.emailAddress,
+                        style: TextStyle(color: texteFort(_sombre)),
+                        decoration: InputDecoration(
+                          hintText: hintEmail,
+                          hintStyle: TextStyle(color: texteDoux(_sombre)),
+                          filled: true,
+                          fillColor: _sombre ? darkSurface : white,
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                        ),
                       ),
                     ),
-                  ),
-                ],
-                const SizedBox(height: 14),
 
-                TextField(
-                  controller: _passwordController,
-                  onChanged: (_) => setState(() {}),
-                  obscureText: _obscurePassword,
-                  style: const TextStyle(color: black),
-                  decoration: InputDecoration(
-                    hintText: hintPass,
-                    hintStyle: const TextStyle(color: grey),
-                    filled: true,
-                    fillColor: white,
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                    suffixIcon: IconButton(
-                      icon: Icon(_obscurePassword ? Icons.visibility_off : Icons.visibility, color: orange),
-                      onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                    if (emailSaisi.isNotEmpty) ...[
+                      const SizedBox(height: 6),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                        child: Text(
+                          emailEstValide ? emailValideTxt : emailInvalideTxt,
+                          style: TextStyle(
+                            color: emailEstValide ? const Color(0xFF2E7D32) : const Color(0xFFD32F2F),
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 14),
+
+                    DecoratedBox(
+                      decoration: BoxDecoration(
+                        borderRadius: const BorderRadius.all(Radius.circular(8)),
+                        boxShadow: _sombre ? null : shadowSoft,
+                      ),
+                      child: TextField(
+                        controller: _passwordController,
+                        onChanged: (_) => setState(() {}),
+                        obscureText: _obscurePassword,
+                        style: TextStyle(color: texteFort(_sombre)),
+                        decoration: InputDecoration(
+                          hintText: hintPass,
+                          hintStyle: TextStyle(color: texteDoux(_sombre)),
+                          filled: true,
+                          fillColor: _sombre ? darkSurface : white,
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                          suffixIcon: IconButton(
+                            icon: Icon(_obscurePassword ? Icons.visibility_off : Icons.visibility, color: orange),
+                            onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                          ),
+                        ),
+                      ),
                     ),
-                  ),
+                    const SizedBox(height: 30),
+                  ],
                 ),
-                const SizedBox(height: 30),
-              ],
+            ),
+          );
+        },
+      );
+    }
+
+    // --- ÉTAPE 5 : BIOMÉTRIE ---
+    Widget _buildEtapeBiometrie(AppLocalizations? localizations) {
+      String titreBio = "Facilite ton accès à l'application";
+      String bioLabel = "Activer la biométrie";
+
+      try {
+        titreBio = localizations?.onboardingBiometricsTitle ?? titreBio;
+        bioLabel = localizations?.onboardingBiometricsLabel ?? bioLabel;
+      } catch(_) {}
+
+      final double adaptiveTitleSize = (MediaQuery.of(context).size.width * 0.064).clamp(18.0, 30.0);
+
+      // Scrollable et non figée : à la fermeture du clavier, la hauteur
+      // disponible passe brièvement sous celle du contenu. Une Column rigide y
+      // affichait la bande jaune et noire de débordement.
+      return LayoutBuilder(
+        builder: (context, constraints) {
+          return SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
+            padding: const EdgeInsets.symmetric(horizontal: 30),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minHeight: constraints.maxHeight),
+              child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                titreBio,
+                style: styleTitreLora.copyWith(fontSize: tailleLora(adaptiveTitleSize), color: orange),
+              ),
+              const SizedBox(height: 24),
+              Container(
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        bioLabel,
+                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: orange),
+                      ),
+                    ),
+                    const SizedBox(width: 15),
+                    SwitchBiometrie(
+                      key: ValueKey(_biometrieValue), 
+                      initialValue: _biometrieValue,
+                      isNegative: false,
+                      onChanged: (val) async {
+                        if (val) {
+                          setState(() {
+                            _biometrieValue = true;
+                          });
+
+                          bool succes = await BiometricService.authentifier();
+                        
+                          setState(() {
+                            _biometrieValue = succes;
+                          });
+                        } else {
+                          setState(() {
+                            _biometrieValue = false;
+                          });
+                        }
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ],
             ),
           ),
         );
       },
-    );
-  }
-
-  // --- ÉTAPE 5 : BIOMÉTRIE ---
-  Widget _buildEtapeBiometrie(localizations) {
-    String titreBio = "Facilite ton accès à l'application";
-    String bioLabel = "Activer la biométrie";
-
-    try {
-      titreBio = localizations?.onboardingBiometricsTitle ?? titreBio;
-      bioLabel = localizations?.onboardingBiometricsLabel ?? bioLabel;
-    } catch(_) {}
-
-    final double adaptiveTitleSize = (MediaQuery.of(context).size.width * 0.064).clamp(18.0, 30.0);
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 30),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            titreBio,
-            style: TextStyle(fontSize: adaptiveTitleSize, color: white, fontFamily: 'Lobster Two'),
-          ),
-          const SizedBox(height: 24),
-          Container(
-            padding: const EdgeInsets.symmetric(vertical: 10),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Text(
-                    bioLabel,
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: white),
-                  ),
-                ),
-                const SizedBox(width: 15),
-                SwitchBiometrie(
-                  key: ValueKey(_biometrieValue), 
-                  initialValue: _biometrieValue,
-                  isNegative: true,
-                  onChanged: (val) async {
-                    if (val) {
-                      setState(() {
-                        _biometrieValue = true;
-                      });
-
-                      bool succes = await BiometricService.authentifier();
-                      
-                      setState(() {
-                        _biometrieValue = succes;
-                      });
-                    } else {
-                      setState(() {
-                        _biometrieValue = false;
-                      });
-                    }
-                  },
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import '../services/database_service.dart';
 
 class StockageService {
@@ -28,7 +29,7 @@ class StockageService {
         'notes': _formaterTaille(octetsNotes),
       };
     } catch (e) {
-      print("Erreur lors du calcul de l'espace simulé : $e");
+      debugPrint("Erreur lors du calcul de l'espace simulé : $e");
       return {'photos': '0 Ko', 'notes': '0 Ko'};
     }
   }

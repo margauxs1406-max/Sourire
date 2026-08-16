@@ -20,14 +20,14 @@ class BtnNewPicture extends StatelessWidget {
       child: Container(
         width: buttonSize,
         height: buttonSize,
-        decoration: BoxDecoration(
-          color: white, 
+        decoration: const BoxDecoration(
+          color: orange,
           shape: BoxShape.circle,
-          boxShadow: shadowDrop, 
+          boxShadow: shadowDrop,
         ),
         child: Icon(
           Icons.image_outlined,
-          color: orange, 
+          color: white,
           size: iconSize,
         ),
       ),

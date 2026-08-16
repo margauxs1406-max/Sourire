@@ -6,8 +6,8 @@ const Color black = Color(0xFF000000);
 const Color white = Color(0xFFFFFFFF);
 const Color grey = Color(0xFF616161);
 const Color lightGrey = Color(0xFFA6A6A6);
-const Color orange = Color(0xFFFF8C00);
-const Color lightOrange = Color(0xFFFFFEFB);
+const Color orange = Color(0xFFFF8000);
+const Color lightOrange = Color(0xFFFFFBF5);
 const Color green = Color(0xFF60B993);
 const Color lightGreen = Color(0xFFFDFFFB);
 const Color blue = Color(0xFF5CCDFE);
@@ -29,24 +29,10 @@ const Color lightRed = Color(0xFFFFFAFA);
 const Color teal = Color.fromARGB(255, 10, 219, 191);
 const Color lightTeal = Color(0xFFF5FFFE);
 
-// --- 1. AJOUT DE LA STRUCTURE DES ICÔNES ---
-class BackgroundIconConfig {
-  final String assetPath;
-  final double widthRatio;
-  final double heightRatio;
-  final double xRatio;
-  final double yRatio;
-  final double? rotation;
-
-  const BackgroundIconConfig({
-    required this.assetPath,
-    required this.widthRatio,
-    required this.heightRatio,
-    required this.xRatio,
-    required this.yRatio,
-    this.rotation,
-  });
-}
+// NOTE : la structure BackgroundIconConfig vivait aussi ici, en double de
+// celle de models/theme_app.dart. Cette copie n'était utilisée nulle part —
+// seule celle de theme_app.dart porte les positions des thèmes, et c'est elle
+// qui expose les helpers getX/getY/getWidth/getHeight. Elle a été supprimée.
 
 class SourireTheme {
   final Color main;    
@@ -61,6 +47,7 @@ class SourireTheme {
     SourireTheme(main: green, light: lightGreen, label: "vert"),
     SourireTheme(main: blue, light: lightBlue, label: "bleu"),
     SourireTheme(main: pink, light: lightPink, label: "rose"),
+    SourireTheme(main: purple, light: lightPurple, label: "violet"),
   ];
 
   // --- NOUVEAU : liste de référence dédiée aux PHOTOS ---
@@ -98,7 +85,7 @@ class SourireTheme {
       case 'jaune':
         return SourireTheme(main: yellow, light: lightYellow, label: 'jaune');
       case 'violet':
-        return SourireTheme(main: purple, light: lightPurple, label: 'violet');
+        return SourireTheme(main: const Color.fromARGB(255, 88, 5, 189), light: lightPurple, label: 'violet');
       case 'rouge':
         return SourireTheme(main: red, light: lightRed, label: 'rouge');
       case 'turquoise':
@@ -112,8 +99,17 @@ class SourireTheme {
 
 // --- TYPOGRAPHY & EFFECTS (Laissez votre reste du fichier inchangé) ---
 const TextStyle styleLogo = TextStyle(fontFamily: 'Spicy Rice', fontSize: 36, color : white);
-const TextStyle styleNoteLarge = TextStyle(fontFamily: 'Lobster Two', fontSize: 36);
-const TextStyle styleNoteSmall = TextStyle(fontFamily: 'Lobster Two', fontSize: 8);
+/// Lora a un œil bien plus large que Lobster Two : à taille de police égale,
+/// elle paraît nettement plus grosse. Toutes les tailles qui s'appliquent à
+/// Lora passent donc par [tailleLora], qui applique ce facteur de correction —
+/// le rendu reste visuellement identique à l'ancienne police.
+const double facteurLora = 0.85;
+
+/// Convertit une taille pensée pour Lobster Two en taille Lora équivalente.
+double tailleLora(double taille) => taille * facteurLora;
+
+const TextStyle styleNoteLarge = TextStyle(fontFamily: 'Lora', fontSize: 31);
+const TextStyle styleNoteSmall = TextStyle(fontFamily: 'Lora', fontSize: 7);
 const TextStyle styleBouton = TextStyle(fontFamily: 'Inclusive Sans', fontWeight: FontWeight.w500, fontSize: 16);
 const TextStyle styleCategorie = TextStyle(fontFamily: 'Inclusive Sans', fontWeight: FontWeight.w500, fontSize: 20, color : grey);
 const List<BoxShadow> shadowDrop = [BoxShadow(color: Color(0x33000000), blurRadius: 8, offset: Offset(4, 4))];

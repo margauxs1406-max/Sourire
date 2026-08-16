@@ -15,14 +15,16 @@ class BtnOnboarding extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // 1. Gestion du texte (Orange si actif, Orange à 50% d'opacité si inactif)
-    final Color couleurContenu = isActive ? orange : orange.withOpacity(0.5);
-
-    // 2. Gestion du fond (Toujours blanc)
-    final Color couleurFond = white;
-
-    // 3. Gestion de la bordure (Orange si actif, Orange à 50% d'opacité si inactif)
-    final Color couleurBordure = isActive ? orange : orange.withOpacity(0.5);
+    // Le CTA est plein orange sur le fond clair de l'onboarding : c'est lui
+    // l'élément le plus fort de l'écran. À l'état inactif, c'est le fond qui
+    // s'estompe, pas le texte — il reste ainsi lisible.
+    //
+    // Aucune bordure : elle se superposait au fond translucide de l'état
+    // inactif et y dessinait un liseré plus foncé. Les boutons primaires de
+    // la catégorisation n'en ont pas non plus — même alpha (0,35) qu'eux,
+    // pour que les deux écrans se ressemblent.
+    const Color couleurContenu = white;
+    final Color couleurFond = isActive ? orange : orange.withValues(alpha: 0.35);
 
     return GestureDetector(
       onTap: isActive ? onTap : null,
@@ -30,13 +32,12 @@ class BtnOnboarding extends StatelessWidget {
         decoration: BoxDecoration(
           color: couleurFond,
           borderRadius: BorderRadius.circular(30),
-          border: Border.all(color: couleurBordure, width: 2),
         ),
         padding: const EdgeInsets.symmetric(vertical: 15),
         child: Center(
           child: Text(
             text,
-            style: TextStyle(
+            style: const TextStyle(
               color: couleurContenu,
               fontWeight: FontWeight.bold,
               fontSize: 16,
