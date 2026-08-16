@@ -253,9 +253,16 @@ class PartageService {
         ..color = black.withValues(alpha: 0.06),
     );
 
-    // La signature reste orange quelle que soit la couleur du souvenir :
-    // c'est la marque, pas une décoration du souvenir partagé.
-    _dessinerSignature(canvas, orange, carte, zoneVignette.bottom);
+    // Bande basse du polaroid : la date à gauche, la marque à droite.
+    // La date n'est PAS reprise de la pastille posée sur le souvenir à
+    // l'écran — sur une image que l'on donne, elle appartient au cadre, pas
+    // à la photo.
+    _dessinerBandeau(
+      canvas,
+      carte: carte,
+      basVignette: zoneVignette.bottom,
+      date: souvenir.dateAffichee,
+    );
 
     final ui.Picture picture = recorder.endRecording();
     final ui.Image rendu =
@@ -418,21 +425,43 @@ class PartageService {
     );
   }
 
-  /// Logo « Sourire » seul, en bas à droite de la bande du polaroid, toujours
-  /// dans l'orange de la marque.
-  static void _dessinerSignature(
-    Canvas canvas,
-    Color couleur,
-    Rect carte,
-    double basVignette,
-  ) {
+  /// Bande basse du polaroid : la date à gauche, le logo « Sourire » à
+  /// droite, tous deux dans l'orange de la marque et centrés sur la même
+  /// ligne de base optique.
+  static void _dessinerBandeau(
+    Canvas canvas, {
+    required Rect carte,
+    required double basVignette,
+    required DateTime date,
+  }) {
     final TextPainter logo = TextPainter(
       text: TextSpan(
         text: 'Sourire',
-        style: styleLogo.copyWith(color: couleur, fontSize: 60),
+        style: styleLogo.copyWith(color: orange, fontSize: 60),
       ),
       textDirection: TextDirection.ltr,
     )..layout();
+
+    // La date est en police d'interface, pas en Spicy Rice : le logo doit
+    // rester le seul élément « écrit à la main » du polaroid.
+    final TextPainter dateur = TextPainter(
+      text: TextSpan(
+        text: formaterDateSouvenir(date),
+        style: const TextStyle(
+          color: orange,
+          fontSize: 40,
+          fontWeight: FontWeight.w600,
+          letterSpacing: 1.5,
+        ),
+      ),
+      textDirection: TextDirection.ltr,
+    )..layout();
+
+    final double milieu = basVignette + (carte.bottom - basVignette) / 2;
+    dateur.paint(
+      canvas,
+      Offset(carte.left + _marge, milieu - dateur.height / 2),
+    );
 
     final double y = basVignette + (carte.bottom - basVignette - logo.height) / 2;
     logo.paint(canvas, Offset(carte.right - _marge - logo.width, y));

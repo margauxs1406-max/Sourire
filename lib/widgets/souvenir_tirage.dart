@@ -241,6 +241,14 @@ class _WidgetSouvenirTirageState extends State<WidgetSouvenirTirage> {
                         ),
                 ),
 
+                // DATE DU SOUVENIR, par-dessus, en bas à gauche.
+                // Elle fait pendant au bouton de partage, à l'autre bout.
+                Positioned(
+                  left: 12,
+                  bottom: 12,
+                  child: _PastilleDate(date: widget.souvenir.dateAffichee),
+                ),
+
                 // BOUTON DE PARTAGE, par-dessus le souvenir
                 if (widget.afficherPartage)
                   Positioned(
@@ -265,6 +273,35 @@ class _WidgetSouvenirTirageState extends State<WidgetSouvenirTirage> {
 
 /// Pastille de partage posée sur le souvenir.
 ///
+/// Date du souvenir, posée en bas à gauche.
+///
+/// Même matière que le bouton de partage — pastille blanche, encre orange,
+/// ombre portée décalée de 2 px — pour que les deux éléments se lisent comme
+/// une même couche posée sur le souvenir.
+class _PastilleDate extends StatelessWidget {
+  final DateTime date;
+
+  const _PastilleDate({required this.date});
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: const BoxDecoration(
+        color: white,
+        borderRadius: BorderRadius.all(Radius.circular(999)),
+        boxShadow: shadowPastille,
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        child: Text(
+          formaterDateSouvenir(date),
+          style: styleMention.copyWith(color: orange),
+        ),
+      ),
+    );
+  }
+}
+
 /// L'icône suit la convention de la plateforme : l'avion en papier sur iOS,
 /// les trois nœuds reliés sur Android. Le fond blanc translucide garde
 /// l'icône lisible aussi bien sur une photo sombre que sur une note claire.

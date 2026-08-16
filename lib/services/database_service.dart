@@ -42,7 +42,7 @@ class DatabaseService {
 
     return await openDatabase(
       path,
-      version: 2,
+      version: 3,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -55,6 +55,11 @@ class DatabaseService {
       await db.execute(
         "ALTER TABLE notes ADD COLUMN estAmorce INTEGER NOT NULL DEFAULT 0",
       );
+    }
+    if (ancienne < 3) {
+      // Date d'origine d'une photo. Nullable : les souvenirs déjà en base
+      // n'en ont pas, et retomberont sur leur date d'entrée.
+      await db.execute("ALTER TABLE notes ADD COLUMN datePrise TEXT");
     }
   }
 
@@ -69,6 +74,7 @@ class DatabaseService {
         colorLabel TEXT,
         categories TEXT,
         date TEXT,
+        datePrise TEXT,
         estAmorce INTEGER NOT NULL DEFAULT 0
       )
     ''');
@@ -306,6 +312,7 @@ class DatabaseService {
       'colorLabel': note.colorLabel,
       'categories': categoriesFinales.join(','),
       'date': note.date.toIso8601String(),
+      'datePrise': note.datePrise?.toIso8601String(),
       'estAmorce': note.estAmorce ? 1 : 0,
     };
 

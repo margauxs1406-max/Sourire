@@ -82,6 +82,7 @@ class SauvegardeService {
           'colorLabel': souvenir.colorLabel,
           'categories': souvenir.categories,
           'date': souvenir.date.toIso8601String(),
+          'datePrise': souvenir.datePrise?.toIso8601String(),
           'estAmorce': souvenir.estAmorce,
         });
       }
@@ -209,6 +210,7 @@ class SauvegardeService {
               .map((e) => e.toString())
               .toList(),
           date: DateTime.tryParse(m['date'] as String? ?? '') ?? DateTime.now(),
+          datePrise: DateTime.tryParse(m['datePrise'] as String? ?? ''),
           estAmorce: m['estAmorce'] as bool? ?? false,
         );
 

@@ -5,7 +5,21 @@ class NoteSourire {
   final String themeLabel;   
   final String colorLabel;   
   final List<String> categories;
+
+  /// Date d'ENTRÉE du souvenir dans le bocal. C'est elle, et elle seule, qui
+  /// ordonne l'historique et le bocal : elle ne doit jamais être remplacée
+  /// par la date d'origine d'une photo, sous peine de voir un souvenir
+  /// importé aujourd'hui replonger au fond de l'historique.
   final DateTime date;
+
+  /// Date à laquelle la photo a été PRISE, telle que la galerie du téléphone
+  /// la connaît. `null` pour une note écrite : sa date d'écriture est déjà
+  /// [date]. Purement informative — c'est elle qu'on affiche sur le souvenir.
+  final DateTime? datePrise;
+
+  /// Date à montrer à l'utilisateur : celle de la photo si on la connaît,
+  /// sinon celle de l'entrée dans le bocal.
+  DateTime get dateAffichee => datePrise ?? date;
 
   /// Souvenir d'amorçage proposé à l'installation.
   ///
@@ -22,6 +36,7 @@ class NoteSourire {
     required this.colorLabel, 
     required this.categories,
     required this.date,
+    this.datePrise,
     this.estAmorce = false,
   });
 
@@ -43,6 +58,9 @@ class NoteSourire {
       date: map['date'] != null 
           ? DateTime.parse(map['date'] as String) 
           : DateTime.now(),
+      datePrise: map['datePrise'] != null
+          ? DateTime.tryParse(map['datePrise'] as String)
+          : null,
       estAmorce: (map['estAmorce'] as int? ?? 0) == 1,
     );
   }
@@ -59,6 +77,7 @@ class NoteSourire {
       'categories': categories.join(','),
       // On stocke la date au format texte standardisé ISO8601
       'date': date.toIso8601String(),
+      'datePrise': datePrise?.toIso8601String(),
       'estAmorce': estAmorce ? 1 : 0,
     };
   }
@@ -72,6 +91,7 @@ class NoteSourire {
     String? colorLabel,      
     List<String>? categories,
     DateTime? date,
+    DateTime? datePrise,
     bool? estAmorce,
   }) {
     return NoteSourire(
@@ -82,6 +102,7 @@ class NoteSourire {
       colorLabel: colorLabel ?? this.colorLabel,
       categories: categories ?? this.categories,
       date: date ?? this.date,
+      datePrise: datePrise ?? this.datePrise,
       estAmorce: estAmorce ?? this.estAmorce,
     );
   }

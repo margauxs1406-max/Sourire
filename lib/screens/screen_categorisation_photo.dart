@@ -152,7 +152,12 @@ class _ScreenCategorisationPhotoState extends State<ScreenCategorisationPhoto> {
         themeLabel: '',
         colorLabel: SourireTheme.getRandomPhoto().label,
         categories: categories.isEmpty ? ["unclassified"] : List<String>.from(categories),
+        // `date` reste la date d'ENTRÉE dans le bocal : c'est elle qui ordonne
+        // l'historique. La date de la galerie va dans `datePrise`, purement
+        // informative — sans quoi une photo de 2019 importée aujourd'hui
+        // replongerait tout au fond de l'historique.
         date: DateTime.now(),
+        datePrise: widget.photos[index].createDateTime,
       );
       _databaseService.insertNote(nouvellePhoto);
       preloadHistoriqueImage(localPath); // volontairement SANS await
