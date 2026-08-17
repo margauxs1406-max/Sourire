@@ -89,7 +89,7 @@ class _BtnCategorisationState extends State<BtnCategorisation> {
                 ? 0.70
                 : 1.0;
 
-        final Color orangeActuel = orange.withOpacity(opaciteEtat);
+        final Color orangeActuel = orange.withValues(alpha: opaciteEtat);
 
         Color couleurContenu;
         Color couleurFond;
@@ -105,7 +105,7 @@ class _BtnCategorisationState extends State<BtnCategorisation> {
           // Le secondaire n'a pas de fond plein : on matérialise l'appui par
           // un léger voile orangé, sinon rien ne bougerait à l'écran.
           couleurFond = estEnfonce
-              ? orange.withOpacity(isDarkMode ? 0.16 : 0.10)
+              ? orange.withValues(alpha: isDarkMode ? 0.16 : 0.10)
               : (isDarkMode ? Colors.transparent : white);
         }
 

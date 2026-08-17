@@ -42,9 +42,15 @@ class ThemeService {
     return true; 
   }
 
-  /// Déverrouille les thèmes (Appelé après un achat réussi)
+  /// Déverrouille les thèmes (appelé après un achat réussi).
+  ///
+  /// Ne force plus de rebuild global : l'ancienne version appelait
+  /// `themeVisuelNotifier.notifyListeners()` depuis l'extérieur, une API que
+  /// Flutter marque comme protégée. C'était inutile — les deux appelants
+  /// (l'écran des thèmes et la modale d'achat de la Home) rafraîchissent
+  /// déjà ce qu'ils affichent, et le statut premium est relu à la demande
+  /// partout ailleurs.
   static void deverrouillerPremium() {
     estUtilisateurPremium = true;
-    themeVisuelNotifier.notifyListeners(); 
   }
 }

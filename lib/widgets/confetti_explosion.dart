@@ -126,7 +126,7 @@ class _ConfettiPainter extends CustomPainter {
       final Offset position = origine + Offset(dx, dy);
       final double rotation = p.rotationInitiale + p.vitesseRotation * t * 2 * pi;
 
-      final Paint paint = Paint()..color = p.couleur.withOpacity(opacite);
+      final Paint paint = Paint()..color = p.couleur.withValues(alpha: opacite);
 
       canvas.save();
       canvas.translate(position.dx, position.dy);

@@ -157,17 +157,156 @@ class NotificationService {
     }
   }
 
-  /// Planification du rappel quotidien de gratitude
-  static Future<void> planifierRappelGratitude() async {
-    const int notifId = 1;
+  // --- OUTILS DE PLANIFICATION PARTAGÉS ---------------------------------------
 
-    if (!UserPrefs.rappelGratitudeActive) { 
-      await _plugin.cancel(notifId);
+  static const Map<String, int> _joursSemaine = {
+    "Lundi": DateTime.monday,
+    "Mardi": DateTime.tuesday,
+    "Mercredi": DateTime.wednesday,
+    "Jeudi": DateTime.thursday,
+    "Vendredi": DateTime.friday,
+    "Samedi": DateTime.saturday,
+    "Dimanche": DateTime.sunday,
+  };
+
+  /// Prochaine occurrence de [heure]:[minute] strictement dans le futur, en
+  /// avançant de [pas] tant qu'elle est déjà passée.
+  static tz.TZDateTime _prochaineOccurrence(int heure, int minute, Duration pas) {
+    final maintenant = tz.TZDateTime.now(tz.local);
+    var instant = tz.TZDateTime(
+      tz.local,
+      maintenant.year,
+      maintenant.month,
+      maintenant.day,
+      heure,
+      minute,
+    );
+    // Marge d'une minute : on ne programme pas un rappel pour « dans 3 secondes ».
+    while (!instant.isAfter(maintenant.add(const Duration(minutes: 1)))) {
+      instant = instant.add(pas);
+    }
+    return instant;
+  }
+
+  /// Prochaine occurrence de [heure]:[minute] tombant sur [jour].
+  static tz.TZDateTime _prochaineOccurrenceHebdomadaire(String jour, int heure, int minute) {
+    final maintenant = tz.TZDateTime.now(tz.local);
+    final int jourCible = _joursSemaine[jour] ?? DateTime.sunday;
+    var instant = tz.TZDateTime(
+      tz.local,
+      maintenant.year,
+      maintenant.month,
+      maintenant.day,
+      heure,
+      minute,
+    );
+    while (instant.weekday != jourCible ||
+        !instant.isAfter(maintenant.add(const Duration(minutes: 1)))) {
+      instant = instant.add(const Duration(days: 1));
+    }
+    return instant;
+  }
+
+  // --- IDENTIFIANTS DE NOTIFICATION ---------------------------------------------
+  //
+  // Chaque rappel a un identifiant principal (répétition native) et une plage
+  // dédiée pour les occurrences programmées d'avance en mode « tous les 2
+  // jours ». Les plages sont disjointes pour qu'un rappel n'annule jamais
+  // l'autre.
+  static const int _idGratitude = 1;
+  static const int _idGratitudeSerieBase = 1001;
+
+  static const int _idSouvenirs = 2;
+  static const int _idSouvenirsSerieBase = 2001;
+
+  /// Un rappel hebdomadaire peut couvrir jusqu'à 7 jours cochés, donc 7
+  /// notifications distinctes à annuler avant chaque replanification.
+  static const int _maxJoursSemaine = 7;
+
+  /// Annule un rappel : l'occurrence principale ET toute la série avancée.
+  /// Indispensable avant chaque replanification, sinon un changement de
+  /// fréquence laisserait traîner les rappels de l'ancien réglage.
+  static Future<void> _annulerRappel(int idPrincipal, int idSerieBase) async {
+    await _plugin.cancel(idPrincipal);
+    for (int i = 0; i < _maxJoursSemaine; i++) {
+      await _plugin.cancel(idSerieBase + i);
+    }
+  }
+
+  /// Programme un rappel récurrent selon la fréquence choisie.
+  ///
+  /// Les deux rythmes s'appuient sur la répétition NATIVE du système
+  /// (`matchDateTimeComponents`) : une fois programmées, les notifications se
+  /// rejouent indéfiniment, même si l'utilisateur n'ouvre jamais l'app.
+  ///
+  /// En hebdomadaire, une notification distincte est programmée par jour
+  /// coché — c'est la seule façon de couvrir plusieurs jours, le système ne
+  /// sachant répéter que sur un seul jour de la semaine à la fois.
+  static Future<void> _programmerRappelRecurrent({
+    required int idPrincipal,
+    required int idSerieBase,
+    required String frequence,
+    required List<String> jours,
+    required int heure,
+    required int minute,
+    required String titre,
+    required String corps,
+    required String payload,
+    required NotificationDetails details,
+  }) async {
+    if (frequence == UserPrefs.frequenceHebdomadaire) {
+      // Garde-fou : une liste vide laisserait l'utilisateur sans aucun rappel
+      // alors qu'il a laissé le réglage activé.
+      final List<String> joursRetenus =
+          jours.isEmpty ? const [UserPrefs.jourLundi] : jours;
+
+      for (int i = 0; i < joursRetenus.length && i < _maxJoursSemaine; i++) {
+        await _plugin.zonedSchedule(
+          idSerieBase + i,
+          titre,
+          corps,
+          _prochaineOccurrenceHebdomadaire(joursRetenus[i], heure, minute),
+          details,
+          androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+          uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
+          matchDateTimeComponents: DateTimeComponents.dayOfWeekAndTime,
+          payload: payload,
+        );
+      }
       return;
     }
 
+    await _plugin.zonedSchedule(
+      idPrincipal,
+      titre,
+      corps,
+      _prochaineOccurrence(heure, minute, const Duration(days: 1)),
+      details,
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
+      matchDateTimeComponents: DateTimeComponents.time,
+      payload: payload,
+    );
+  }
+
+  // --- RAPPEL DE GRATITUDE -----------------------------------------------------
+
+  /// Le texte du rappel s'adapte à la fréquence choisie.
+  static String _corpsGratitude(AppLocalizations l, String frequence) {
+    return frequence == UserPrefs.frequenceHebdomadaire
+        ? l.notifGratitudeBodyWeekly
+        : l.notifGratitudeBodyDaily;
+  }
+
+  /// Planification du rappel de gratitude (quotidien, tous les 2 jours ou
+  /// hebdomadaire, à l'heure choisie par l'utilisateur).
+  static Future<void> planifierRappelGratitude() async {
+    await _annulerRappel(_idGratitude, _idGratitudeSerieBase);
+
+    if (!UserPrefs.rappelGratitudeActive) return;
+
     final localizations = _obtenirTraductions();
-    
+
     final androidPlugin = _plugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
     if (androidPlugin != null) {
       await androidPlugin.createNotificationChannel(AndroidNotificationChannel(
@@ -180,27 +319,19 @@ class NotificationService {
       ));
     }
 
-    final maintenant = tz.TZDateTime.now(tz.local);
-    
-    var instantPlanifie = tz.TZDateTime(
-      tz.local,
-      maintenant.year,
-      maintenant.month,
-      maintenant.day,
-      UserPrefs.heureRappelGratitude,
-      UserPrefs.minuteRappelGratitude,
-    );
-    
-    if (instantPlanifie.isBefore(maintenant.add(const Duration(minutes: 1)))) {
-      instantPlanifie = instantPlanifie.add(const Duration(days: 1));
-    }
+    final String frequence = UserPrefs.frequenceGratitude;
 
-    await _plugin.zonedSchedule(
-      notifId,
-      localizations.notifGratitudeTitle, 
-      localizations.notifGratitudeBody,  
-      instantPlanifie,
-      NotificationDetails(
+    await _programmerRappelRecurrent(
+      idPrincipal: _idGratitude,
+      idSerieBase: _idGratitudeSerieBase,
+      frequence: frequence,
+      jours: UserPrefs.joursGratitude,
+      heure: UserPrefs.heureRappelGratitude,
+      minute: UserPrefs.minuteRappelGratitude,
+      titre: localizations.notifGratitudeTitle,
+      corps: _corpsGratitude(localizations, frequence),
+      payload: 'rappel_gratitude',
+      details: NotificationDetails(
         android: AndroidNotificationDetails(
           'rappel_gratitude_id',
           localizations.notifGratitudeChannelName,
@@ -214,17 +345,18 @@ class NotificationService {
           presentSound: true,
         ),
       ),
-      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-      uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
-      matchDateTimeComponents: DateTimeComponents.time,
-      payload: 'rappel_gratitude',
     );
   }
 
-  /// Planification du rappel de souvenirs (Pérenne & Léger)
+  // --- RAPPEL DE SOUVENIRS -----------------------------------------------------
+
+  /// Planification du rappel de souvenirs (Pérenne & Léger).
+  ///
+  /// Même mécanique que le rappel de gratitude : répétition native en
+  /// quotidien / hebdomadaire, série d'occurrences programmées d'avance en
+  /// « tous les 2 jours ».
   static Future<void> planifierRappelSouvenirs() async {
-    const int notifId = 2;
-    await _plugin.cancel(notifId);
+    await _annulerRappel(_idSouvenirs, _idSouvenirsSerieBase);
 
     if (!UserPrefs.rappelSouvenirsActive) return;
 
@@ -267,58 +399,19 @@ class NotificationService {
       corpsTexteFinal = notifAllBody; 
     }
 
-    final maintenant = tz.TZDateTime.now(tz.local);
-    var instantPlanifie = tz.TZDateTime(
-      tz.local,
-      maintenant.year,
-      maintenant.month,
-      maintenant.day,
-      UserPrefs.heureRappelSouvenirs,
-      UserPrefs.minuteRappelSouvenirs,
-    );
-
-    if (instantPlanifie.isBefore(maintenant.add(const Duration(minutes: 1)))) {
-      if (UserPrefs.frequenceSouvenirs == "Tous les jours") {
-        instantPlanifie = instantPlanifie.add(const Duration(days: 1));
-      }
-    }
-
-    DateTimeComponents? matchComponents;
-    if (UserPrefs.frequenceSouvenirs == "Tous les jours") {
-      if (instantPlanifie.isBefore(maintenant)) {
-        instantPlanifie = instantPlanifie.add(const Duration(days: 1));
-      }
-      matchComponents = DateTimeComponents.time;
-    } 
-    else if (UserPrefs.frequenceSouvenirs == "Tous les 2 jours") {
-      if (instantPlanifie.isBefore(maintenant)) {
-        instantPlanifie = instantPlanifie.add(const Duration(days: 2));
-      }
-      matchComponents = null; 
-    } 
-    else if (UserPrefs.frequenceSouvenirs == "Toutes les semaines") {
-      final Map<String, int> joursMapping = {
-        "Lundi": DateTime.monday, "Mardi": DateTime.tuesday, "Mercredi": DateTime.wednesday,
-        "Jeudi": DateTime.thursday, "Vendredi": DateTime.friday, "Samedi": DateTime.saturday,
-        "Dimanche": DateTime.sunday,
-      };
-      int jourCible = joursMapping[UserPrefs.jourSemaineSouvenirs] ?? DateTime.monday;
-      if (instantPlanifie.weekday == jourCible && instantPlanifie.isBefore(maintenant)) {
-        instantPlanifie = instantPlanifie.add(const Duration(days: 7));
-      } else {
-        while (instantPlanifie.weekday != jourCible || instantPlanifie.isBefore(maintenant)) {
-          instantPlanifie = instantPlanifie.add(const Duration(days: 1));
-        }
-      }
-      matchComponents = DateTimeComponents.dayOfWeekAndTime;
-    }
-
-    await _plugin.zonedSchedule(
-      notifId,
-      notifTitle,
-      corpsTexteFinal, 
-      instantPlanifie,
-      NotificationDetails(
+    // Le texte reflète l'état du bocal au moment de la planification. Il est
+    // recalculé à chaque ouverture de l'app, comme la série d'occurrences.
+    await _programmerRappelRecurrent(
+      idPrincipal: _idSouvenirs,
+      idSerieBase: _idSouvenirsSerieBase,
+      frequence: UserPrefs.frequenceSouvenirs,
+      jours: UserPrefs.joursSouvenirs,
+      heure: UserPrefs.heureRappelSouvenirs,
+      minute: UserPrefs.minuteRappelSouvenirs,
+      titre: notifTitle,
+      corps: corpsTexteFinal,
+      payload: payloadData,
+      details: NotificationDetails(
         android: AndroidNotificationDetails(
           'rappel_souvenirs_id',
           localizations.notifSouvenirsChannelName,
@@ -332,10 +425,6 @@ class NotificationService {
           presentSound: true,
         ),
       ),
-      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-      uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
-      matchDateTimeComponents: matchComponents, 
-      payload: payloadData,
     );
   }
 

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:sourire/l10n/app_localizations.dart';
 import 'package:flutter_svg/flutter_svg.dart'; // Requis pour le rendu automatique des SVG sécurisés
+import 'package:sourire/theme/tokens.dart'; // Couleurs de marque (orange…)
 import 'dart:math' as math;
 
 /// Représente les données de positionnement responsive d'une icône de fond
@@ -50,7 +51,7 @@ class BackgroundIconConfig {
         height: targetHeight,
         fit: BoxFit.contain,
         colorFilter: color != null 
-            ? ColorFilter.mode(color.withOpacity(opacity), BlendMode.srcIn) 
+            ? ColorFilter.mode(color.withValues(alpha: opacity), BlendMode.srcIn) 
             : null,
       );
     } else {
@@ -59,7 +60,7 @@ class BackgroundIconConfig {
         width: targetWidth,
         height: targetHeight,
         fit: BoxFit.contain,
-        color: color?.withOpacity(opacity),
+        color: color?.withValues(alpha: opacity),
       );
     }
 
@@ -138,8 +139,8 @@ class ThemeRepository {
     label: (context) => AppLocalizations.of(context)!.themeMontagne,
     isPremium: true,
     
-    homeIconColor: Colors.white,
-    homeIconOpacity: 0.50,
+    homeIconColor: orange,
+    homeIconOpacity: 0.30,
      
 
     homeIcons: [
@@ -158,14 +159,14 @@ class ThemeRepository {
         yRatio: 206 / _homeBaseHeight,
       ),
       BackgroundIconConfig(
-        assetPath: 'assets/themes/montagne/montagnes.svg',
+        assetPath: 'assets/themes/montagne/montagnes_fin.svg',
          widthRatio: 250 / _homeBaseWidth,
         heightRatio: 250 / _homeBaseHeight,
         xRatio: -56 / _homeBaseWidth,
          yRatio: 265 / _homeBaseHeight,
       ),
       BackgroundIconConfig(
-        assetPath: 'assets/themes/montagne/bonnet.svg',
+        assetPath: 'assets/themes/montagne/bonnet_fin.svg',
         widthRatio: 124 / _homeBaseWidth,
         heightRatio: 124 / _homeBaseHeight,
         xRatio: 313 / _homeBaseWidth,
@@ -173,7 +174,7 @@ class ThemeRepository {
       ),
     ],
 
-    noteIconOpacity: 0.50,
+    noteIconOpacity: 0.25,
 
     noteIcons: [
       BackgroundIconConfig(
@@ -230,8 +231,8 @@ class ThemeRepository {
     id: 'mer',
     label: (context) => AppLocalizations.of(context)!.themeMer,
     isPremium: true,
-    homeIconColor: Colors.white,
-    homeIconOpacity: 0.50,
+    homeIconColor: orange,
+    homeIconOpacity: 0.30,
      
     homeIcons: [
       BackgroundIconConfig(
@@ -250,14 +251,14 @@ class ThemeRepository {
         yRatio: 206 / _homeBaseHeight,
       ),
       BackgroundIconConfig(
-        assetPath: 'assets/themes/mer/vague.svg',
+        assetPath: 'assets/themes/mer/vague_fin.svg',
          widthRatio: 250 / _homeBaseWidth,
         heightRatio: 250 / _homeBaseHeight,
         xRatio: -56 / _homeBaseWidth,
          yRatio: 265 / _homeBaseHeight,
       ),
       BackgroundIconConfig(
-        assetPath: 'assets/themes/mer/claquettes.svg',
+        assetPath: 'assets/themes/mer/claquettes_fin.svg',
         widthRatio: 124 / _homeBaseWidth,
         heightRatio: 124 / _homeBaseHeight,
         xRatio: 300 / _homeBaseWidth,
@@ -265,7 +266,7 @@ class ThemeRepository {
         rotation: 12,
       ),
     ],
-    noteIconOpacity: 0.50,
+    noteIconOpacity: 0.25,
     noteIcons: [
       BackgroundIconConfig(
         assetPath: 'assets/themes/mer/claquettes.svg',
@@ -321,8 +322,8 @@ class ThemeRepository {
     id: 'abstrait',
     label: (context) => AppLocalizations.of(context)!.themeAbstrait,
     isPremium: true,
-    homeIconColor: Colors.white,
-    homeIconOpacity: 0.50,
+    homeIconColor: orange,
+    homeIconOpacity: 0.30,
      
     homeIcons: [
       BackgroundIconConfig(
@@ -354,7 +355,7 @@ class ThemeRepository {
         yRatio: 630 / _homeBaseHeight,
       ),
     ],
-    noteIconOpacity: 0.50,
+    noteIconOpacity: 0.25,
     noteIcons: [
       BackgroundIconConfig(
         assetPath: 'assets/themes/abstrait/zigzag.svg',
@@ -410,8 +411,8 @@ class ThemeRepository {
     id: 'sport',
     label: (context) => AppLocalizations.of(context)!.themeSport,
     isPremium: true,
-    homeIconColor: Colors.white,
-    homeIconOpacity: 0.50,
+    homeIconColor: orange,
+    homeIconOpacity: 0.30,
      
     homeIcons: [
       BackgroundIconConfig(
@@ -429,21 +430,21 @@ class ThemeRepository {
         yRatio: 206 / _homeBaseHeight,
       ),
       BackgroundIconConfig(
-        assetPath: 'assets/themes/sport/rugby.svg',
+        assetPath: 'assets/themes/sport/rugby_fin.svg',
         widthRatio: 240 / _homeBaseWidth,
         heightRatio: 240 / _homeBaseHeight,
         xRatio: -66 / _homeBaseWidth,
         yRatio: 265 / _homeBaseHeight,
       ),
       BackgroundIconConfig(
-        assetPath: 'assets/themes/sport/drapeau.svg',
+        assetPath: 'assets/themes/sport/drapeau_fin.svg',
         widthRatio: 124 / _homeBaseWidth,
         heightRatio: 124 / _homeBaseHeight,
         xRatio: 313 / _homeBaseWidth,
         yRatio: 630 / _homeBaseHeight,
       ),
     ],
-    noteIconOpacity: 0.50,
+    noteIconOpacity: 0.25,
     noteIcons: [
       BackgroundIconConfig(
         assetPath: 'assets/themes/sport/drapeau.svg',
@@ -499,8 +500,8 @@ class ThemeRepository {
     id: 'musique',
     label: (context) => AppLocalizations.of(context)!.themeMusique,
     isPremium: true,
-    homeIconColor: Colors.white,
-    homeIconOpacity: 0.50,
+    homeIconColor: orange,
+    homeIconOpacity: 0.30,
      
     homeIcons: [
       BackgroundIconConfig(
@@ -518,21 +519,21 @@ class ThemeRepository {
         yRatio: 206 / _homeBaseHeight,
       ),
       BackgroundIconConfig(
-        assetPath: 'assets/themes/musique/disque.svg',
+        assetPath: 'assets/themes/musique/disque_fin.svg',
         widthRatio: 240 / _homeBaseWidth,
         heightRatio: 240 / _homeBaseHeight,
         xRatio: -56 / _homeBaseWidth,
         yRatio: 265 / _homeBaseHeight,
       ),
       BackgroundIconConfig(
-        assetPath: 'assets/themes/musique/micro.svg',
+        assetPath: 'assets/themes/musique/micro_fin.svg',
         widthRatio: 124 / _homeBaseWidth,
         heightRatio: 124 / _homeBaseHeight,
         xRatio: 313 / _homeBaseWidth,
         yRatio: 630 / _homeBaseHeight,
       ),
     ],
-    noteIconOpacity: 0.50,
+    noteIconOpacity: 0.25,
     noteIcons: [
       BackgroundIconConfig(
         assetPath: 'assets/themes/musique/micro.svg',
@@ -588,8 +589,8 @@ class ThemeRepository {
     id: 'cinema',
     label: (context) => AppLocalizations.of(context)!.themeCinema,
     isPremium: true,
-    homeIconColor: Colors.white,
-    homeIconOpacity: 0.50,
+    homeIconColor: orange,
+    homeIconOpacity: 0.30,
      
     homeIcons: [
       BackgroundIconConfig(
@@ -607,21 +608,21 @@ class ThemeRepository {
         yRatio: 206 / _homeBaseHeight,
       ),
       BackgroundIconConfig(
-        assetPath: 'assets/themes/cinema/clap.svg',
+        assetPath: 'assets/themes/cinema/clap_fin.svg',
          widthRatio: 250 / _homeBaseWidth,
         heightRatio: 250 / _homeBaseHeight,
         xRatio: -56 / _homeBaseWidth,
          yRatio: 265 / _homeBaseHeight,
       ),
       BackgroundIconConfig(
-        assetPath: 'assets/themes/cinema/pop-corn.svg',
+        assetPath: 'assets/themes/cinema/pop-corn_fin.svg',
         widthRatio: 124 / _homeBaseWidth,
         heightRatio: 124 / _homeBaseHeight,
         xRatio: 313 / _homeBaseWidth,
         yRatio: 630 / _homeBaseHeight,
       ),
     ],
-    noteIconOpacity: 0.50,
+    noteIconOpacity: 0.25,
     noteIcons: [
       BackgroundIconConfig(
         assetPath: 'assets/themes/cinema/pop-corn.svg',
@@ -677,8 +678,8 @@ class ThemeRepository {
     id: 'animaux_marins',
     label: (context) => AppLocalizations.of(context)!.themeAnimauxMarins,
     isPremium: true,
-    homeIconColor: Colors.white,
-    homeIconOpacity: 0.50,
+    homeIconColor: orange,
+    homeIconOpacity: 0.30,
      
     homeIcons: [
       BackgroundIconConfig(
@@ -696,21 +697,21 @@ class ThemeRepository {
         yRatio: 206 / _homeBaseHeight,
       ),
       BackgroundIconConfig(
-        assetPath: 'assets/themes/animaux_marins/tortue.svg',
+        assetPath: 'assets/themes/animaux_marins/tortue_fin.svg',
          widthRatio: 250 / _homeBaseWidth,
         heightRatio: 250 / _homeBaseHeight,
         xRatio: -75 / _homeBaseWidth,
          yRatio: 265 / _homeBaseHeight,
       ),
       BackgroundIconConfig(
-        assetPath: 'assets/themes/animaux_marins/poulpe.svg',
+        assetPath: 'assets/themes/animaux_marins/poulpe_fin.svg',
         widthRatio: 124 / _homeBaseWidth,
         heightRatio: 124 / _homeBaseHeight,
         xRatio: 313 / _homeBaseWidth,
         yRatio: 630 / _homeBaseHeight,
       ),
     ],
-    noteIconOpacity: 0.50,
+    noteIconOpacity: 0.25,
     noteIcons: [
       BackgroundIconConfig(
         assetPath: 'assets/themes/animaux_marins/poulpe.svg',
@@ -766,8 +767,8 @@ class ThemeRepository {
     id: 'floral',
     label: (context) => AppLocalizations.of(context)!.themeFloral,
     isPremium: true,
-    homeIconColor: Colors.white,
-    homeIconOpacity: 0.50,
+    homeIconColor: orange,
+    homeIconOpacity: 0.30,
      
     homeIcons: [
       BackgroundIconConfig(
@@ -785,7 +786,7 @@ class ThemeRepository {
         yRatio: 206 / _homeBaseHeight,
       ),
       BackgroundIconConfig(
-        assetPath: 'assets/themes/floral/cerisier.svg',
+        assetPath: 'assets/themes/floral/cerisier_fin.svg',
          widthRatio: 250 / _homeBaseWidth,
         heightRatio: 250 / _homeBaseHeight,
         xRatio: -56 / _homeBaseWidth,
@@ -793,7 +794,7 @@ class ThemeRepository {
         rotation: 11,
       ),
       BackgroundIconConfig(
-        assetPath: 'assets/themes/floral/monstera.svg',
+        assetPath: 'assets/themes/floral/monstera_fin.svg',
         widthRatio: 124 / _homeBaseWidth,
         heightRatio: 124 / _homeBaseHeight,
         xRatio: 313 / _homeBaseWidth,
@@ -801,7 +802,7 @@ class ThemeRepository {
         rotation: 12,
       ),
     ],
-    noteIconOpacity: 0.50,
+    noteIconOpacity: 0.25,
     noteIcons: [
       BackgroundIconConfig(
         assetPath: 'assets/themes/floral/monstera.svg',
@@ -857,8 +858,8 @@ class ThemeRepository {
     id: 'kawaii',
     label: (context) => AppLocalizations.of(context)!.themeKawaii,
     isPremium: true,
-    homeIconColor: Colors.white,
-    homeIconOpacity: 0.50,
+    homeIconColor: orange,
+    homeIconOpacity: 0.30,
      
     homeIcons: [
       BackgroundIconConfig(
@@ -878,7 +879,7 @@ class ThemeRepository {
         rotation: 12,
       ),
       BackgroundIconConfig(
-        assetPath: 'assets/themes/kawaii/soleil.svg',
+        assetPath: 'assets/themes/kawaii/soleil_fin.svg',
          widthRatio: 250 / _homeBaseWidth,
         heightRatio: 250 / _homeBaseHeight,
         xRatio: -56 / _homeBaseWidth,
@@ -886,14 +887,14 @@ class ThemeRepository {
         rotation: 13,
       ),
       BackgroundIconConfig(
-        assetPath: 'assets/themes/kawaii/sundae.svg',
+        assetPath: 'assets/themes/kawaii/sundae_fin.svg',
         widthRatio: 124 / _homeBaseWidth,
         heightRatio: 124 / _homeBaseHeight,
         xRatio: 313 / _homeBaseWidth,
         yRatio: 630 / _homeBaseHeight,
       ),
     ],
-    noteIconOpacity: 0.50,
+    noteIconOpacity: 0.25,
     noteIcons: [
       BackgroundIconConfig(
         assetPath: 'assets/themes/kawaii/sundae.svg',
@@ -946,7 +947,10 @@ class ThemeRepository {
   /// Liste globale pour l'affichage de la boutique / sélection
   static final List<ThemeApp> tousLesThemes = [
     themeClassique,
-    themeAbstrait,
+    // themeAbstrait retiré de la personnalisation. Sa définition reste plus
+    // haut, mais comme la résolution d'un thème passe par cette liste, les
+    // souvenirs enregistrés avec 'abstrait' s'afficheront désormais avec le
+    // thème classique.
     themeAnimauxMarins,
     themeCinema,
     themeFloral,

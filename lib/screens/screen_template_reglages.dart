@@ -26,13 +26,16 @@ class ScreenTemplateReglages extends StatelessWidget {
     final double responsiveFontSize = (screenWidth * 18) / 390;
 
     return Scaffold(
-      backgroundColor: isDark ? darkBg : white, // <--- Fond adaptatif (via token)
+      // Surface d'écran : blanc chaud, comme la home et le profil.
+      backgroundColor: isDark ? darkBg : lightOrange,
       body: SafeArea(
         child: Column(
           children: [
             // HEADER FIXE UNIQUE
             Container(
-              color: isDark ? darkSurface : white, // <--- Fond du header adaptatif
+              // Le bandeau se fond dans l'écran : deux blancs différents
+              // à trois points l'un de l'autre se verraient sans rien apporter.
+              color: isDark ? darkSurface : lightOrange,
               padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 10),
               width: double.infinity,
               child: Stack(

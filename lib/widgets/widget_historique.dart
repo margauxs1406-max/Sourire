@@ -42,7 +42,7 @@ class _WidgetHistoriqueState extends State<WidgetHistorique> {
   void _ouvrirSouvenirGrandEcran(BuildContext context, NoteSourire souvenir) {
     showDialog(
       context: context,
-      barrierColor: Colors.black.withOpacity(0.25), 
+      barrierColor: Colors.black.withValues(alpha: 0.25), 
       builder: (BuildContext context) {
         return Dialog(
           backgroundColor: Colors.transparent,
@@ -91,7 +91,7 @@ class _WidgetHistoriqueState extends State<WidgetHistorique> {
                     Expanded(
                       child: Text(
                         l10n.deleteAlertTitle,
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: couleurTitre),
+                        style: styleTitreAction.copyWith(color: couleurTitre),
                       ),
                     ),
                     GestureDetector(
@@ -103,7 +103,7 @@ class _WidgetHistoriqueState extends State<WidgetHistorique> {
                 const SizedBox(height: 16),
                 Text(
                   l10n.deleteAlertMessage,
-                  style: TextStyle(fontSize: 14, color: couleurDescription, height: 1.4),
+                  style: styleSecondaire.copyWith(color: couleurDescription),
                 ),
                 const SizedBox(height: 24),
                 SizedBox(
@@ -131,7 +131,7 @@ class _WidgetHistoriqueState extends State<WidgetHistorique> {
                     },
                     child: Text(
                       l10n.btnDeleteSelection,
-                      style: const TextStyle(color: white, fontWeight: FontWeight.bold, fontSize: 15),
+                      style: styleCorps.copyWith(color: white, fontWeight: FontWeight.bold),
                     ),
                   ),
                 ),
@@ -313,8 +313,7 @@ class _WidgetHistoriqueState extends State<WidgetHistorique> {
                         topRight: Radius.circular(16),
                       ),
                     ),
-                    child: Container(
-                      child: StreamBuilder<List<NoteSourire>>(
+                    child: StreamBuilder<List<NoteSourire>>(
                         stream: databaseService.getNotesStream(),
                         builder: (context, snapshot) {
                           final toutesLesNotes = snapshot.data ?? widget.notes;
@@ -443,7 +442,7 @@ class _WidgetHistoriqueState extends State<WidgetHistorique> {
                                                             Positioned.fill(
                                                               child: Container(
                                                                 decoration: BoxDecoration(
-                                                                  color: orange.withOpacity(0.4),
+                                                                  color: orange.withValues(alpha: 0.4),
                                                                   borderRadius: BorderRadius.circular(6),
                                                                 ),
                                                               ),
@@ -464,7 +463,7 @@ class _WidgetHistoriqueState extends State<WidgetHistorique> {
                                                                   ),
                                                                   boxShadow: [
                                                                     BoxShadow(
-                                                                      color: Colors.black.withOpacity(0.2),
+                                                                      color: Colors.black.withValues(alpha: 0.2),
                                                                       blurRadius: 2,
                                                                     )
                                                                   ],
@@ -612,7 +611,7 @@ class _WidgetHistoriqueState extends State<WidgetHistorique> {
                                       color: isDarkMode ? darkSurface : Colors.white, 
                                       boxShadow: [
                                         BoxShadow(
-                                          color: Colors.black.withOpacity(isDarkMode ? 0.3 : 0.1),
+                                          color: Colors.black.withValues(alpha: isDarkMode ? 0.3 : 0.1),
                                           blurRadius: 10,
                                           offset: const Offset(0, -2),
                                         ),
@@ -661,7 +660,6 @@ class _WidgetHistoriqueState extends State<WidgetHistorique> {
                           );
                         },
                       ),
-                    ),
                   ),
                 );
               },

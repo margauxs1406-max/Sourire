@@ -18,7 +18,7 @@ class WidgetSwitch extends StatelessWidget {
     // Détermination des couleurs selon le thème choisi
     final Color trackColor = isNegative 
         ? white 
-        : (value ? orange : orange.withOpacity(0.3));
+        : (value ? orange : orange.withValues(alpha: 0.3));
 
     final Color thumbColor = isNegative
         ? (value ? orange : const Color(0xFFFCE4D6))

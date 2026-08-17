@@ -99,11 +99,9 @@ class _EcranFiltrerState extends State<EcranFiltrer> {
                       ),
                       Text(
                         localizations.filterTitle, 
-                        style: styleBouton.copyWith(
-                          fontFamily: 'Lobster Two',
-                          fontStyle: FontStyle.italic,
+                        style: styleTitreLora.copyWith(
                           color: orange,
-                          fontSize: 28,
+                          fontSize: tailleLora(28),
                         ),
                       ),
                     ],
@@ -114,11 +112,7 @@ class _EcranFiltrerState extends State<EcranFiltrer> {
                 // --- SECTION TITRE ---
                 Text(
                   localizations.categoriesTitle, 
-                  style: TextStyle(
-                    color: isDarkMode ? Colors.white : black, 
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: styleSection.copyWith(color: texteFort(isDarkMode)),
                 ),
                 const SizedBox(height: 12),
 

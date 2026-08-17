@@ -1,7 +1,5 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:path_provider/path_provider.dart'; 
-import 'package:path/path.dart' as p; 
 import 'package:sourire/main.dart'; 
 import 'package:sourire/theme/tokens.dart';
 import 'package:sourire/widgets/item_categorie.dart';
@@ -11,6 +9,7 @@ import 'package:sourire/widgets/btn_chevron_gauche.dart';
 import 'package:sourire/widgets/btn_categorisation.dart'; 
 import 'package:sourire/models/note_model.dart';
 import 'package:sourire/services/database_service.dart';
+import 'package:sourire/services/photo_service.dart';
 import 'package:sourire/l10n/app_localizations.dart';
 import 'package:sourire/widgets/btn_action_categorie.dart';
 import 'package:sourire/services/notifications_service.dart';
@@ -94,26 +93,16 @@ class _ScreenCategorisationPhotoState extends State<ScreenCategorisationPhoto> {
     }
   }
 
+  /// La photo n'est plus COPIÉE telle quelle : elle est redimensionnée à
+  /// 1600 px de côté et réencodée en JPEG, ce qui divise son poids par dix
+  /// sans perte visible. Voir PhotoService pour le détail du compromis.
   Future<String?> _sauvegarderFichierEnLocal(AssetEntity asset) async {
-    try {
-      final File? fileOrigin = await asset.file;
-      if (fileOrigin == null) {
-        debugPrint("Erreur : Impossible d'accéder au fichier d'origine de l'asset.");
-        return null;
-      }
-
-      final Directory appDocDir = await getApplicationDocumentsDirectory();
-      final String uniqueName = "sourire_${DateTime.now().microsecondsSinceEpoch}.jpg";
-      final String permanentPath = p.join(appDocDir.path, uniqueName);
-
-      final File permanentFile = await fileOrigin.copy(permanentPath);
-
-      debugPrint("Photo sauvegardée avec succès ici : $permanentPath");
-      return permanentFile.path;
-    } catch (e) {
-      debugPrint("Échec de la sauvegarde locale : $e");
+    final File? fileOrigin = await asset.file;
+    if (fileOrigin == null) {
+      debugPrint("Erreur : Impossible d'accéder au fichier d'origine de l'asset.");
       return null;
     }
+    return PhotoService.enregistrer(fileOrigin);
   }
 
   /// Prend le verrou de façon SYNCHRONE (aucun await avant l'affectation).
@@ -163,7 +152,12 @@ class _ScreenCategorisationPhotoState extends State<ScreenCategorisationPhoto> {
         themeLabel: '',
         colorLabel: SourireTheme.getRandomPhoto().label,
         categories: categories.isEmpty ? ["unclassified"] : List<String>.from(categories),
+        // `date` reste la date d'ENTRÉE dans le bocal : c'est elle qui ordonne
+        // l'historique. La date de la galerie va dans `datePrise`, purement
+        // informative — sans quoi une photo de 2019 importée aujourd'hui
+        // replongerait tout au fond de l'historique.
         date: DateTime.now(),
+        datePrise: widget.photos[index].createDateTime,
       );
       _databaseService.insertNote(nouvellePhoto);
       preloadHistoriqueImage(localPath); // volontairement SANS await
@@ -266,7 +260,7 @@ class _ScreenCategorisationPhotoState extends State<ScreenCategorisationPhoto> {
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
               title: Text(
                 localizations.titleDeleteModal,
-                style: TextStyle(color: isDarkMode ? Colors.white : Colors.black, fontSize: 18, fontWeight: FontWeight.bold),
+                style: styleTitreAction.copyWith(color: texteFort(isDarkMode)),
               ),
               content: customList.isEmpty
                   ? Padding(
@@ -324,9 +318,15 @@ class _ScreenCategorisationPhotoState extends State<ScreenCategorisationPhoto> {
     final localizations = AppLocalizations.of(context)!;
     final String labelNouvelleCategorie = localizations.btnNewCategory;
 
+    // Ces bandeaux sont posés en Positioned : leur hauteur ne peut pas être un
+    // simple plancher. On l'indexe donc sur le facteur d'agrandissement du
+    // texte du système, borné à 1,6 pour qu'un réglage extrême ne mange pas
+    // toute la liste de catégories.
+    final double echelleTexte =
+        MediaQuery.textScalerOf(context).scale(1.0).clamp(1.0, 1.6);
     const double topBarHeight = 60.0; 
-    const double titleHeight = 90.0;
-    const double bottomBarHeight = 110.0; 
+    final double titleHeight = 90.0 * echelleTexte;
+    final double bottomBarHeight = 110.0 * echelleTexte;
 
     // Un bouton Valider est cliquable s'il y a des catégories ET qu'aucun enregistrement n'est en cours.
     final bool isValidateActive = _selectedCategories.isNotEmpty && !_isSaving;
@@ -402,9 +402,9 @@ class _ScreenCategorisationPhotoState extends State<ScreenCategorisationPhoto> {
                                 Expanded(
                                   child: Text(
                                     localizations.categoryQuestion,
-                                    style: styleNoteLarge.copyWith(
+                                    style: styleTitreLora.copyWith(
                                       color: isDarkMode ? Colors.white : orange,
-                                      fontSize: screenWidth < 360 ? 18 : 22,
+                                      fontSize: tailleLora(screenWidth < 360 ? 18 : 22),
                                       height: 1.2,
                                     ),
                                   ),

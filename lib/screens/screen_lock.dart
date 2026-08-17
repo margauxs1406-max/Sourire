@@ -143,7 +143,7 @@ class _ScreenLockState extends State<ScreenLock> {
                     style: TextStyle(color: isDark ? white : black),
                     decoration: InputDecoration(
                       hintText: txtHint,
-                      hintStyle: TextStyle(color: isDark ? white.withOpacity(0.5) : Colors.black45),
+                      hintStyle: TextStyle(color: isDark ? white.withValues(alpha: 0.5) : Colors.black45),
                       filled: true,
                       fillColor: isDark ? const Color(0xFF1E1E1E) : white,
                       border: OutlineInputBorder(
@@ -154,7 +154,7 @@ class _ScreenLockState extends State<ScreenLock> {
                       suffixIcon: IconButton(
                         icon: Icon(
                           _obscureText ? Icons.visibility_off : Icons.visibility,
-                          color: isDark ? white.withOpacity(0.6) : Colors.black45,
+                          color: isDark ? white.withValues(alpha: 0.6) : Colors.black45,
                         ),
                         onPressed: () {
                           setState(() {

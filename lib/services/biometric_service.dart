@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:local_auth/local_auth.dart';
 
 class BiometricService {
@@ -17,7 +18,7 @@ class BiometricService {
         biometricOnly: true,
       );
     } catch (e) {
-      print("Erreur biométrie: $e");
+      debugPrint("Erreur biométrie: $e");
       return false;
     }
   }

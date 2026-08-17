@@ -32,18 +32,18 @@ class BtnAction extends StatelessWidget {
         final Color couleurContenu = isNegative 
             ? (isDarkMode 
                 ? Colors.white 
-                : (isActive ? orange : orange.withOpacity(0.5)))
+                : (isActive ? orange : orange.withValues(alpha: 0.5)))
             : Colors.white;
 
         final Color couleurFond = isNegative 
             ? (isDarkMode ? Colors.transparent : white) 
-            : (isActive ? color : color.withOpacity(0.5));
+            : (isActive ? color : color.withValues(alpha: 0.5));
 
         final Color couleurBordure = isNegative
             ? (isDarkMode 
                 ? darkSeparateur 
-                : (isActive ? orange : orange.withOpacity(0.5)))
-            : (isActive ? orange : orange.withOpacity(0.5));
+                : (isActive ? orange : orange.withValues(alpha: 0.5)))
+            : (isActive ? orange : orange.withValues(alpha: 0.5));
 
         return GestureDetector(
           onTap: isActive ? onTap : null,

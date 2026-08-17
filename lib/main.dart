@@ -1,7 +1,12 @@
+import 'dart:async';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart'; 
+import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:sourire/l10n/app_localizations.dart';
+import 'package:sourire/l10n/app_localizations_en.dart';
+import 'package:sourire/l10n/app_localizations_fr.dart';
 import 'package:sourire/models/theme_app.dart';
 import 'package:sourire/screens/home.dart';
 import 'package:sourire/screens/screen_boot.dart'; 
@@ -13,6 +18,7 @@ import 'package:sourire/models/note_model.dart';
 import 'package:sourire/services/timezone_service.dart';
 import 'package:sourire/theme/theme_service.dart';
 import 'package:sourire/services/database_service.dart';
+import 'package:sourire/services/photo_service.dart';
 import 'package:sourire/widgets/bocal_preloader.dart';
 
 // Variables globales
@@ -26,12 +32,49 @@ final ValueNotifier<bool> isAppLockedNotifier = ValueNotifier<bool>(true);
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // En release, on coupe toute sortie console. Contrairement à une idée
+  // répandue, ni print() ni debugPrint() ne sont supprimés par le compilateur :
+  // sans ça, les logs de l'app partent dans logcat sur le téléphone des
+  // utilisateurs, y compris ceux qui contiennent des noms de catégories
+  // qu'ils ont eux-mêmes saisis.
+  if (kReleaseMode) {
+    debugPrint = (String? message, {int? wrapWidth}) {};
+  }
+
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
   ]);
 
   await UserPrefs.init();
+
+  // Le rappel de gratitude devient réglable (fréquence, jour, heure). Bascule
+  // unique de tout le monde sur le nouveau défaut : hebdomadaire, dimanche 20h.
+  await UserPrefs.appliquerNouveauDefautGratitude();
+
+  // « Tous les 2 jours » est retiré, et le jour unique devient une liste de
+  // jours cochés. Bascule unique, sans effet ensuite.
+  await UserPrefs.migrerVersJoursMultiples();
+
+  // Cinq souvenirs d'amorçage au tout premier lancement : le bocal n'est pas
+  // vide, on peut tirer immédiatement, et ce sont autant d'invitations à
+  // écrire. Sans effet si le bocal contient déjà quelque chose.
+  if (!UserPrefs.amorcageEffectue) {
+    final AppLocalizations textes =
+        UserPrefs.langue == 'en' ? AppLocalizationsEn() : AppLocalizationsFr();
+
+    await DatabaseService().amorcerBocal(
+      [
+        textes.amorceVoyage,
+        textes.amorceFouRire,
+        textes.amorceCadeau,
+        textes.amorceToi,
+        textes.amorceFierte,
+      ],
+      UserPrefs.themeId,
+    );
+    UserPrefs.amorcageEffectue = true;
+  }
 
   // Fuseau horaire de l'APPAREIL, lu via la couche native (identifiant IANA).
   // Doit être fait avant NotificationService.init(), qui planifie des rappels
@@ -63,8 +106,25 @@ void main() async {
   // refuse, tarde à répondre, ou revient en arrière sans répondre.
   await NotificationService.init();
 
+  // Passe unique de réduction des photos importées avant que le
+  // redimensionnement n'existe. Volontairement SANS await : elle peut durer
+  // plusieurs secondes sur une grosse bibliothèque et n'a aucune raison de
+  // retarder l'affichage.
+  unawaited(PhotoService.reduireLesAnciennes());
+
   runApp(const MyApp());
 }
+
+/// Police d'interface par défaut, appliquée aux deux ThemeData.
+///
+/// Android seulement : la police système y est Roboto, qu'Inclusive Sans
+/// remplace avantageusement. Sur iOS on garde `null`, donc San Francisco —
+/// elle est dessinée pour l'écran des iPhone et toute substitution s'y voit.
+///
+/// `defaultTargetPlatform` plutôt que `Platform.isAndroid` : il respecte la
+/// surcharge de plateforme des tests et n'oblige pas à importer dart:io.
+final String? _policeInterface =
+    defaultTargetPlatform == TargetPlatform.android ? 'Inclusive Sans' : null;
 
 class MyApp extends StatefulWidget {
   const MyApp({super.key});
@@ -239,12 +299,14 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
                 brightness: Brightness.light,
                 primarySwatch: Colors.orange,
                 scaffoldBackgroundColor: Colors.white,
+                fontFamily: _policeInterface,
                 colorScheme: ColorScheme.fromSeed(seedColor: orange, primary: orange, brightness: Brightness.light),
               ),
               darkTheme: ThemeData(
                 brightness: Brightness.dark,
                 primarySwatch: Colors.orange,
                 scaffoldBackgroundColor: const Color(0xFF121212),
+                fontFamily: _policeInterface,
                 colorScheme: ColorScheme.fromSeed(seedColor: orange, primary: orange, brightness: Brightness.dark),
               ),
               localizationsDelegates: const [

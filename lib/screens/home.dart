@@ -30,6 +30,25 @@ import 'package:sourire/screens/screen_testeurs.dart';
 /// de prendre des captures d'écran destinées aux stores.
 const bool afficherBoutonEspaceTesteurs = true;
 
+// --- LE VERRE DU BOCAL --------------------------------------------------------
+//
+// Deux calques, et l'ordre compte : la STRUCTURE passe derrière les billes,
+// les REFLETS passent devant. C'est ce second calque qui fait qu'on lit une
+// paroi de verre plutôt qu'un simple dessin autour des billes.
+//
+// Les deux PNG ne sont que des masques de forme, blancs : ce sont ces
+// couleurs-ci qui décident de l'intensité. Baisse l'alpha pour un bocal plus
+// discret, monte-le pour une paroi plus présente.
+
+/// Traits et arêtes du bocal, derrière les billes.
+const Color _verreClair = Color(0xB81E1408); // encre chaude, 72 %
+const Color _verreSombre = Color(0xBFFFFFFF); // lumière froide, 75 %
+
+/// Hautes lumières du verre, devant les billes. Toujours blanches : un reflet
+/// est de la lumière, quelle que soit la couleur du fond.
+const Color _refletClair = Color(0xB2FFFFFF); // 70 % (était 75)
+const Color _refletSombre = Color(0xB2FFFFFF); // 70 % (était 80)
+
 class Home extends StatefulWidget {
   const Home({super.key});
 
@@ -53,7 +72,7 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
   dynamic _dernierIdTire; // AJOUT : Stocke l'ID du dernier souvenir affiché
   SourireTheme? _derniereCouleurNote; // AJOUT : Stocke la dernière couleur de note générée
 
-  static const int _capaciteBocal = 50;
+  static const int _capaciteBocal = 45;
   bool _bocalPleinEnAttente = false;
   bool _prochainBocalDoitAnimerDemarrage = false;
 
@@ -339,7 +358,7 @@ void _verifierEtDeclencherSouvenir() async {
     
     TutorialCoachMark(
       targets: _targets,
-      colorShadow: black.withOpacity(0.85),
+      colorShadow: black.withValues(alpha: 0.85),
       textSkip: l10n.demoSkip,
       textStyleSkip: const TextStyle(color: white, fontWeight: FontWeight.bold, fontSize: 14),
       paddingFocus: 8,
@@ -400,35 +419,35 @@ void _verifierEtDeclencherSouvenir() async {
     try {
       final DatabaseService databaseService = DatabaseService();
 
-      // 1. On récupère toutes les notes existantes
-      final toutesLesNotes = await databaseService.getAllNotesAsync();
-      
-      // 2. On compte précisément le nombre de PHOTOS
-      final int nombrePhotosActuelles = toutesLesNotes.where((note) => note.photoPath != null && note.photoPath!.isNotEmpty).length;
+      // 1. Le quota gratuit porte désormais sur le TOTAL de souvenirs, notes
+      //    et photos confondues, et non plus sur deux compteurs séparés.
+      final int souvenirsActuels = await databaseService.getTotalNotesCount();
 
-      const int limiteMaximaleGratuite = 10;
-
-      // 3. CORRECTION : Blocage ou calcul de quota basé sur la persistance de UserPrefs
-      if (!UserPrefs.isPremium && nombrePhotosActuelles >= limiteMaximaleGratuite) {
+      if (!UserPrefs.isPremium &&
+          souvenirsActuels >= UserPrefs.limiteSouvenirsGratuits) {
         if (!context.mounted) return;
-        _ouvrirAlerteAchat(context, estPourPhotos: true);
+        _ouvrirAlerteAchat(context);
         return;
       }
 
-      // 4. On calcule le Quota restant pour le sélecteur d'assets
-      // CORRECTION : Utilisation de UserPrefs.isPremium ici aussi
-      final int photosAutoriseesRestantes = UserPrefs.isPremium 
-          ? 10 
-          : (limiteMaximaleGratuite - nombrePhotosActuelles);
+      // 2. Le sélecteur affiche "X/10" par défaut, mais le plafond descend dès
+      //    qu'il reste moins de 10 places avant la limite des 25 : à 20
+      //    souvenirs enregistrés, le compteur devient "X/5".
+      const int maxPhotosParLot = 10;
+      final int placesRestantes =
+          UserPrefs.limiteSouvenirsGratuits - souvenirsActuels;
+      final int maxAssetsAutorises = UserPrefs.isPremium
+          ? maxPhotosParLot
+          : (placesRestantes < maxPhotosParLot ? placesRestantes : maxPhotosParLot);
 
-      // getAllNotesAsync() ci-dessus est un await : l'écran a pu être démonté
+      // getTotalNotesCount() ci-dessus est un await : l'écran a pu être démonté
       // depuis. On revérifie avant de passer le context au sélecteur.
       if (!context.mounted) return;
 
       final List<AssetEntity>? result = await AssetPicker.pickAssets(
         context,
         pickerConfig: AssetPickerConfig(
-          maxAssets: photosAutoriseesRestantes > 10 ? 10 : photosAutoriseesRestantes,
+          maxAssets: maxAssetsAutorises,
           requestType: RequestType.image,
           textDelegate: const FrenchAssetPickerTextDelegate(),
           gridThumbnailSize: const ThumbnailSize.square(240),
@@ -443,7 +462,7 @@ void _verifierEtDeclencherSouvenir() async {
                 if (states.contains(WidgetState.selected)) {
                   return orange; 
                 }
-                return Colors.white.withOpacity(0.2); 
+                return Colors.white.withValues(alpha: 0.2); 
               }),
               checkColor: WidgetStateProperty.all(Colors.white),
             ),
@@ -502,7 +521,7 @@ void _verifierEtDeclencherSouvenir() async {
                   children: [
                     Text(
                       l10n.alertWarningTitle,
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: couleurTitre),
+                      style: styleTitreAction.copyWith(color: couleurTitre),
                     ),
                     GestureDetector(
                       onTap: () => Navigator.of(context).pop(),
@@ -513,7 +532,7 @@ void _verifierEtDeclencherSouvenir() async {
                 const SizedBox(height: 16),
                 Text(
                   l10n.galleryDisabledMessage,
-                  style: TextStyle(fontSize: 14, color: couleurDescription, height: 1.4),
+                  style: styleSecondaire.copyWith(color: couleurDescription),
                 ),
                 const SizedBox(height: 24),
                 SizedBox(
@@ -534,7 +553,7 @@ void _verifierEtDeclencherSouvenir() async {
                     },
                     child: Text(
                       l10n.btnEnableAccess,
-                      style: const TextStyle(color: white, fontWeight: FontWeight.bold, fontSize: 15),
+                      style: styleCorps.copyWith(color: white, fontWeight: FontWeight.bold),
                     ),
                   ),
                 ),
@@ -546,7 +565,9 @@ void _verifierEtDeclencherSouvenir() async {
     );
   }
 
-  void _ouvrirAlerteAchat(BuildContext context, {bool estPourPhotos = false}) {
+  /// Modale « Limite atteinte ». Le message est désormais unique : la limite
+  /// gratuite porte sur le total de souvenirs, pas sur leur type.
+  void _ouvrirAlerteAchat(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
 
     showDialog(
@@ -561,9 +582,8 @@ void _verifierEtDeclencherSouvenir() async {
         final Color couleurTitre = isDark ? white : black;
         final Color couleurDescription = isDark ? Colors.white70 : grey; 
 
-        final String texteMessage = estPourPhotos
-            ? l10n.purchaseAlertPhotosMessage
-            : l10n.purchaseAlertNotesMessage;
+        final String texteMessage =
+            l10n.purchaseAlertMessage(UserPrefs.limiteSouvenirsGratuits);
 
         return Dialog(
           backgroundColor: couleurFond,
@@ -579,7 +599,7 @@ void _verifierEtDeclencherSouvenir() async {
                   children: [
                     Text(
                       l10n.purchaseAlertTitle,
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: couleurTitre),
+                      style: styleTitreAction.copyWith(color: couleurTitre),
                     ),
                     GestureDetector(
                       onTap: () => Navigator.of(context).pop(),
@@ -590,7 +610,7 @@ void _verifierEtDeclencherSouvenir() async {
                 const SizedBox(height: 16),
                 Text(
                   texteMessage,
-                  style: TextStyle(fontSize: 14, color: couleurDescription, height: 1.4),
+                  style: styleSecondaire.copyWith(color: couleurDescription),
                 ),
                 const SizedBox(height: 24),
                 SizedBox(
@@ -621,7 +641,7 @@ void _verifierEtDeclencherSouvenir() async {
                     },
                     child: Text(
                       l10n.btnGoPremium,
-                      style: const TextStyle(color: white, fontWeight: FontWeight.bold, fontSize: 15),
+                      style: styleCorps.copyWith(color: white, fontWeight: FontWeight.bold),
                     ),
                   ),
                 ),
@@ -684,13 +704,17 @@ void _verifierEtDeclencherSouvenir() async {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
+                  // Le bocal plein RACONTE quelque chose : Lora, comme les
+                  // paliers et les badges. Les deux autres modales de cet
+                  // écran (accès galerie, achat) DEMANDENT : elles restent en
+                  // sans-serif.
                   l10n.jarFullTitle,
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: couleurTitre),
+                  style: styleTitreRecit.copyWith(color: couleurTitre),
                 ),
                 const SizedBox(height: 16),
                 Text(
                   l10n.jarFullMessage,
-                  style: TextStyle(fontSize: 14, color: couleurDescription, height: 1.4),
+                  style: styleSecondaire.copyWith(color: couleurDescription),
                 ),
                 const SizedBox(height: 24),
                 SizedBox(
@@ -711,7 +735,7 @@ void _verifierEtDeclencherSouvenir() async {
                     },
                     child: Text(
                       l10n.btnNewJar,
-                      style: const TextStyle(color: white, fontWeight: FontWeight.bold, fontSize: 15),
+                      style: styleCorps.copyWith(color: white, fontWeight: FontWeight.bold),
                     ),
                   ),
                 ),
@@ -756,8 +780,17 @@ Widget build(BuildContext context) {
   double responsiveWelcomeFontSize = screenWidth * 0.05; 
   double responsiveQuestionFontSize = screenWidth * 0.07; 
 
+  // `MyApp.themeNotifier` pilote le `themeMode` du MaterialApp : tout
+  // changement reconstruit cet écran, il n'y a donc rien à écouter ici.
+  final ThemeMode modeCourant = MyApp.themeNotifier.value;
+  final bool isDarkMode = modeCourant == ThemeMode.system
+      ? (MediaQuery.platformBrightnessOf(context) == Brightness.dark)
+      : (modeCourant == ThemeMode.dark);
+  Home.isDarkMode = isDarkMode;
+
   return Container(
-    color: orange,
+    // Fond clair : le contraste de l'ancien aplat orange écrasait le bocal.
+    color: isDarkMode ? darkBg : lightOrange,
     child: Scaffold(
       backgroundColor: Colors.transparent, 
       resizeToAvoidBottomInset: false,     
@@ -789,7 +822,7 @@ Positioned.fill(
                   height: iconHeight,
                   colorFilter: themeActuel.homeIconColor != null
                       ? ColorFilter.mode(
-                          themeActuel.homeIconColor!.withOpacity(themeActuel.homeIconOpacity),
+                          themeActuel.homeIconColor!.withValues(alpha: themeActuel.homeIconOpacity),
                           BlendMode.srcIn,
                         )
                       : null,
@@ -846,17 +879,17 @@ Positioned.fill(
                             children: [
                               Text(
                                 l10n.welcomeMessage(prenomAffiche),
-                                style: styleNoteLarge.copyWith(
-                                  color: white, 
-                                  fontSize: responsiveWelcomeFontSize,
+                                style: styleTitreLora.copyWith(
+                                  color: orange, 
+                                  fontSize: tailleLora(responsiveWelcomeFontSize),
                                 ),
                               ),
                               const SizedBox(height: 8),
                               Text(
                                 l10n.mainQuestion(accordAffiche), 
-                                style: styleNoteLarge.copyWith(
-                                  color: white, 
-                                  fontSize: responsiveQuestionFontSize,
+                                style: styleTitreLora.copyWith(
+                                  color: orange, 
+                                  fontSize: tailleLora(responsiveQuestionFontSize),
                                   height: 1.2,
                                 ),
                               ),
@@ -876,18 +909,18 @@ Positioned.fill(
                                   child: Container(
                                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                                     decoration: BoxDecoration(
-                                      color: Colors.white.withOpacity(0.2),
+                                      color: orange.withValues(alpha: 0.12),
                                       borderRadius: BorderRadius.circular(20),
-                                      border: Border.all(color: Colors.white.withOpacity(0.5), width: 1),
+                                      border: Border.all(color: orange.withValues(alpha: 0.35), width: 1),
                                     ),
-                                    child: Row(
+                                    child: const Row(
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
-                                        const Icon(Icons.science_outlined, color: white, size: 16),
-                                        const SizedBox(width: 6),
+                                        Icon(Icons.science_outlined, color: orange, size: 16),
+                                        SizedBox(width: 6),
                                         Text(
                                           "Espace testeurs",
-                                          style: TextStyle(color: white, fontSize: 13, fontWeight: FontWeight.w600),
+                                          style: TextStyle(color: orange, fontSize: 13, fontWeight: FontWeight.w600),
                                         ),
                                       ],
                                     ),
@@ -912,28 +945,70 @@ Positioned.fill(
         child: Stack(
           clipBehavior: Clip.none,
           children: [
-            // 1. Ombre portée (inchangée, basée sur le PNG de fond)
+            // 1. Ombre AU SOL, en deux couches pour donner de la profondeur.
+            //    L'ancienne ombre reprenait la silhouette entière du PNG et
+            //    donnait l'impression que le bocal flottait dans le vide.
+            //
+            //    1a. La nappe : large et très floue, elle décolle le bocal du
+            //        fond et tient lieu de lumière ambiante.
             Positioned(
-              left: 8.0,
-              top: 4.0,
-              right: -8.0,
-              bottom: -4.0,
+              left: bocalWidth * 0.05,
+              right: bocalWidth * 0.05,
+              bottom: -bocalHeight * 0.012,
+              height: bocalHeight * 0.085,
               child: ImageFiltered(
-                imageFilter: ImageFilter.blur(sigmaX: 6.0, sigmaY: 6.0, tileMode: TileMode.decal),
-                child: Image(
-                  image: const AssetImage('assets/bocal_new.png'),
-                  fit: BoxFit.contain,
-                  color: black.withOpacity(0.20),
-                  colorBlendMode: BlendMode.srcIn,
+                imageFilter: ImageFilter.blur(sigmaX: 22.0, sigmaY: 13.0, tileMode: TileMode.decal),
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: black.withValues(alpha: 0.16),
+                    borderRadius: BorderRadius.all(
+                      Radius.elliptical(bocalWidth, bocalHeight * 0.085),
+                    ),
+                  ),
                 ),
               ),
             ),
 
-            // 2. Bocal opaque en fond (Le PNG original complet) — Toujours en arrière-plan
-            const Positioned.fill(
-              child: Image(
-                image: AssetImage('assets/bocal_new.png'),
-                fit: BoxFit.contain,
+            //    1b. Le contact : resserré et plus dense, juste sous le verre.
+            //        C'est cette seconde couche qui donne le sentiment que le
+            //        bocal est POSÉ, et non simplement dessiné par-dessus.
+            Positioned(
+              left: bocalWidth * 0.21,
+              right: bocalWidth * 0.21,
+              bottom: bocalHeight * 0.014,
+              height: bocalHeight * 0.032,
+              child: ImageFiltered(
+                imageFilter: ImageFilter.blur(sigmaX: 8.0, sigmaY: 5.0, tileMode: TileMode.decal),
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: black.withValues(alpha: 0.24),
+                    borderRadius: BorderRadius.all(
+                      Radius.elliptical(bocalWidth, bocalHeight * 0.032),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+
+            // 2. LA STRUCTURE DU VERRE, derrière les billes.
+            //
+            //    `bocal_new.png` était un aplat quasi blanc OPAQUE : même à
+            //    63 % d'opacité il restait une assiette grise posée sur le
+            //    fond, et en mode sombre il crevait l'écran. `bocal_verre.png`
+            //    est un MASQUE dont l'alpha suit l'inverse de la luminance du
+            //    dessin : le remplissage blanc y est devenu transparent, seuls
+            //    subsistent les traits et un voile de paroi. On le teinte donc
+            //    en code — sombre sur fond clair, clair sur fond sombre.
+            Positioned.fill(
+              child: ColorFiltered(
+                colorFilter: ColorFilter.mode(
+                  isDarkMode ? _verreSombre : _verreClair,
+                  BlendMode.srcIn,
+                ),
+                child: const Image(
+                  image: AssetImage('assets/bocal_verre.png'),
+                  fit: BoxFit.contain,
+                ),
               ),
             ),
 
@@ -953,15 +1028,25 @@ Positioned.fill(
               ),
             ),
 
-            // 4. Ton calque PNG personnalisé avec Photopea par-dessus les pastilles
-            // On retire le widget Opacity puisque tu as déjà géré l'atténuation directement dans le fichier !
-            const Positioned.fill(
-              child: Opacity(
-                opacity: 0.55,
-                  child : Image(
-                    image: AssetImage('assets/bocal_reflets.png'),
+            // 4. LES REFLETS DU VERRE, PAR-DESSUS les billes.
+            //
+            //    Ce sont les stries quasi blanches des flancs du bocal,
+            //    isolées du dessin d'origine par leur luminance. Posées
+            //    devant, elles glissent sur les billes : c'est précisément ce
+            //    qui donne l'impression de regarder à travers une paroi, et
+            //    non un décor dessiné autour d'elles.
+            Positioned.fill(
+              child: IgnorePointer(
+                child: ColorFiltered(
+                  colorFilter: ColorFilter.mode(
+                    isDarkMode ? _refletSombre : _refletClair,
+                    BlendMode.srcIn,
+                  ),
+                  child: const Image(
+                    image: AssetImage('assets/bocal_reflets_verre.png'),
                     fit: BoxFit.contain,
                   ),
+                ),
               ),
             ),
           ],
@@ -984,11 +1069,14 @@ Positioned.fill(
                                   if (!ScreenProfil.accesGalerieActive) {
                                     _ouvrirAlerteActivationGalerie(context);
                                   } else {
-                                    final int nombrePhotosActuelles = await DatabaseService().getPhotoNotesCount();
-                                    
-                                    if (!ThemeService.estUtilisateurPremium && nombrePhotosActuelles >= 10) {
+                                    final int souvenirsActuels = await DatabaseService().getTotalNotesCount();
+
+                                    // Une seule source de vérité pour le statut
+                                    // premium : UserPrefs (persistant).
+                                    if (!UserPrefs.isPremium &&
+                                        souvenirsActuels >= UserPrefs.limiteSouvenirsGratuits) {
                                       if (!context.mounted) return;
-                                      _ouvrirAlerteAchat(context, estPourPhotos: true);
+                                      _ouvrirAlerteAchat(context);
                                     } else {
                                       if (!context.mounted) return;
                                       _ouvrirGalerieSelectionMultiple(context);
@@ -1001,12 +1089,13 @@ Positioned.fill(
 BtnNewNote(
   key: _cleBoutonNote, 
   onTap: () async {
-    final int nombreNotesPures = await DatabaseService().getTextNotesCount();
+    final int souvenirsActuels = await DatabaseService().getTotalNotesCount();
 
-    // CORRECTION : Détection automatique et persistante du premium via UserPrefs
-    if (!UserPrefs.isPremium && nombreNotesPures >= 5) {
+    // Même limite que pour les photos : 25 souvenirs tous types confondus.
+    if (!UserPrefs.isPremium &&
+        souvenirsActuels >= UserPrefs.limiteSouvenirsGratuits) {
       if (!context.mounted) return;
-      _ouvrirAlerteAchat(context, estPourPhotos: false);
+      _ouvrirAlerteAchat(context);
     } else {
       List<SourireTheme> couleursDisponibles = List.from(SourireTheme.tousLesThemes);
 
@@ -1052,7 +1141,12 @@ BtnNewNote(
               final notesFluides = snapshot.data ?? [];
 
               if (snapshot.hasData) {
-                _verifierPalier(notesFluides.length, context);
+                // Les souvenirs d'amorçage ne sont pas de l'utilisateur :
+                // ils ne doivent pas lui faire franchir de palier.
+                _verifierPalier(
+                  notesFluides.where((n) => !n.estAmorce).length,
+                  context,
+                );
               }
 
               return Positioned.fill(

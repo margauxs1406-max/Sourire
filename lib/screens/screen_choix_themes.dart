@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:sourire/l10n/app_localizations.dart';
-import 'package:sourire/main.dart';
 import 'package:sourire/models/theme_app.dart';
 import 'package:sourire/theme/theme_service.dart';
 import 'package:sourire/theme/tokens.dart'; 
@@ -29,10 +28,11 @@ class _ScreenChoixThemesState extends State<ScreenChoixThemes> {
     });
 
     // 1. MISE À JOUR DU THEME GLOBAL
+    // changerThemeVisuel affecte themeVisuelNotifier.value, ce qui notifie
+    // déjà ses auditeurs — la Home écoute ce notifier. Le rebuild global
+    // forcé qui suivait était redondant, et passait par une API que Flutter
+    // marque comme protégée.
     ThemeService.changerThemeVisuel(theme);
-
-    // ignore: invalid_use_of_visible_for_testing_member, invalid_use_of_protected_member
-    MyApp.themeNotifier.notifyListeners(); 
   }
 
   void _ouvrirApercuTheme(BuildContext context, ThemeApp theme, Color textColor, Color dialogBgColor) {
@@ -63,9 +63,8 @@ class _ScreenChoixThemesState extends State<ScreenChoixThemes> {
                   // Titre
                   Text(
                     theme.label(context),
-                    style: TextStyle(
+                    style: styleSection.copyWith(
                       fontSize: sizeTitle,
-                      fontWeight: FontWeight.bold,
                       color: textColor,
                     ),
                   ),
@@ -177,9 +176,9 @@ class _ScreenChoixThemesState extends State<ScreenChoixThemes> {
 
   @override
   Widget build(BuildContext context) {
-    final Color bgColor = widget.isDarkMode ? darkBg : white;
+    final Color bgColor = widget.isDarkMode ? darkBg : lightOrange;
     final Color textColor = widget.isDarkMode ? white : black;
-    final Color headerBgColor = widget.isDarkMode ? darkSurface : white;
+    final Color headerBgColor = widget.isDarkMode ? darkSurface : lightOrange;
     final Color dialogBgColor = widget.isDarkMode ? darkSurface : white;
 
     // Calculs de tailles responsives pour la grille principale
@@ -229,9 +228,8 @@ class _ScreenChoixThemesState extends State<ScreenChoixThemes> {
                   children: [
                     Text(
                       AppLocalizations.of(context)!.themesTitle,
-                      style: TextStyle(
+                      style: styleSection.copyWith(
                         fontSize: titleFontSize,
-                        fontWeight: FontWeight.bold,
                         color: textColor,
                       ),
                     ),
@@ -259,7 +257,7 @@ class _ScreenChoixThemesState extends State<ScreenChoixThemes> {
                                 theme.label(context),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
+                                style: styleCorps.copyWith(
                                   fontSize: itemFontSize,
                                   fontWeight: FontWeight.w600,
                                   color: textColor,
@@ -309,7 +307,7 @@ class _ScreenChoixThemesState extends State<ScreenChoixThemes> {
                                         child: Container(
                                           padding: const EdgeInsets.all(4),
                                           decoration: BoxDecoration(
-                                            color: Colors.black.withOpacity(0.3),
+                                            color: Colors.black.withValues(alpha: 0.3),
                                             shape: BoxShape.circle,
                                           ),
                                           child: Icon(Icons.lock_outline, color: Colors.white, size: iconScaleFactor),

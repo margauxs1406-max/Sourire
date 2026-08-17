@@ -15,14 +15,23 @@ class WidgetRadioLangue extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Ce widget ne recevait pas d'indicateur de thème et restait gris clair à
+    // texte noir, même en mode sombre. La luminosité du ThemeData suffit :
+    // c'est `MyApp.themeNotifier` qui la pilote.
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(8),
       child: Container(
-        height: 50,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
+        // Plancher plutôt que hauteur figée, pour ne pas rogner le libellé
+        // aux grands réglages d'accessibilité.
+        constraints: const BoxConstraints(minHeight: 50),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color: const Color(0xFFF5F5F5), // Fond grisé comme tes champs
+          // Blanc et non le gris F5F5F5 : ce gris tirait au froid contre le
+          // fond lightOrange de l'écran.
+          color: isDark ? darkSurface : white,
           borderRadius: BorderRadius.circular(8),
         ),
         child: Row(
@@ -30,11 +39,7 @@ class WidgetRadioLangue extends StatelessWidget {
           children: [
             Text(
               label,
-              style: const TextStyle(
-                fontSize: 16,
-                color: black,
-                fontWeight: FontWeight.w500,
-              ),
+              style: styleCorps.copyWith(color: texteFort(isDark)),
             ),
             // Le cercle radio personnalisé
             Container(

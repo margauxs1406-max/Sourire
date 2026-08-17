@@ -9,8 +9,30 @@ import 'package:sourire/theme/tokens.dart';
 import 'package:sourire/models/note_model.dart';
 import 'package:sourire/models/theme_app.dart';
 
-// Déclaration du cache partagé pour éliminer les accès asynchrones répétitifs au stockage
-final Map<String, Uint8List> _historiqueImageCache = {};
+// --- CACHE PARTAGÉ DES PHOTOS ------------------------------------------------
+//
+// Il évite de relire le disque à chaque affichage. Il était en revanche SANS
+// LIMITE : chaque photo consultée y restait pour la durée de vie du process.
+// Sur un bocal de deux cents souvenirs, cela finissait par retenir plusieurs
+// centaines de mégaoctets, et l'app se mettait à ramer puis à perdre ses
+// images — exactement le symptôme « les photos ont du mal à se charger quand
+// il y en a beaucoup ».
+//
+// C'est désormais un cache LRU : au-delà de [_tailleMaxCache] entrées, la
+// photo consultée il y a le plus longtemps est libérée. Un LinkedHashMap
+// conserve l'ordre d'insertion, il suffit donc de réinsérer une entrée pour
+// la marquer comme récemment utilisée.
+const int _tailleMaxCache = 30;
+final Map<String, Uint8List> _historiqueImageCache = <String, Uint8List>{};
+
+/// Enregistre [bytes] et fait de la place si nécessaire.
+void _mettreEnCache(String cle, Uint8List bytes) {
+  _historiqueImageCache.remove(cle); // repasse la clé en fin de file
+  _historiqueImageCache[cle] = bytes;
+  while (_historiqueImageCache.length > _tailleMaxCache) {
+    _historiqueImageCache.remove(_historiqueImageCache.keys.first);
+  }
+}
 
 /// Précharge une photo dans le cache mémoire partagé de l'historique, en
 /// tâche de fond, SANS bloquer l'appelant (ne pas attendre son résultat).
@@ -26,7 +48,11 @@ Uint8List? getCachedHistoriqueImageBytes(String? photoPath) {
   if (photoPath == null || photoPath.trim().isEmpty) return null;
   final String pathKey = photoPath.trim();
   final bytes = _historiqueImageCache[pathKey];
-  return (bytes != null && bytes.isNotEmpty) ? bytes : null;
+  if (bytes == null || bytes.isEmpty) return null;
+  // Une lecture compte comme un usage : on remet la clé en fin de file pour
+  // qu'elle ne soit pas la première évincée.
+  _mettreEnCache(pathKey, bytes);
+  return bytes;
 }
 
 Future<void> preloadHistoriqueImage(String? photoPath) async {
@@ -55,7 +81,7 @@ Future<void> preloadHistoriqueImage(String? photoPath) async {
 
     if (file.existsSync()) {
       final bytes = await file.readAsBytes();
-      _historiqueImageCache[pathKey] = bytes;
+      _mettreEnCache(pathKey, bytes);
       debugPrint("--- PRELOAD : terminé et mis en cache (${bytes.length} bytes) pour $pathKey ---");
     } else {
       debugPrint("--- PRELOAD : fichier introuvable pour $pathKey ---");
@@ -116,7 +142,7 @@ class _WidgetSouvenirHistoriqueState extends State<WidgetSouvenirHistorique> {
 
       if (file.existsSync()) {
         final bytes = await file.readAsBytes();
-        _historiqueImageCache[pathKey] = bytes;
+        _mettreEnCache(pathKey, bytes);
         if (mounted) {
           setState(() {
             _cachedBytes = bytes;
@@ -224,7 +250,7 @@ class _WidgetSouvenirHistoriqueState extends State<WidgetSouvenirHistorique> {
                             overflow: TextOverflow.ellipsis,
                             style: styleNoteLarge.copyWith(
                               color: themeCouleur.main,
-                              fontSize: size * 0.09,
+                              fontSize: tailleLora(size * 0.09),
                             ),
                           ),
                         ),

@@ -1,34 +1,40 @@
 import 'dart:async';
+import 'dart:io' show Platform;
 import 'dart:math' as math;
-import 'dart:typed_data';
 import 'dart:ui' as ui; // Importation essentielle pour le décodeur brut
 import 'package:flutter/material.dart';
+// Fournit l'haptique ET réexporte dart:typed_data (Uint8List).
+import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:sourire/l10n/app_localizations.dart';
+import 'package:sourire/services/partage_service.dart';
 import 'package:sourire/theme/tokens.dart';
 import 'package:sourire/models/note_model.dart';
 import 'package:sourire/screens/screen_profil.dart';
-import 'package:sourire/models/theme_app.dart'; 
+import 'package:sourire/models/theme_app.dart';
 import 'package:sourire/widgets/souvenir_historique.dart'; // Cache partagé
 
-/// Résolution des thèmes de couleur de l'application
-SourireTheme _getThemeFromColorLabel(String? colorLabel) {
-  switch (colorLabel) {
-    case 'vert':
-      return SourireTheme(main: green, light: lightGreen, label: 'vert');
-    case 'bleu':
-      return SourireTheme(main: blue, light: lightBlue, label: 'bleu');
-    case 'rose':
-      return SourireTheme(main: pink, light: lightPink, label: 'rose');
-    case 'orange':
-    default:
-      return SourireTheme(main: orange, light: lightOrange, label: 'orange');
-  }
-}
+// La résolution d'un label de couleur vit dans SourireTheme.fromLabel
+// (tokens.dart). Une copie locale traînait ici et ne connaissait que quatre
+// couleurs sur huit : un souvenir jaune, violet, rouge ou turquoise
+// retombait silencieusement sur l'orange dès qu'il passait par le tirage,
+// l'affichage en grand ou le partage.
 
 class WidgetSouvenirTirage extends StatefulWidget {
   final NoteSourire souvenir;
 
-  const WidgetSouvenirTirage({required this.souvenir, super.key});
+  /// Bouton de partage posé en bas à droite, par-dessus le souvenir.
+  ///
+  /// Il vit ici et non dans la fenêtre de tirage : le même widget sert à
+  /// l'affichage en grand depuis l'historique, qui hérite donc du bouton
+  /// sans duplication.
+  final bool afficherPartage;
+
+  const WidgetSouvenirTirage({
+    required this.souvenir,
+    this.afficherPartage = true,
+    super.key,
+  });
 
   @override
   State<WidgetSouvenirTirage> createState() => _WidgetSouvenirTirageState();
@@ -111,14 +117,14 @@ class _WidgetSouvenirTirageState extends State<WidgetSouvenirTirage> {
     if (targetOffsetX > 0 || targetOffsetY > 0) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _transformationController.value = Matrix4.identity()
-          ..translate(-targetOffsetX, -targetOffsetY);
+          ..translateByDouble(-targetOffsetX, -targetOffsetY, 0, 1);
       });
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final themeCouleur = _getThemeFromColorLabel(widget.souvenir.colorLabel);
+    final themeCouleur = SourireTheme.fromLabel(widget.souvenir.colorLabel);
     final bool isPhoto = widget.souvenir.photoPath != null && widget.souvenir.photoPath!.trim().isNotEmpty;
 
     final ThemeApp themeGraphique = ThemeRepository.tousLesThemes.firstWhere(
@@ -128,7 +134,7 @@ class _WidgetSouvenirTirageState extends State<WidgetSouvenirTirage> {
 
     if (!_isLoaded && _imageBytes == null) {
       return const Center(
-        child: CircularProgressIndicator(),
+        child: CircularProgressIndicator(color: orange),
       );
     }
 
@@ -228,12 +234,28 @@ class _WidgetSouvenirTirageState extends State<WidgetSouvenirTirage> {
                               textAlign: TextAlign.center,
                               style: styleNoteLarge.copyWith(
                                 color: themeCouleur.main,
-                                fontSize: 24,
+                                fontSize: tailleLora(24),
                               ),
                             ),
                           ),
                         ),
                 ),
+
+                // DATE DU SOUVENIR, par-dessus, en bas à gauche.
+                // Elle fait pendant au bouton de partage, à l'autre bout.
+                Positioned(
+                  left: 12,
+                  bottom: 12,
+                  child: _PastilleDate(date: widget.souvenir.dateAffichee),
+                ),
+
+                // BOUTON DE PARTAGE, par-dessus le souvenir
+                if (widget.afficherPartage)
+                  Positioned(
+                    right: 12,
+                    bottom: 12,
+                    child: _BoutonPartage(souvenir: widget.souvenir),
+                  ),
               ],
             ),
           ),
@@ -249,15 +271,261 @@ class _WidgetSouvenirTirageState extends State<WidgetSouvenirTirage> {
   }
 }
 
+/// Pastille de partage posée sur le souvenir.
+///
+/// Date du souvenir, posée en bas à gauche.
+///
+/// Même matière que le bouton de partage — pastille blanche, encre orange,
+/// ombre portée décalée de 2 px — pour que les deux éléments se lisent comme
+/// une même couche posée sur le souvenir.
+class _PastilleDate extends StatelessWidget {
+  final DateTime date;
+
+  const _PastilleDate({required this.date});
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: const BoxDecoration(
+        color: white,
+        borderRadius: BorderRadius.all(Radius.circular(999)),
+        boxShadow: shadowPastille,
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        child: Text(
+          formaterDateSouvenir(date),
+          style: styleMention.copyWith(color: orange),
+        ),
+      ),
+    );
+  }
+}
+
+/// L'icône suit la convention de la plateforme : l'avion en papier sur iOS,
+/// les trois nœuds reliés sur Android. Le fond blanc translucide garde
+/// l'icône lisible aussi bien sur une photo sombre que sur une note claire.
+class _BoutonPartage extends StatelessWidget {
+  final NoteSourire souvenir;
+
+  const _BoutonPartage({required this.souvenir});
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      // Material.elevation ne permet pas de choisir le décalage : on dessine
+      // l'ombre nous-mêmes pour la porter légèrement sur la droite plutôt que
+      // vers le bas.
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        boxShadow: [
+          BoxShadow(
+            color: black.withValues(alpha: 0.18),
+            blurRadius: 5,
+            offset: const Offset(2, 2),
+          ),
+        ],
+      ),
+      child: Material(
+        color: white.withValues(alpha: 0.92),
+        shape: const CircleBorder(),
+        child: InkWell(
+          customBorder: const CircleBorder(),
+          // Le GestureDetector de l'historique referme la fenêtre au moindre
+          // tap : en consommant le geste ici, on l'empêche de remonter.
+          onTap: () {
+            HapticFeedback.selectionClick();
+            _ouvrirPartage(context, souvenir);
+          },
+          child: Padding(
+            padding: const EdgeInsets.all(11),
+            child: Icon(
+              // `ios_share` est le carré à flèche montante du système iOS ;
+              // `share_outlined` est le partage à trois points d'Android.
+              Platform.isIOS ? Icons.ios_share : Icons.share_outlined,
+              // Toujours l'orange de la marque, jamais la couleur du
+              // souvenir : le partage est une action de l'app, pas une
+              // propriété du souvenir. Idem pour la roue d'attente.
+              color: orange,
+              size: 22,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Partage du souvenir : un seul format, un polaroid.
+///
+/// Pas de feuille de choix intermédiaire — un tap, une image, la feuille de
+/// partage du système. C'est l'utilisateur qui déclenche l'envoi, souvenir par
+/// souvenir : rien ne sort du téléphone tout seul.
+Future<void> _ouvrirPartage(BuildContext context, NoteSourire souvenir) async {
+  final l10n = AppLocalizations.of(context)!;
+  final themeCouleur = SourireTheme.fromLabel(souvenir.colorLabel);
+
+  // Sert à borner la hauteur de l'image d'une note : elle ne doit pas
+  // s'afficher sur plus de la moitié d'un écran de téléphone.
+  final Size tailleEcran = MediaQuery.sizeOf(context);
+
+  // Position de la fenêtre à l'écran : iPad ancre la feuille de partage
+  // système sur ce rectangle, faute de quoi elle refuse de s'ouvrir.
+  final RenderBox? boite = context.findRenderObject() as RenderBox?;
+  final Rect? origineIpad = boite != null && boite.hasSize
+      ? boite.localToGlobal(Offset.zero) & boite.size
+      : null;
+
+  // Le rendu, le décodage de la photo et l'ouverture de la feuille système
+  // prennent un instant : sans indicateur, l'utilisateur croirait que son tap
+  // n'a rien déclenché.
+  final NavigatorState navigateur = Navigator.of(context, rootNavigator: true);
+  bool attenteAffichee = true;
+
+  showDialog<void>(
+    context: context,
+    barrierDismissible: false,
+    barrierColor: black.withValues(alpha: 0.35),
+    builder: (_) => Center(
+      child: const CircularProgressIndicator(color: orange),
+    ),
+  );
+
+  bool succes = false;
+  try {
+    succes = await PartageService.partager(
+      souvenir: souvenir,
+      couleurPrincipale: themeCouleur.main,
+      couleurClaire: themeCouleur.light,
+      tailleEcran: tailleEcran,
+      origineIpad: origineIpad,
+    );
+  } finally {
+    if (attenteAffichee) {
+      attenteAffichee = false;
+      navigateur.pop();
+    }
+  }
+
+  if (!succes && context.mounted) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(l10n.shareError)),
+    );
+  }
+}
+
+/// Éclosion du souvenir, comme une fleur qui s'ouvre depuis son centre.
+///
+/// Le souvenir naît d'un point au milieu de l'écran, se déploie en pivotant
+/// légèrement, dépasse d'un cheveu sa taille finale puis se pose. Les deux
+/// axes ne s'ouvrent pas exactement en même temps — la hauteur devance la
+/// largeur — ce qui donne une éclosion plutôt qu'un simple agrandissement.
+class _EclosionFleur extends StatefulWidget {
+  final Animation<double> animation;
+  final Widget child;
+
+  const _EclosionFleur({
+    required this.animation,
+    required this.child,
+  });
+
+  @override
+  State<_EclosionFleur> createState() => _EclosionFleurState();
+}
+
+class _EclosionFleurState extends State<_EclosionFleur> {
+  /// Taille du bouton au départ : assez petit pour qu'on ne lise pas encore
+  /// le souvenir, assez grand pour qu'il ne surgisse pas de nulle part.
+  static const double _echelleDepart = 0.16;
+
+  /// Vrille initiale, qui se dévisse au fur et à mesure de l'ouverture.
+  static const double _rotationDepart = -0.45; // ≈ -26°
+
+  bool _hapticDepart = false;
+  bool _hapticEclosion = false;
+  bool _hapticPose = false;
+
+  @override
+  void initState() {
+    super.initState();
+    widget.animation.addListener(_declencherHaptique);
+  }
+
+  @override
+  void dispose() {
+    widget.animation.removeListener(_declencherHaptique);
+    super.dispose();
+  }
+
+  /// Une vibration par temps fort, jamais rejouée : les drapeaux ne sont
+  /// remis à zéro nulle part, donc la fermeture du souvenir (animation à
+  /// l'envers) reste silencieuse.
+  void _declencherHaptique() {
+    final double t = widget.animation.value;
+
+    if (!_hapticDepart && t > 0.02) {
+      _hapticDepart = true;
+      HapticFeedback.lightImpact();
+    }
+    if (!_hapticEclosion && t >= 0.45) {
+      _hapticEclosion = true;
+      HapticFeedback.mediumImpact();
+    }
+    if (!_hapticPose && t >= 0.95) {
+      _hapticPose = true;
+      HapticFeedback.selectionClick();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: widget.animation,
+      builder: (context, child) {
+        final double t = widget.animation.value.clamp(0.0, 1.0);
+
+        // easeOutBack dépasse légèrement 1 : c'est le petit rebond de la
+        // corolle qui s'ouvre un peu trop grand avant de se stabiliser.
+        final double ouvertureY = Curves.easeOutBack.transform(t);
+        // La largeur suit avec un léger retard.
+        final double ouvertureX =
+            Curves.easeOutBack.transform((t * 0.88).clamp(0.0, 1.0));
+
+        final double echelleY = _echelleDepart + (1 - _echelleDepart) * ouvertureY;
+        final double echelleX = _echelleDepart + (1 - _echelleDepart) * ouvertureX;
+
+        final double rotation =
+            _rotationDepart * (1 - Curves.easeOutCubic.transform(t));
+
+        return Opacity(
+          opacity: (t / 0.15).clamp(0.0, 1.0),
+          child: Transform.rotate(
+            angle: rotation,
+            child: Transform(
+              alignment: Alignment.center,
+              transform: Matrix4.identity()
+                ..scaleByDouble(echelleX, echelleY, 1, 1),
+              child: child,
+            ),
+          ),
+        );
+      },
+      child: widget.child,
+    );
+  }
+}
+
 /// Affiche l'overlay dialog contenant le widget du souvenir pioché
 void afficherSouvenirBocal(BuildContext context, NoteSourire souvenir) {
-  final int dureeAnimation = ScreenProfil.animationsDoucesActive ? 400 : 800;
+  // L'éclosion est plus courte que le dépliage : c'est un seul geste continu,
+  // au-delà de ~700 ms elle traîne.
+  final int dureeAnimation = ScreenProfil.animationsDoucesActive ? 400 : 700;
 
   showGeneralDialog(
     context: context,
     barrierDismissible: true,
     barrierLabel: "Fermer",
-    barrierColor: black.withOpacity(0.25),
+    barrierColor: black.withValues(alpha: 0.25),
     transitionDuration: Duration(milliseconds: dureeAnimation),
     pageBuilder: (context, anim1, anim2) {
       return Center(
@@ -265,16 +533,20 @@ void afficherSouvenirBocal(BuildContext context, NoteSourire souvenir) {
           padding: const EdgeInsets.symmetric(horizontal: 40),
           child: LayoutBuilder(
             builder: (context, constraints) {
-              final double tailleCarree = constraints.maxWidth;
+              // Le bouton de partage est désormais posé DANS la carte, il ne
+              // réclame donc plus de place sous elle.
+              final double tailleCarree = constraints.maxHeight.isFinite
+                  ? math.min(constraints.maxWidth, constraints.maxHeight)
+                  : constraints.maxWidth;
 
-              return Container(
+              final Widget carte = Container(
                 width: tailleCarree,
                 height: tailleCarree,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(24),
                   boxShadow: [
                     BoxShadow(
-                      color: black.withOpacity(0.2),
+                      color: black.withValues(alpha: 0.2),
                       blurRadius: 20,
                       spreadRadius: 5,
                     )
@@ -285,6 +557,12 @@ void afficherSouvenirBocal(BuildContext context, NoteSourire souvenir) {
                   child: WidgetSouvenirTirage(souvenir: souvenir),
                 ),
               );
+
+              // En mode « animations douces », le fondu du transitionBuilder
+              // suffit : ni éclosion, ni vibration.
+              if (ScreenProfil.animationsDoucesActive) return carte;
+
+              return _EclosionFleur(animation: anim1, child: carte);
             },
           ),
         ),
@@ -296,18 +574,9 @@ void afficherSouvenirBocal(BuildContext context, NoteSourire souvenir) {
           opacity: anim1.value,
           child: child,
         );
-      } else {
-        return Transform.rotate(
-          angle: (1 - anim1.value) * 12.5, 
-          child: Transform.scale(
-            scale: anim1.value,
-            child: Opacity(
-              opacity: anim1.value,
-              child: child,
-            ),
-          ),
-        );
       }
+      // L'éclosion est appliquée dans le pageBuilder, au plus près de la carte.
+      return child;
     },
   );
 }

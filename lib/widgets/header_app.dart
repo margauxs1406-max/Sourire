@@ -31,12 +31,12 @@ class HeaderApp extends StatelessWidget {
             onTap: onProfilTap,
             child: const Icon(
               Icons.person_outline,
-              color: white,
+              color: orange,
               size: 28,
             ),
           ), 
           
-          const LogoSourire(), 
+          const LogoSourire(color: orange), 
           
           // CORRECTION : On associe la clé keyBurger directement sur le bouton ciblé par le tutoriel
           BtnHistorique(

@@ -12,16 +12,23 @@ class AppLocalizationsFr extends AppLocalizations {
   String get titleSourire => 'Sourire';
 
   @override
-  String welcomeMessage(String prenom) => 'Bonjour $prenom,';
+  String welcomeMessage(String prenom) {
+    return 'Bonjour $prenom,';
+  }
 
   @override
-  String mainQuestion(String accord) => 'Qu’est-ce qui te rend $accord aujourd’hui ?';
+  String mainQuestion(String accord) {
+    return 'Qu’est-ce qui te rend $accord aujourd’hui ?';
+  }
 
   @override
   String get personalData => 'Données personnelles';
 
   @override
   String get firstName => 'Prénom';
+
+  @override
+  String get gender => 'Genre';
 
   @override
   String get email => 'Email';
@@ -37,6 +44,9 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get notifications => 'Notifications';
+
+  @override
+  String get personalization => 'Personnalisation';
 
   @override
   String get permissions => 'Autorisations';
@@ -60,7 +70,8 @@ class AppLocalizationsFr extends AppLocalizations {
   String get dailyGratitudeReminder => 'Rappel quotidien de gratitude';
 
   @override
-  String get dailyReminderSubtitle => 'Me rappeler de noter un souvenir positif';
+  String get dailyReminderSubtitle =>
+      'Me rappeler de noter un souvenir positif';
 
   @override
   String get reminderTime => 'Heure du rappel';
@@ -90,13 +101,15 @@ class AppLocalizationsFr extends AppLocalizations {
   String get photoGalleryAccess => 'Accès à la galerie photo';
 
   @override
-  String get photoGallerySubtitle => 'Indispensable pour ajouter des photos de tes moments précieux.';
+  String get photoGallerySubtitle =>
+      'Indispensable pour ajouter des photos de tes moments précieux.';
 
   @override
   String get secureLocalStorage => 'Stockage local sécurisé';
 
   @override
-  String get secureStorageSubtitle => 'Tes souvenirs sont automatiquement sauvegardés localement sur ton espace de stockage privé.';
+  String get secureStorageSubtitle =>
+      'Tes souvenirs sont automatiquement sauvegardés localement sur ton espace de stockage privé.';
 
   @override
   String get active => 'Actif';
@@ -105,19 +118,23 @@ class AppLocalizationsFr extends AppLocalizations {
   String get spaceOccupied => 'Espace occupé';
 
   @override
-  String storageCounter(String photos, String notes) => 'Photos : $photos | Notes : $notes';
+  String storageCounter(String photos, String notes) {
+    return 'Photos : $photos | Notes : $notes';
+  }
 
   @override
   String get darkMode => 'Mode sombre';
 
   @override
-  String get darkModeSubtitle => 'Bascule l\'interface dans des tons sombres pour reposer tes yeux le soir.';
+  String get darkModeSubtitle =>
+      'Bascule l\'interface dans des tons sombres pour reposer tes yeux le soir.';
 
   @override
   String get smoothAnimations => 'Animations douces';
 
   @override
-  String get smoothAnimationsSubtitle => 'Remplace l\'effet tornade du bocal par une apparition en fondu plus légère.';
+  String get smoothAnimationsSubtitle =>
+      'Remplace l\'effet tornade du bocal par une apparition en fondu plus légère.';
 
   @override
   String get francais => 'Français';
@@ -132,25 +149,29 @@ class AppLocalizationsFr extends AppLocalizations {
   String get faqQuestion1 => 'Où sont stockés mes souvenirs ?';
 
   @override
-  String get faqAnswer1 => 'Ils restent localement dans le dossier sécurisé de ton téléphone, personne d\'autre n\'y a accès.';
+  String get faqAnswer1 =>
+      'Ils restent localement dans le dossier sécurisé de ton téléphone, personne d\'autre n\'y a accès.';
 
   @override
   String get faqQuestion2 => 'Comment fonctionne le tirage au sort ?';
 
   @override
-  String get faqAnswer2 => 'Secoue ton téléphone ou clique sur le bocal pour faire remonter un souvenir au hasard.';
+  String get faqAnswer2 =>
+      'Secoue ton téléphone ou clique sur le bocal pour faire remonter un souvenir au hasard.';
 
   @override
   String get faqQuestion3 => 'Comment catégoriser des souvenirs ?';
 
   @override
-  String get faqAnswer3 => 'Va dans l\'historique et appuie longuement sur un souvenir. Tu pourras alors en sélectionner plusieurs et choisir \'Catégoriser\'.';
+  String get faqAnswer3 =>
+      'Va dans l\'historique et appuie longuement sur un souvenir. Tu pourras alors en sélectionner plusieurs et choisir \'Catégoriser\'.';
 
   @override
   String get faqQuestion4 => 'Comment supprimer des souvenirs ?';
 
   @override
-  String get faqAnswer4 => 'Va dans l\'historique, fais un appui long le souvenir, sélectionne-le et appuie sur le bouton \'Supprimer\'.';
+  String get faqAnswer4 =>
+      'Va dans l\'historique, fais un appui long le souvenir, sélectionne-le et appuie sur le bouton \'Supprimer\'.';
 
   @override
   String get filterTitle => 'Filtrer';
@@ -192,8 +213,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get btnDeleteCategories => 'Supprimer des catégories';
 
   @override
-  String get noCustomCategoryToDelete => 'Aucune catégorie personnalisée à supprimer.';
-  
+  String get noCustomCategoryToDelete =>
+      'Aucune catégorie personnalisée à supprimer.';
+
   @override
   String get btnClose => 'Fermer';
 
@@ -207,13 +229,16 @@ class AppLocalizationsFr extends AppLocalizations {
   String get btnFilter => 'Filtrer';
 
   @override
-  String writeHappyThought(String accord) => 'Écris ce qui te rend $accord...';
+  String writeHappyThought(String accord) {
+    return 'Écris ce qui te rend $accord...';
+  }
 
   @override
   String get btnValidate => 'Valider';
 
   @override
-  String get categoryQuestion => 'À quelle(s) catégorie(s) appartient ce souvenir ?';
+  String get categoryQuestion =>
+      'À quelle(s) catégorie(s) appartient ce souvenir ?';
 
   @override
   String get btnSkip => 'Passer';
@@ -243,7 +268,8 @@ class AppLocalizationsFr extends AppLocalizations {
   String get alertWarningTitle => 'Attention';
 
   @override
-  String get galleryDisabledMessage => 'Tu as désactivé l\'accès à ta galerie photo. Active-la dans tes autorisations.';
+  String get galleryDisabledMessage =>
+      'Tu as désactivé l\'accès à ta galerie photo. Active-la dans tes autorisations.';
 
   @override
   String get btnEnableAccess => 'Activer l\'accès';
@@ -252,7 +278,8 @@ class AppLocalizationsFr extends AppLocalizations {
   String get emptyJarMessage => 'Le bocal est vide, ajoute un souvenir !';
 
   @override
-  String get deleteConfirmMessage => 'Voulez-vous vraiment supprimer définitivement ces souvenirs ?';
+  String get deleteConfirmMessage =>
+      'Voulez-vous vraiment supprimer définitivement ces souvenirs ?';
 
   @override
   String get btnCancel => 'Annuler';
@@ -261,7 +288,8 @@ class AppLocalizationsFr extends AppLocalizations {
   String get btnDeleteConfirm => 'Supprimer';
 
   @override
-  String get recategorizeTitle => 'Sélectionnez les catégories à appliquer aux souvenirs sélectionnés :';
+  String get recategorizeTitle =>
+      'Sélectionnez les catégories à appliquer aux souvenirs sélectionnés :';
 
   @override
   String get btnSave => 'Enregistrer';
@@ -270,22 +298,26 @@ class AppLocalizationsFr extends AppLocalizations {
   String get onboardingBtnGetStarted => 'Commencer';
 
   @override
-  String get onboardingWelcomeMessage => 'Bienvenue dans ton\nespace personnel conçu\npour te redonner le\nsourire !';
+  String get onboardingWelcomeMessage =>
+      'Bienvenue dans ton\nespace personnel conçu\npour te redonner le\nsourire !';
 
   @override
-  String get onboardingQuestionName => "Comment t'appelles-tu ?";
+  String get onboardingQuestionName => 'Comment t\'appelles-tu ?';
 
   @override
   String get onboardingHintName => 'Prénom';
 
   @override
-  String get onboardingQuestionGender => 'Tu es...';
+  String get onboardingQuestionGender => 'Comment dois-je m\'adresser à toi ?';
 
   @override
-  String get onboardingGenderMale => 'Un homme';
+  String get onboardingGenderMale => 'Au masculin';
 
   @override
-  String get onboardingGenderFemale => 'Une femme';
+  String get onboardingGenderFemale => 'Au féminin';
+
+  @override
+  String get onboardingGenderNone => 'En écriture inclusive';
 
   @override
   String get onboardingSecurityTitle => 'Sécurise tes données';
@@ -327,200 +359,259 @@ class AppLocalizationsFr extends AppLocalizations {
   String get demoPhotoTitle => 'Ajouter une photo';
 
   @override
-  String get demoPhotoDesc => 'Clique ici pour importer tes photos préférées et les classer dans ton espace personnel.';
+  String get demoPhotoDesc =>
+      'Clique ici pour importer tes photos préférées et les classer dans ton espace personnel.';
 
   @override
   String get demoNoteTitle => 'Écrire une note';
 
   @override
-  String get demoNoteDesc => 'Enregistre une pensée, un mot doux ou un souvenir marquant textuel à conserver.';
+  String get demoNoteDesc =>
+      'Enregistre une pensée, un mot doux ou un souvenir marquant textuel à conserver.';
 
   @override
   String get demoBocalTitle => 'Ton bocal à souvenirs';
 
   @override
-  String get demoBocalDesc => 'Appuie sur le bocal à tout moment pour tirer au sort un souvenir enregistré et te redonner le sourire !';
+  String get demoBocalDesc =>
+      'Appuie sur le bocal à tout moment pour tirer au sort un souvenir enregistré et te redonner le sourire !';
 
   @override
   String get demoBurgerTitle => 'Ton historique';
 
   @override
-  String get demoBurgerDesc => 'Ouvre ce menu à tout moment pour retrouver la liste chronologique de tous tes précieux souvenirs enregistrés.';
+  String get demoBurgerDesc =>
+      'Ouvre ce menu à tout moment pour retrouver la liste chronologique de tous tes précieux souvenirs enregistrés.';
 
   @override
-  String get profilTitlePersonalData => "Données personnelles";
-  @override
-  String get profilLabelFirstName => "Prénom";
-  @override
-  String get profilLabelEmail => "Email";
-  @override
-  String get profilLabelPassword => "Mot de passe";
-  @override
-  String get profilLabelBiometrics => "Biométrie";
-  @override
-  String get profilTitleAccountSettings => "Paramètres du compte";
-  @override
-  String get profilMenuNotifications => "Notifications";
-  @override
-  String get profilMenuLanguage => "Langue de l'application";
-  @override
-  String get profilMenuDarkMode => "Thème sombre";
-  @override
-  String get profilMenuSoftAnimations => "Animations douces";
-  @override
-  String get profilTitleStorage => "Stockage de l'appareil";
-  @override
-  String get profilLabelImportedPhotos => "Photos importées";
-  @override
-  String get profilLabelTextMemories => "Souvenirs textuels";
-  @override
-  String get profilLabelGalleryAccess => "Accès à la galerie";
-  @override
-  String get profilBtnEmpty => "Vider";
-  @override
-  String profilSnackbarEmptied(String label) => "$label vidé";
-  @override
-  String get profilTitleHelp => "Besoin d'aide ?";
-  @override
-  String get profilHelpQuestion1 => "Comment ajouter un souvenir ?";
-  @override
-  String get profilHelpAnswer1 => "Clique sur le bouton '+' sur l'écran d'accueil pour commencer à rédiger un souvenir ou importer une photo.";
-  @override
-  String get profilHelpQuestion2 => "Mes données sont-elles sécurisées ?";
-  @override
-  String get profilHelpAnswer2 => "Oui, toutes tes données sont stockées localement sur ton téléphone et chiffrées.";
-  @override
-  String get profilAlertTitle => "Attention";
-  @override
-  String get profilAlertGalleryMessage => "Attention, si tu décides de supprimer l'accès à ta galerie photo, tu ne pourras plus enregistrer de photos dans tes souvenirs.";
-  @override
-  String get profilAlertBtnDisable => "Désactiver l'accès";
-  @override
-  String get notifLabelTitleGratitude => "Rappel quotidien de gratitude";
-  @override
-  String get notifLabelSubGratitude => "Me rappeler de noter un souvenir positif";
-  @override
-  String get notifLabelTime => "Heure du rappel";
-  @override
-  String get notifLabelTitleSouvenirs => "Fréquence des souvenirs tirés";
-  @override
-  String get notifLabelSubSouvenirs => "Me proposer un vieux souvenir à revoir";
-  @override
-  String get notifLabelFreqSettings => "Réglages de la fréquence";
-  @override
-  String get notifFreqEveryDay => "Tous les jours";
-  @override
-  String get notifFreqEveryTwoDays => "Tous les 2 jours";
-  @override
-  String get notifFreqEveryWeek => "Toutes les semaines";
-  @override
-  String get notifLabelDayOfWeek => "Jour de la semaine";
-  @override
-  String get notifDayMonday => "Lundi";
-  @override
-  String get notifDayTuesday => "Mardi";
-  @override
-  String get notifDayWednesday => "Mercredi";
-  @override
-  String get notifDayThursday => "Jeudi";
-  @override
-  String get notifDayFriday => "Vendredi";
-  @override
-  String get notifDaySaturday => "Samedi";
-  @override
-  String get notifDaySunday => "Dimanche";
-  @override
-  String get notifLabelCategoriesIncluded => "Catégories incluses";
-  @override
-  String get notifAllCategories => "Toutes catégories";
+  String get profilTitlePersonalData => 'Données personnelles';
 
   @override
-String get notifBocalVideTitle => 'Bocal vide';
-
-@override
-String get notifBocalVideBody => 'Aucun souvenir à afficher dans les catégories sélectionnées.';
+  String get profilLabelFirstName => 'Prénom';
 
   @override
-  String get resetPasswordTitle => "Réinitialise ton mot de passe";
+  String get profilLabelEmail => 'Email';
 
   @override
-  String get resetPasswordHintNew => "Nouveau mot de passe";
+  String get profilLabelPassword => 'Mot de passe';
 
   @override
-  String get resetPasswordHintConfirm => "Confirmez le mot de passe";
+  String get profilLabelBiometrics => 'Biométrie';
 
   @override
-  String get resetPasswordErrorEmpty => "Veuillez remplir tous les champs";
+  String get profilTitleAccountSettings => 'Paramètres du compte';
 
   @override
-  String get resetPasswordErrorMismatch => "Les mots de passe ne correspondent pas";
+  String get profilMenuNotifications => 'Notifications';
 
   @override
-  String get resetPasswordSuccess => "Mot de passe réinitialisé avec succès";
+  String get profilMenuLanguage => 'Langue de l\'application';
 
   @override
-  String get lockBiometricReason => "Verrouillage de sécurité Sourire";
+  String get profilMenuDarkMode => 'Thème sombre';
 
   @override
-  String get lockInputHint => "Entrez votre mot de passe";
+  String get profilMenuSoftAnimations => 'Animations douces';
 
   @override
-  String get lockErrorIncorrect => "Mot de passe incorrect";
+  String get profilTitleStorage => 'Stockage de l\'appareil';
 
   @override
-  String get lockForgotPassword => "Mot de passe oublié ?";
+  String get profilLabelImportedPhotos => 'Photos importées';
 
   @override
-  String get lockBtnBiometric => "Utiliser l'empreinte";
+  String get profilLabelTextMemories => 'Souvenirs textuels';
 
   @override
-  String get purchaseAlertTitle => "Limite atteinte";
+  String get profilLabelGalleryAccess => 'Accès à la galerie';
 
   @override
-  String get purchaseAlertPhotosMessage => "Tu as atteint la limite maximale de 10 photos pour la version gratuite. Passe à la version Premium pour ajouter des souvenirs en illimité et débloquer de nouveaux thèmes !";
+  String get profilBtnEmpty => 'Vider';
 
   @override
-  String get purchaseAlertNotesMessage => "Tu as atteint la limite maximale de 5 notes pour la version gratuite. Passe à la version Premium pour ajouter des souvenirs en illimité et débloquer de nouveaux thèmes !";
-
-
-  @override
-  String get deleteAlertTitle => "Veux-tu vraiment supprimer ces souvenirs ?";
+  String profilSnackbarEmptied(String label) {
+    return '$label vidé';
+  }
 
   @override
-  String get deleteAlertMessage => "Cette action est irréversible et entraînera la suppression définitive des souvenirs sélectionnés.";
+  String get profilTitleHelp => 'Besoin d\'aide ?';
 
   @override
-  String get btnGoPremium => "Passer Premium";
+  String get profilHelpQuestion1 => 'Comment ajouter un souvenir ?';
 
   @override
-  String get emptyHistory => "L'historique est vide";
+  String get profilHelpAnswer1 =>
+      'Clique sur le bouton \'+\' sur l\'écran d\'accueil pour commencer à rédiger un souvenir ou importer une photo.';
+
+  @override
+  String get profilHelpQuestion2 => 'Mes données sont-elles sécurisées ?';
+
+  @override
+  String get profilHelpAnswer2 =>
+      'Oui. Tes souvenirs restent uniquement dans l\'espace privé de Sourire sur ton téléphone, auquel aucune autre application n\'a accès, et ne sont jamais envoyés sur Internet.';
+
+  @override
+  String get profilAlertTitle => 'Attention';
+
+  @override
+  String get profilAlertGalleryMessage =>
+      'Attention, si tu décides de supprimer l\'accès à ta galerie photo, tu ne pourras plus enregistrer de photos dans tes souvenirs.';
+
+  @override
+  String get profilAlertBtnDisable => 'Désactiver l\'accès';
+
+  @override
+  String get notifLabelTitleGratitude => 'Rappel de gratitude';
+
+  @override
+  String get notifLabelSubGratitude =>
+      'Me rappeler de noter un souvenir positif';
+
+  @override
+  String get notifLabelTime => 'Heure du rappel';
+
+  @override
+  String get notifLabelTitleSouvenirs => 'Fréquence des souvenirs tirés';
+
+  @override
+  String get notifLabelSubSouvenirs => 'Me proposer un vieux souvenir à revoir';
+
+  @override
+  String get notifLabelFreqSettings => 'Réglages de la fréquence';
+
+  @override
+  String get notifFreqEveryDay => 'Tous les jours';
+
+  @override
+  String get notifFreqEveryWeek => 'Toutes les semaines';
+
+  @override
+  String get notifLabelDayOfWeek => 'Jours de la semaine';
+
+  @override
+  String get notifDayMonday => 'Lundi';
+
+  @override
+  String get notifDayTuesday => 'Mardi';
+
+  @override
+  String get notifDayWednesday => 'Mercredi';
+
+  @override
+  String get notifDayThursday => 'Jeudi';
+
+  @override
+  String get notifDayFriday => 'Vendredi';
+
+  @override
+  String get notifDaySaturday => 'Samedi';
+
+  @override
+  String get notifDaySunday => 'Dimanche';
+
+  @override
+  String get notifLabelCategoriesIncluded => 'Catégories incluses';
+
+  @override
+  String get notifAllCategories => 'Toutes catégories';
+
+  @override
+  String get notifBocalVideTitle => 'Bocal vide';
+
+  @override
+  String get notifBocalVideBody =>
+      'Aucun souvenir à afficher dans les catégories sélectionnées.';
+
+  @override
+  String get resetPasswordTitle => 'Réinitialise ton mot de passe';
+
+  @override
+  String get resetPasswordHintNew => 'Nouveau mot de passe';
+
+  @override
+  String get resetPasswordHintConfirm => 'Confirmez le mot de passe';
+
+  @override
+  String get resetPasswordErrorEmpty => 'Veuillez remplir tous les champs';
+
+  @override
+  String get resetPasswordErrorMismatch =>
+      'Les mots de passe ne correspondent pas';
+
+  @override
+  String get resetPasswordSuccess => 'Mot de passe réinitialisé avec succès';
+
+  @override
+  String get lockBiometricReason => 'Verrouillage de sécurité Sourire';
+
+  @override
+  String get lockInputHint => 'Entrez votre mot de passe';
+
+  @override
+  String get lockErrorIncorrect => 'Mot de passe incorrect';
+
+  @override
+  String get lockForgotPassword => 'Mot de passe oublié ?';
+
+  @override
+  String get lockBtnBiometric => 'Utiliser l\'empreinte';
+
+  @override
+  String get purchaseAlertTitle => 'Limite atteinte';
+
+  @override
+  String purchaseAlertMessage(int limite) {
+    return 'Tu as atteint la limite de $limite souvenirs pour la version gratuite. Passe à la version Premium pour ajouter des souvenirs en illimité et débloquer de nouveaux thèmes !';
+  }
+
+  @override
+  String get deleteAlertTitle => 'Veux-tu vraiment supprimer ces souvenirs ?';
+
+  @override
+  String get deleteAlertMessage =>
+      'Cette action est irréversible et entraînera la suppression définitive des souvenirs sélectionnés.';
+
+  @override
+  String get btnGoPremium => 'Passer Premium';
+
+  @override
+  String get emptyHistory => 'L\'historique est vide';
 
   @override
   String get notifGratitudeChannelName => 'Rappel de Gratitude';
 
   @override
-  String get notifGratitudeChannelDesc => 'Pour te rappeler de noter tes pensées positives';
+  String get notifGratitudeChannelDesc =>
+      'Pour te rappeler de noter tes pensées positives';
 
   @override
   String get notifSouvenirsChannelName => 'Souvenir heureux';
 
   @override
-  String get notifSouvenirsChannelDesc => 'Psst, regarde ce qui vient de remonter...';
+  String get notifSouvenirsChannelDesc =>
+      'Psst, regarde ce qui vient de remonter...';
 
   @override
   String get notifGratitudeTitle => 'Rappel de gratitude';
 
   @override
-  String get notifGratitudeBody => "Que s'est-il passé de positif dans ta journée ? ";
+  String get notifGratitudeBodyDaily =>
+      'Que s\'est-il passé de positif dans ta journée ?';
 
   @override
-  String get notifSouvenirsDefaultTitle => 'Psst, regarde ce qui vient de remonter 👀';
+  String get notifGratitudeBodyWeekly =>
+      'Que s\'est-il passé de positif dans ta semaine ?';
+
+  @override
+  String get notifSouvenirsDefaultTitle =>
+      'Psst, regarde ce qui vient de remonter 👀';
 
   @override
   String get notifSouvenirsEmptyTitle => 'Ton bocal à bonheur est vide...';
 
   @override
-  String get notifSouvenirsEmptyBody => 'Ajoute tes premiers souvenirs heureux pour pouvoir les revoir ! ';
+  String get notifSouvenirsEmptyBody =>
+      'Ajoute tes premiers souvenirs heureux pour pouvoir les revoir ! ';
 
   @override
   String get notifSouvenirsAllBody => 'Jette un oeil à ce souvenir...';
@@ -535,14 +626,16 @@ String get notifBocalVideBody => 'Aucun souvenir à afficher dans les catégorie
   String get themesTitle => 'Thèmes';
 
   @override
-  String get themesDescription => 'Personnalise ton interface et tes notes à tout moment en choisissant parmi les thèmes suivants.';
+  String get themesDescription =>
+      'Personnalise ton interface et tes notes à tout moment en choisissant parmi les thèmes suivants.';
 
   @override
-  String get notesPurchaseSuccessSnackBar => 'Achat simulé avec succès ! Notes et photos illimitées débloquées.';
+  String get notesPurchaseSuccessSnackBar =>
+      'Achat simulé avec succès ! Notes et photos illimitées débloquées.';
 
   @override
   String premiumSuccessSnackBar(String themeLabel) {
-    return 'Premium Activé ! Tous les verrous ont sauté. Thème \'$themeLabel\' appliqué.';
+    return 'Premium Activé ! Tous les verrous ont sauté. Thème « $themeLabel » appliqué.';
   }
 
   @override
@@ -576,104 +669,179 @@ String get notifBocalVideBody => 'Aucun souvenir à afficher dans les catégorie
   String get themeKawaii => 'Kawaii';
 
   @override
-String get popupPalierTitle => 'Félicitations !';
+  String get popupPalierTitle => 'Félicitations !';
 
-@override
-String popupPalierMessage(int palier) => 'Tu as ajouté $palier souvenirs à ton bocal !';
+  @override
+  String popupPalierMessage(int palier) {
+    return 'Tu as ajouté $palier souvenirs à ton bocal !';
+  }
 
-@override
-String get btnContinuerPalier => 'Continuer';
+  @override
+  String get btnContinuerPalier => 'Continuer';
 
-@override
-String get badge10Name => 'Chercheur d’Étoiles';
-@override
-String get badge10Phrase => 'Les plus beaux souvenirs commencent souvent tout petits.';
+  @override
+  String get badge10Name => 'Chercheur d’Étoiles';
 
-@override
-String get badge50Name => 'Cueilleur de Beauté';
-@override
-String get badge50Phrase => 'Continue à capturer les instants qui illuminent tes journées.';
+  @override
+  String get badge10Phrase =>
+      'Les plus beaux souvenirs commencent souvent tout petits.';
 
-@override
-String get badge100Name => 'Gardien des Instants';
-@override
-String get badge100Phrase => 'Ton bocal devient un vrai refuge à souvenirs.';
+  @override
+  String get badge50Name => 'Cueilleur de Beauté';
 
-@override
-String get badge200Name => 'Conteur de Souvenirs';
-@override
-String get badge200Phrase => 'Chaque souvenir ajoute une page à ton histoire.';
+  @override
+  String get badge50Phrase =>
+      'Continue à capturer les instants qui illuminent tes journées.';
 
-@override
-String get badge500Name => 'Émanateur de Joie';
-@override
-String get badge500Phrase => 'Ton bocal se remplit de beaux moments à revivre.';
+  @override
+  String get badge100Name => 'Gardien des Instants';
 
-@override
-String get badge1000Name => 'Alchimiste du Bonheur';
-@override
-String get badge1000Phrase => 'Continue à garder précieusement ces petits instants de joie.';
+  @override
+  String get badge100Phrase => 'Ton bocal devient un vrai refuge à souvenirs.';
 
-@override
-String get badge1500Name => 'Fée de Lumière';
-@override
-String get badge1500Phrase => 'Chaque souvenir ajouté éclaire un peu plus ton quotidien.';
+  @override
+  String get badge200Name => 'Conteur de Souvenirs';
 
-@override
-String get badge2000Name => 'Archiviste du Cœur';
-@override
-String get badge2000Phrase => 'Ton bocal devient une vraie mémoire d’émotions.';
+  @override
+  String get badge200Phrase =>
+      'Chaque souvenir ajoute une page à ton histoire.';
 
-@override
-String get badge2500Name => 'Orfèvre d’Émotions';
-@override
-String get badge2500Phrase => 'Tu collectionnes des souvenirs aussi précieux que rares.';
+  @override
+  String get badge500Name => 'Émanateur de Joie';
 
-@override
-String get badge3000Name => 'Horloger des Instants';
-@override
-String get badge3000Phrase => 'Tu transformes les instants fugaces en souvenirs durables.';
+  @override
+  String get badge500Phrase =>
+      'Ton bocal se remplit de beaux moments à revivre.';
 
-@override
-String get badge3500Name => 'Veilleur de Lumière';
-@override
-String get badge3500Phrase => 'Même les petits moments peuvent illuminer une journée.';
+  @override
+  String get badge1000Name => 'Alchimiste du Bonheur';
 
-@override
-String get badge4000Name => 'Gardien d’Éternité';
-@override
-String get badge4000Phrase => 'Tu construis une collection de souvenirs hors du temps.';
+  @override
+  String get badge1000Phrase =>
+      'Continue à garder précieusement ces petits instants de joie.';
 
-@override
-String get badge4500Name => 'Mage des Souvenirs';
-@override
-String get badge4500Phrase => 'Ton bocal déborde déjà de moments précieux.';
+  @override
+  String get badge1500Name => 'Fée de Lumière';
 
-@override
-String get badge5000Name => 'Légende de Sourire';
-@override
-String get badge5000Phrase => 'Les plus beaux souvenirs sont encore à venir.';
+  @override
+  String get badge1500Phrase =>
+      'Chaque souvenir ajouté éclaire un peu plus ton quotidien.';
 
-@override
-String get rewardsSectionTitle => 'Récompenses';
-@override
-String get myBadgesTitle => 'Mes badges';
+  @override
+  String get badge2000Name => 'Archiviste du Cœur';
 
-@override
-String get btnSelectAll => 'Tout sélectionner';
+  @override
+  String get badge2000Phrase =>
+      'Ton bocal devient une vraie mémoire d’émotions.';
 
-@override
-String get btnDeselectAll => 'Tout désélectionner';
+  @override
+  String get badge2500Name => 'Orfèvre d’Émotions';
 
-@override
-String selectedCountLabel(int count) => '$count sélectionné(s)';
+  @override
+  String get badge2500Phrase =>
+      'Tu collectionnes des souvenirs aussi précieux que rares.';
 
-@override
-String get jarFullTitle => 'Ton bocal est plein !';
+  @override
+  String get badge3000Name => 'Horloger des Instants';
 
-@override
-String get jarFullMessage => 'Remplis-en un nouveau ! Tes souvenirs restent bien sûr tous conservés — seul l\'affichage change, un nouveau bocal t\'attend.';
+  @override
+  String get badge3000Phrase =>
+      'Tu transformes les instants fugaces en souvenirs durables.';
 
-@override
-String get btnNewJar => 'Nouveau bocal';
+  @override
+  String get badge3500Name => 'Veilleur de Lumière';
+
+  @override
+  String get badge3500Phrase =>
+      'Même les petits moments peuvent illuminer une journée.';
+
+  @override
+  String get badge4000Name => 'Gardien d’Éternité';
+
+  @override
+  String get badge4000Phrase =>
+      'Tu construis une collection de souvenirs hors du temps.';
+
+  @override
+  String get badge4500Name => 'Mage des Souvenirs';
+
+  @override
+  String get badge4500Phrase => 'Ton bocal déborde déjà de moments précieux.';
+
+  @override
+  String get badge5000Name => 'Légende de Sourire';
+
+  @override
+  String get badge5000Phrase => 'Les plus beaux souvenirs sont encore à venir.';
+
+  @override
+  String get rewardsSectionTitle => 'Récompenses';
+
+  @override
+  String get myBadgesTitle => 'Mes badges';
+
+  @override
+  String get btnSelectAll => 'Tout sélectionner';
+
+  @override
+  String get btnDeselectAll => 'Tout désélectionner';
+
+  @override
+  String selectedCountLabel(int count) {
+    return '$count sélectionné(s)';
+  }
+
+  @override
+  String get jarFullTitle => 'Ton bocal est plein !';
+
+  @override
+  String get jarFullMessage =>
+      'Un nouveau bocal t\'attend, tes souvenirs restent bien sûr tous conservés, seul l\'affichage change.';
+
+  @override
+  String get btnNewJar => 'Nouveau bocal';
+
+  @override
+  String get shareError => 'Le partage n\'a pas pu aboutir. Réessaie.';
+
+  @override
+  String get amorceVoyage => 'Ton meilleur souvenir de voyage...';
+
+  @override
+  String get amorceFouRire => 'Ton dernier fou rire !';
+
+  @override
+  String get amorceCadeau => 'Le plus beau cadeau qu\'on t\'ait offert.';
+
+  @override
+  String get amorceToi => 'Ce que tu aimes le plus chez toi.';
+
+  @override
+  String get amorceFierte => 'Ce dont tu es le·la plus fièr·e !';
+
+  @override
+  String get backupExportTitle => 'Exporter mes souvenirs';
+
+  @override
+  String get backupExportSub =>
+      'Fabrique une archive contenant tes notes et tes photos. Tu la ranges où tu veux : rien n\'est envoyé sur Internet.';
+
+  @override
+  String get backupImportTitle => 'Restaurer une sauvegarde';
+
+  @override
+  String get backupImportSub =>
+      'Ajoute les souvenirs d\'une archive. Rien n\'est supprimé, et les souvenirs déjà présents sont ignorés.';
+
+  @override
+  String get backupExportError => 'L\'export n\'a pas pu aboutir. Réessaie.';
+
+  @override
+  String get backupImportError =>
+      'Archive illisible. Vérifie que c\'est bien un export Sourire.';
+
+  @override
+  String backupImportDone(int ajoutes, int ignores) {
+    return '$ajoutes souvenir(s) restauré(s), $ignores déjà présent(s).';
+  }
 }

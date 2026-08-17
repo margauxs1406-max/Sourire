@@ -93,7 +93,7 @@ class _ScreenRecategorisationHistoriqueState extends State<ScreenRecategorisatio
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
               title: Text(
                 localizations.titleDeleteModal,
-                style: TextStyle(color: isDarkMode ? Colors.white : Colors.black, fontSize: 18, fontWeight: FontWeight.bold),
+                style: styleTitreAction.copyWith(color: texteFort(isDarkMode)),
               ),
               content: customList.isEmpty
                   ? Padding(
@@ -186,9 +186,15 @@ class _ScreenRecategorisationHistoriqueState extends State<ScreenRecategorisatio
     
     final souvenir = widget.souvenirs[widget.currentIndex];
     final String labelNouvelleCategorie = localizations.btnNewCategory;
+    // Ces bandeaux sont posés en Positioned : leur hauteur ne peut pas être un
+    // simple plancher. On l'indexe donc sur le facteur d'agrandissement du
+    // texte du système, borné à 1,6 pour qu'un réglage extrême ne mange pas
+    // toute la liste de catégories.
+    final double echelleTexte =
+        MediaQuery.textScalerOf(context).scale(1.0).clamp(1.0, 1.6);
     const double topBarHeight = 60.0; 
-    const double titleHeight = 120.0; 
-    const double bottomBarHeight = 110.0;
+    final double titleHeight = 120.0 * echelleTexte;
+    final double bottomBarHeight = 110.0 * echelleTexte;
 
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
@@ -258,9 +264,9 @@ class _ScreenRecategorisationHistoriqueState extends State<ScreenRecategorisatio
                                 Expanded(
                                   child: Text(
                                     localizations.categoryQuestion,
-                                    style: styleNoteLarge.copyWith(
+                                    style: styleTitreLora.copyWith(
                                       color: isDarkMode ? Colors.white : orange,
-                                      fontSize: screenWidth < 360 ? 18 : 22,
+                                      fontSize: tailleLora(screenWidth < 360 ? 18 : 22),
                                       height: 1.2,
                                     ),
                                   ),

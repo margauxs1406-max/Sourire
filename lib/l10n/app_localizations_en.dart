@@ -12,16 +12,23 @@ class AppLocalizationsEn extends AppLocalizations {
   String get titleSourire => 'Sourire';
 
   @override
-  String welcomeMessage(String prenom) => 'Hello $prenom,';
+  String welcomeMessage(String prenom) {
+    return 'Hello $prenom,';
+  }
 
   @override
-  String mainQuestion(String accord) => 'What makes you happy today?';
+  String mainQuestion(String accord) {
+    return 'What makes you happy today?';
+  }
 
   @override
   String get personalData => 'Personal data';
 
   @override
   String get firstName => 'First name';
+
+  @override
+  String get gender => 'Gender';
 
   @override
   String get email => 'Email';
@@ -37,6 +44,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get notifications => 'Notifications';
+
+  @override
+  String get personalization => 'Personalization';
 
   @override
   String get permissions => 'Permissions';
@@ -60,7 +70,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get dailyGratitudeReminder => 'Daily gratitude reminder';
 
   @override
-  String get dailyReminderSubtitle => 'Remind me to write down a positive memory';
+  String get dailyReminderSubtitle =>
+      'Remind me to write down a positive memory';
 
   @override
   String get reminderTime => 'Reminder time';
@@ -90,13 +101,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get photoGalleryAccess => 'Photo gallery access';
 
   @override
-  String get photoGallerySubtitle => 'Essential for adding photos of your previous moments.';
+  String get photoGallerySubtitle =>
+      'Essential for adding photos of your previous moments.';
 
   @override
   String get secureLocalStorage => 'Secure local storage';
 
   @override
-  String get secureStorageSubtitle => 'Your memories are automatically saved locally on your private storage space.';
+  String get secureStorageSubtitle =>
+      'Your memories are automatically saved locally on your private storage space.';
 
   @override
   String get active => 'Active';
@@ -105,19 +118,23 @@ class AppLocalizationsEn extends AppLocalizations {
   String get spaceOccupied => 'Storage used';
 
   @override
-  String storageCounter(String photos, String notes) => 'Photos: $photos | Notes: $notes';
+  String storageCounter(String photos, String notes) {
+    return 'Photos: $photos | Notes: $notes';
+  }
 
   @override
   String get darkMode => 'Dark mode';
 
   @override
-  String get darkModeSubtitle => 'Switch the interface to dark tones to rest your eyes at night.';
+  String get darkModeSubtitle =>
+      'Switch the interface to dark tones to rest your eyes at night.';
 
   @override
   String get smoothAnimations => 'Smooth animations';
 
   @override
-  String get smoothAnimationsSubtitle => 'Replaces the jar\'s tornado effect with a lighter fade-in effect.';
+  String get smoothAnimationsSubtitle =>
+      'Replaces the jar\'s tornado effect with a lighter fade-in effect.';
 
   @override
   String get francais => 'French';
@@ -132,25 +149,29 @@ class AppLocalizationsEn extends AppLocalizations {
   String get faqQuestion1 => 'Where are my memories stored?';
 
   @override
-  String get faqAnswer1 => 'They remain locally in your phone\'s secure folder, no one else has access to them.';
+  String get faqAnswer1 =>
+      'They remain locally in your phone\'s secure folder, no one else has access to them.';
 
   @override
   String get faqQuestion2 => 'How does the lucky draw work?';
 
   @override
-  String get faqAnswer2 => 'Shake your phone or click on the jar to bring up a random memory.';
+  String get faqAnswer2 =>
+      'Shake your phone or click on the jar to bring up a random memory.';
 
   @override
   String get faqQuestion3 => 'How to categorize memories?';
 
   @override
-  String get faqAnswer3 => 'Go to history and long-press a memory. You can then select multiple items and choose \'Categorize\'.';
+  String get faqAnswer3 =>
+      'Go to history and long-press a memory. You can then select multiple items and choose \'Categorize\'.';
 
   @override
   String get faqQuestion4 => 'How to delete memories?';
 
   @override
-  String get faqAnswer4 => 'Go to history, long-press the memory, select it and press the \'Delete\' button.';
+  String get faqAnswer4 =>
+      'Go to history, long-press the memory, select it and press the \'Delete\' button.';
 
   @override
   String get filterTitle => 'Filter';
@@ -193,7 +214,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get noCustomCategoryToDelete => 'No custom categories to delete.';
-  
+
   @override
   String get btnClose => 'Close';
 
@@ -207,13 +228,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get btnFilter => 'Filter';
 
   @override
-  String writeHappyThought(String accord) => 'Write down what makes you happy...';
+  String writeHappyThought(String accord) {
+    return 'Write down what makes you happy...';
+  }
 
   @override
   String get btnValidate => 'Validate';
 
   @override
-  String get categoryQuestion => 'Which category(ies) does this souvenir belong to?';
+  String get categoryQuestion =>
+      'Which category(ies) does this souvenir belong to?';
 
   @override
   String get btnSkip => 'Skip';
@@ -243,7 +267,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get alertWarningTitle => 'Warning';
 
   @override
-  String get galleryDisabledMessage => 'You have disabled access to your photo gallery. Please enable it in your permissions.';
+  String get galleryDisabledMessage =>
+      'You have disabled access to your photo gallery. Please enable it in your permissions.';
 
   @override
   String get btnEnableAccess => 'Enable access';
@@ -252,7 +277,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get emptyJarMessage => 'The jar is empty, add a memory!';
 
   @override
-  String get deleteConfirmMessage => 'Are you sure you want to permanently delete these memories?';
+  String get deleteConfirmMessage =>
+      'Are you sure you want to permanently delete these memories?';
 
   @override
   String get btnCancel => 'Cancel';
@@ -261,7 +287,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get btnDeleteConfirm => 'Delete';
 
   @override
-  String get recategorizeTitle => 'Select the categories to apply to the selected memories:';
+  String get recategorizeTitle =>
+      'Select the categories to apply to the selected memories:';
 
   @override
   String get btnSave => 'Save';
@@ -270,7 +297,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get onboardingBtnGetStarted => 'Get started';
 
   @override
-  String get onboardingWelcomeMessage => 'Welcome to your\npersonal space designed\nto bring back your\nsmile!';
+  String get onboardingWelcomeMessage =>
+      'Welcome to your\npersonal space designed\nto bring back your\nsmile!';
 
   @override
   String get onboardingQuestionName => 'What is your name?';
@@ -279,13 +307,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get onboardingHintName => 'First name';
 
   @override
-  String get onboardingQuestionGender => 'You are...';
+  String get onboardingQuestionGender => 'How should I address you?';
 
   @override
-  String get onboardingGenderMale => 'A man';
+  String get onboardingGenderMale => 'Masculine';
 
   @override
-  String get onboardingGenderFemale => 'A woman';
+  String get onboardingGenderFemale => 'Feminine';
+
+  @override
+  String get onboardingGenderNone => 'Inclusive language';
 
   @override
   String get onboardingSecurityTitle => 'Secure your data';
@@ -327,178 +358,229 @@ class AppLocalizationsEn extends AppLocalizations {
   String get demoPhotoTitle => 'Add a photo';
 
   @override
-  String get demoPhotoDesc => 'Click here to import your favorite photos and organize them in your personal space.';
+  String get demoPhotoDesc =>
+      'Click here to import your favorite photos and organize them in your personal space.';
 
   @override
   String get demoNoteTitle => 'Write a note';
 
   @override
-  String get demoNoteDesc => 'Save a thought, a sweet word, or a text-based memory to keep.';
+  String get demoNoteDesc =>
+      'Save a thought, a sweet word, or a text-based memory to keep.';
 
   @override
   String get demoBocalTitle => 'Your memory jar';
 
   @override
-  String get demoBocalDesc => 'Tap the jar at any time to randomly draw a saved memory and put a smile back on your face!';
+  String get demoBocalDesc =>
+      'Tap the jar at any time to randomly draw a saved memory and put a smile back on your face!';
 
   @override
   String get demoBurgerTitle => 'Your history';
 
   @override
-  String get demoBurgerDesc => 'Open this menu at any time to find the chronological list of all your precious saved memories.';
+  String get demoBurgerDesc =>
+      'Open this menu at any time to find the chronological list of all your precious saved memories.';
 
   @override
-  String get profilTitlePersonalData => "Personal data";
-  @override
-  String get profilLabelFirstName => "First name";
-  @override
-  String get profilLabelEmail => "Email";
-  @override
-  String get profilLabelPassword => "Password";
-  @override
-  String get profilLabelBiometrics => "Biometrics";
-  @override
-  String get profilTitleAccountSettings => "Account settings";
-  @override
-  String get profilMenuNotifications => "Notifications";
-  @override
-  String get profilMenuLanguage => "Application language";
-  @override
-  String get profilMenuDarkMode => "Dark theme";
-  @override
-  String get profilMenuSoftAnimations => "Smooth animations";
-  @override
-  String get profilTitleStorage => "Device storage";
-  @override
-  String get profilLabelImportedPhotos => "Imported photos";
-  @override
-  String get profilLabelTextMemories => "Textual memories";
-  @override
-  String get profilLabelGalleryAccess => "Gallery access";
-  @override
-  String get profilBtnEmpty => "Clear";
-  @override
-  String profilSnackbarEmptied(String label) => "$label cleared";
-  @override
-  String get profilTitleHelp => "Need help?";
-  @override
-  String get profilHelpQuestion1 => "How to add a memory?";
-  @override
-  String get profilHelpAnswer1 => "Click the '+' button on the home screen to start writing a memory or importing a photo.";
-  @override
-  String get profilHelpQuestion2 => "Is my data secure?";
-  @override
-  String get profilHelpAnswer2 => "Yes, all your data is stored locally on your phone and encrypted.";
-  @override
-  String get profilAlertTitle => "Warning";
-  @override
-  String get profilAlertGalleryMessage => "Warning, if you decide to remove access to your photo gallery, you will no longer be able to save photos in your memories.";
-  @override
-  String get profilAlertBtnDisable => "Disable access";
-  @override
-  String get notifLabelTitleGratitude => "Daily gratitude reminder";
-  @override
-  String get notifLabelSubGratitude => "Remind me to write down a positive memory";
-  @override
-  String get notifLabelTime => "Reminder time";
-  @override
-  String get notifLabelTitleSouvenirs => "Drawn memories frequency";
-  @override
-  String get notifLabelSubSouvenirs => "Suggest an old memory for me to review";
-  @override
-  String get notifLabelFreqSettings => "Frequency settings";
-  @override
-  String get notifFreqEveryDay => "Every day";
-  @override
-  String get notifFreqEveryTwoDays => "Every 2 days";
-  @override
-  String get notifFreqEveryWeek => "Every week";
-  @override
-  String get notifLabelDayOfWeek => "Day of the week";
-  @override
-  String get notifDayMonday => "Monday";
-  @override
-  String get notifDayTuesday => "Tuesday";
-  @override
-  String get notifDayWednesday => "Wednesday";
-  @override
-  String get notifDayThursday => "Thursday";
-  @override
-  String get notifDayFriday => "Friday";
-  @override
-  String get notifDaySaturday => "Saturday";
-  @override
-  String get notifDaySunday => "Sunday";
-  @override
-  String get notifLabelCategoriesIncluded => "Categories included";
-  @override
-  String get notifAllCategories => "All categories";
+  String get profilTitlePersonalData => 'Personal data';
 
   @override
-String get notifBocalVideTitle => 'Empty jar';
-
-@override
-String get notifBocalVideBody => 'No memories to display in the selected categories.';
+  String get profilLabelFirstName => 'First name';
 
   @override
-  String get resetPasswordTitle => "Reset your password";
+  String get profilLabelEmail => 'Email';
 
   @override
-  String get resetPasswordHintNew => "New password";
+  String get profilLabelPassword => 'Password';
 
   @override
-  String get resetPasswordHintConfirm => "Confirm password";
+  String get profilLabelBiometrics => 'Biometrics';
 
   @override
-  String get resetPasswordErrorEmpty => "Please fill in all fields";
+  String get profilTitleAccountSettings => 'Account settings';
 
   @override
-  String get resetPasswordErrorMismatch => "Passwords do not match";
+  String get profilMenuNotifications => 'Notifications';
 
   @override
-  String get resetPasswordSuccess => "Password reset successfully";
+  String get profilMenuLanguage => 'Application language';
 
   @override
-  String get lockBiometricReason => "Sourire security lock";
+  String get profilMenuDarkMode => 'Dark theme';
 
   @override
-  String get lockInputHint => "Enter your password";
+  String get profilMenuSoftAnimations => 'Smooth animations';
 
   @override
-  String get lockErrorIncorrect => "Incorrect password";
+  String get profilTitleStorage => 'Device storage';
 
   @override
-  String get lockForgotPassword => "Forgot password?";
+  String get profilLabelImportedPhotos => 'Imported photos';
 
   @override
-  String get lockBtnBiometric => "Use fingerprint";
+  String get profilLabelTextMemories => 'Textual memories';
 
   @override
-  String get purchaseAlertTitle => "Limit reached";
+  String get profilLabelGalleryAccess => 'Gallery access';
 
   @override
-  String get purchaseAlertPhotosMessage => "You have reached the maximum limit of 10 photos for the free version. Upgrade to Premium to add unlimited memories and unlock new themes!";
+  String get profilBtnEmpty => 'Clear';
 
   @override
-  String get purchaseAlertNotesMessage => "You have reached the maximum limit of 5 notes for the free version. Upgrade to Premium to add unlimited memories and unlock new themes!";
+  String profilSnackbarEmptied(String label) {
+    return '$label cleared';
+  }
 
   @override
-  String get deleteAlertTitle => "Do you really want to delete these memories?";
+  String get profilTitleHelp => 'Need help?';
 
   @override
-  String get deleteAlertMessage => "This action cannot be undone and will permanently delete the selected memories.";
+  String get profilHelpQuestion1 => 'How to add a memory?';
 
   @override
-  String get btnGoPremium => "Go Premium";
+  String get profilHelpAnswer1 =>
+      'Click the \'+\' button on the home screen to start writing a memory or importing a photo.';
 
   @override
- String get emptyHistory => "History is empty";
+  String get profilHelpQuestion2 => 'Is my data secure?';
 
- @override
+  @override
+  String get profilHelpAnswer2 =>
+      'Yes. Your memories stay only in Sourire\'s private storage on your phone, which no other app can access, and they are never sent over the internet.';
+
+  @override
+  String get profilAlertTitle => 'Warning';
+
+  @override
+  String get profilAlertGalleryMessage =>
+      'Warning, if you decide to remove access to your photo gallery, you will no longer be able to save photos in your memories.';
+
+  @override
+  String get profilAlertBtnDisable => 'Disable access';
+
+  @override
+  String get notifLabelTitleGratitude => 'Gratitude reminder';
+
+  @override
+  String get notifLabelSubGratitude =>
+      'Remind me to write down a positive memory';
+
+  @override
+  String get notifLabelTime => 'Reminder time';
+
+  @override
+  String get notifLabelTitleSouvenirs => 'Drawn memories frequency';
+
+  @override
+  String get notifLabelSubSouvenirs => 'Suggest an old memory for me to review';
+
+  @override
+  String get notifLabelFreqSettings => 'Frequency settings';
+
+  @override
+  String get notifFreqEveryDay => 'Every day';
+
+  @override
+  String get notifFreqEveryWeek => 'Every week';
+
+  @override
+  String get notifLabelDayOfWeek => 'Days of the week';
+
+  @override
+  String get notifDayMonday => 'Monday';
+
+  @override
+  String get notifDayTuesday => 'Tuesday';
+
+  @override
+  String get notifDayWednesday => 'Wednesday';
+
+  @override
+  String get notifDayThursday => 'Thursday';
+
+  @override
+  String get notifDayFriday => 'Friday';
+
+  @override
+  String get notifDaySaturday => 'Saturday';
+
+  @override
+  String get notifDaySunday => 'Sunday';
+
+  @override
+  String get notifLabelCategoriesIncluded => 'Categories included';
+
+  @override
+  String get notifAllCategories => 'All categories';
+
+  @override
+  String get notifBocalVideTitle => 'Empty jar';
+
+  @override
+  String get notifBocalVideBody =>
+      'No memories to display in the selected categories.';
+
+  @override
+  String get resetPasswordTitle => 'Reset your password';
+
+  @override
+  String get resetPasswordHintNew => 'New password';
+
+  @override
+  String get resetPasswordHintConfirm => 'Confirm password';
+
+  @override
+  String get resetPasswordErrorEmpty => 'Please fill in all fields';
+
+  @override
+  String get resetPasswordErrorMismatch => 'Passwords do not match';
+
+  @override
+  String get resetPasswordSuccess => 'Password reset successfully';
+
+  @override
+  String get lockBiometricReason => 'Sourire security lock';
+
+  @override
+  String get lockInputHint => 'Enter your password';
+
+  @override
+  String get lockErrorIncorrect => 'Incorrect password';
+
+  @override
+  String get lockForgotPassword => 'Forgot password?';
+
+  @override
+  String get lockBtnBiometric => 'Use fingerprint';
+
+  @override
+  String get purchaseAlertTitle => 'Limit reached';
+
+  @override
+  String purchaseAlertMessage(int limite) {
+    return 'You have reached the limit of $limite memories for the free version. Upgrade to Premium to add unlimited memories and unlock new themes!';
+  }
+
+  @override
+  String get deleteAlertTitle => 'Do you really want to delete these memories?';
+
+  @override
+  String get deleteAlertMessage =>
+      'This action cannot be undone and will permanently delete the selected memories.';
+
+  @override
+  String get btnGoPremium => 'Go Premium';
+
+  @override
+  String get emptyHistory => 'History is empty';
+
+  @override
   String get notifGratitudeChannelName => 'Gratitude Reminder';
 
   @override
-  String get notifGratitudeChannelDesc => 'To remind you to write down your positive thoughts';
+  String get notifGratitudeChannelDesc =>
+      'To remind you to write down your positive thoughts';
 
   @override
   String get notifSouvenirsChannelName => 'Happy memory';
@@ -510,7 +592,12 @@ String get notifBocalVideBody => 'No memories to display in the selected categor
   String get notifGratitudeTitle => 'Gratitude reminder';
 
   @override
-  String get notifGratitudeBody => 'What positive thing happened in your day? ';
+  String get notifGratitudeBodyDaily =>
+      'What positive thing happened in your day?';
+
+  @override
+  String get notifGratitudeBodyWeekly =>
+      'What positive thing happened in your week?';
 
   @override
   String get notifSouvenirsDefaultTitle => 'Psst, look what just popped up 👀';
@@ -519,7 +606,8 @@ String get notifBocalVideBody => 'No memories to display in the selected categor
   String get notifSouvenirsEmptyTitle => 'Your happiness jar is empty...';
 
   @override
-  String get notifSouvenirsEmptyBody => 'Add your first happy memories to be able to see them!';
+  String get notifSouvenirsEmptyBody =>
+      'Add your first happy memories to be able to see them!';
 
   @override
   String get notifSouvenirsAllBody => 'Take a look at this souvenir...';
@@ -534,14 +622,16 @@ String get notifBocalVideBody => 'No memories to display in the selected categor
   String get themesTitle => 'Themes';
 
   @override
-  String get themesDescription => 'Customize your interface and notes at any time by choosing from the following themes.';
+  String get themesDescription =>
+      'Customize your interface and notes at any time by choosing from the following themes.';
 
   @override
-  String get notesPurchaseSuccessSnackBar => 'Purchase successfully simulated! Unlimited notes and photos unlocked.';
+  String get notesPurchaseSuccessSnackBar =>
+      'Purchase successfully simulated! Unlimited notes and photos unlocked.';
 
   @override
   String premiumSuccessSnackBar(String themeLabel) {
-    return 'Premium Activated! All locks have been removed. \'$themeLabel\' theme applied.';
+    return 'Premium Activated! All locks have been removed. Theme “$themeLabel” applied.';
   }
 
   @override
@@ -575,104 +665,179 @@ String get notifBocalVideBody => 'No memories to display in the selected categor
   String get themeKawaii => 'Kawaii';
 
   @override
-String get popupPalierTitle => 'Congratulations!';
+  String get popupPalierTitle => 'Congratulations!';
 
-@override
-String popupPalierMessage(int palier) => "You've added $palier memories to your jar!";
+  @override
+  String popupPalierMessage(int palier) {
+    return 'You\'ve added $palier memories to your jar!';
+  }
 
-@override
-String get btnContinuerPalier => 'Continue';
+  @override
+  String get btnContinuerPalier => 'Continue';
 
-@override
-String get badge10Name => 'Star Seeker';
-@override
-String get badge10Phrase => 'The most beautiful memories often start small.';
+  @override
+  String get badge10Name => 'Star Seeker';
 
-@override
-String get badge50Name => 'Beauty Gatherer';
-@override
-String get badge50Phrase => 'Keep capturing the moments that light up your days.';
+  @override
+  String get badge10Phrase => 'The most beautiful memories often start small.';
 
-@override
-String get badge100Name => 'Guardian of Moments';
-@override
-String get badge100Phrase => 'Your jar is becoming a true haven for memories.';
+  @override
+  String get badge50Name => 'Beauty Gatherer';
 
-@override
-String get badge200Name => 'Storyteller of Memories';
-@override
-String get badge200Phrase => 'Every memory adds a page to your story.';
+  @override
+  String get badge50Phrase =>
+      'Keep capturing the moments that light up your days.';
 
-@override
-String get badge500Name => 'Wellspring of Joy';
-@override
-String get badge500Phrase => 'Your jar is filling up with beautiful moments to relive.';
+  @override
+  String get badge100Name => 'Guardian of Moments';
 
-@override
-String get badge1000Name => 'Alchemist of Happiness';
-@override
-String get badge1000Phrase => 'Keep treasuring these little sparks of joy.';
+  @override
+  String get badge100Phrase =>
+      'Your jar is becoming a true haven for memories.';
 
-@override
-String get badge1500Name => 'Fairy of Light';
-@override
-String get badge1500Phrase => 'Every memory you add brightens your everyday life a little more.';
+  @override
+  String get badge200Name => 'Storyteller of Memories';
 
-@override
-String get badge2000Name => 'Archivist of the Heart';
-@override
-String get badge2000Phrase => 'Your jar is becoming a true archive of emotions.';
+  @override
+  String get badge200Phrase => 'Every memory adds a page to your story.';
 
-@override
-String get badge2500Name => 'Goldsmith of Emotions';
-@override
-String get badge2500Phrase => "You're collecting memories as precious as they are rare.";
+  @override
+  String get badge500Name => 'Wellspring of Joy';
 
-@override
-String get badge3000Name => 'Clockmaker of Moments';
-@override
-String get badge3000Phrase => "You're turning fleeting moments into lasting memories.";
+  @override
+  String get badge500Phrase =>
+      'Your jar is filling up with beautiful moments to relive.';
 
-@override
-String get badge3500Name => 'Watcher of Light';
-@override
-String get badge3500Phrase => 'Even small moments can light up a whole day.';
+  @override
+  String get badge1000Name => 'Alchemist of Happiness';
 
-@override
-String get badge4000Name => 'Guardian of Eternity';
-@override
-String get badge4000Phrase => "You're building a timeless collection of memories.";
+  @override
+  String get badge1000Phrase => 'Keep treasuring these little sparks of joy.';
 
-@override
-String get badge4500Name => 'Mage of Memories';
-@override
-String get badge4500Phrase => 'Your jar is already overflowing with precious moments.';
+  @override
+  String get badge1500Name => 'Fairy of Light';
 
-@override
-String get badge5000Name => 'Legend of Sourire';
-@override
-String get badge5000Phrase => 'The most beautiful memories are still to come.';
+  @override
+  String get badge1500Phrase =>
+      'Every memory you add brightens your everyday life a little more.';
 
-@override
-String get rewardsSectionTitle => 'Rewards';
-@override
-String get myBadgesTitle => 'My badges';
+  @override
+  String get badge2000Name => 'Archivist of the Heart';
 
-@override
-String get btnSelectAll => 'Select all';
+  @override
+  String get badge2000Phrase =>
+      'Your jar is becoming a true archive of emotions.';
 
-@override
-String get btnDeselectAll => 'Deselect all';
+  @override
+  String get badge2500Name => 'Goldsmith of Emotions';
 
-@override
-String selectedCountLabel(int count) => '$count selected';
+  @override
+  String get badge2500Phrase =>
+      'You\'re collecting memories as precious as they are rare.';
 
-@override
-String get jarFullTitle => 'Your jar is full!';
+  @override
+  String get badge3000Name => 'Clockmaker of Moments';
 
-@override
-String get jarFullMessage => 'Fill a new one! Your memories are of course all kept safe — only the display changes, a fresh jar awaits you.';
+  @override
+  String get badge3000Phrase =>
+      'You\'re turning fleeting moments into lasting memories.';
 
-@override
-String get btnNewJar => 'New jar';
+  @override
+  String get badge3500Name => 'Watcher of Light';
+
+  @override
+  String get badge3500Phrase => 'Even small moments can light up a whole day.';
+
+  @override
+  String get badge4000Name => 'Guardian of Eternity';
+
+  @override
+  String get badge4000Phrase =>
+      'You\'re building a timeless collection of memories.';
+
+  @override
+  String get badge4500Name => 'Mage of Memories';
+
+  @override
+  String get badge4500Phrase =>
+      'Your jar is already overflowing with precious moments.';
+
+  @override
+  String get badge5000Name => 'Legend of Sourire';
+
+  @override
+  String get badge5000Phrase =>
+      'The most beautiful memories are still to come.';
+
+  @override
+  String get rewardsSectionTitle => 'Rewards';
+
+  @override
+  String get myBadgesTitle => 'My badges';
+
+  @override
+  String get btnSelectAll => 'Select all';
+
+  @override
+  String get btnDeselectAll => 'Deselect all';
+
+  @override
+  String selectedCountLabel(int count) {
+    return '$count selected';
+  }
+
+  @override
+  String get jarFullTitle => 'Your jar is full!';
+
+  @override
+  String get jarFullMessage =>
+      'A new jar awaits you. All your memories are of course kept — only the display changes.';
+
+  @override
+  String get btnNewJar => 'New jar';
+
+  @override
+  String get shareError => 'Sharing didn\'t go through. Please try again.';
+
+  @override
+  String get amorceVoyage => 'Your best travel memory...';
+
+  @override
+  String get amorceFouRire => 'The last time you laughed until you cried!';
+
+  @override
+  String get amorceCadeau => 'The most beautiful gift you\'ve ever been given.';
+
+  @override
+  String get amorceToi => 'What you like most about yourself.';
+
+  @override
+  String get amorceFierte => 'What you\'re proudest of!';
+
+  @override
+  String get backupExportTitle => 'Export my memories';
+
+  @override
+  String get backupExportSub =>
+      'Builds an archive with your notes and photos. Keep it wherever you like — nothing is sent over the internet.';
+
+  @override
+  String get backupImportTitle => 'Restore a backup';
+
+  @override
+  String get backupImportSub =>
+      'Adds the memories from an archive. Nothing is deleted, and memories already present are skipped.';
+
+  @override
+  String get backupExportError =>
+      'The export didn\'t go through. Please try again.';
+
+  @override
+  String get backupImportError =>
+      'Unreadable archive. Check that it is a Sourire export.';
+
+  @override
+  String backupImportDone(int ajoutes, int ignores) {
+    return '$ajoutes memory/ies restored, $ignores already present.';
+  }
 }

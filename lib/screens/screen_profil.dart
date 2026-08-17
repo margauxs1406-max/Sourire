@@ -1,3 +1,6 @@
+import 'dart:io' show Platform;
+
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:sourire/l10n/app_localizations.dart';
 import 'package:sourire/main.dart';
@@ -5,6 +8,7 @@ import 'package:sourire/screens/screen_choix_themes.dart';
 import 'package:sourire/screens/screen_template_reglages.dart';
 import 'package:sourire/services/biometric_service.dart';
 import 'package:sourire/services/notifications_service.dart';
+import 'package:sourire/services/sauvegarde_service.dart';
 import 'package:sourire/theme/tokens.dart';
 import 'package:sourire/widgets/logo_sourire.dart';
 import 'package:sourire/widgets/btn_chevron_gauche.dart';
@@ -16,15 +20,26 @@ import 'package:sourire/theme/user_prefs.dart';
 import 'package:sourire/widgets/widget_switch.dart';
 import 'package:sourire/services/stockage_service.dart';
 import 'package:sourire/services/database_service.dart';  
-import 'package:sourire/screens/screen_mes_badges.dart'; 
+import 'package:sourire/screens/screen_mes_badges.dart';
+import 'package:sourire/screens/screen_reset_password.dart'; 
 
 class ScreenProfil extends StatefulWidget {
   const ScreenProfil({super.key});
   // Déclaration globale de l'état de l'autorisation (accessible depuis la Home)
   static bool accesGalerieActive = true;
   
-  // Déclaration tri-état : null = auto (suit _estLaNuit), true = sombre forcé, false = clair forcé
-  static bool animationsDoucesActive = false;
+  /// Réglage « Animations douces ».
+  ///
+  /// C'est un notifier et non un simple booléen : l'écran d'accessibilité est
+  /// poussé sur une route à part, qui ne se reconstruit pas quand le profil
+  /// appelle son propre setState. Avant, le seul moyen de faire bouger la case
+  /// du switch était de forcer un rebuild global via
+  /// `MyApp.themeNotifier.notifyListeners()` — une API protégée par Flutter.
+  static final ValueNotifier<bool> animationsDoucesNotifier =
+      ValueNotifier<bool>(false);
+
+  /// Raccourci de lecture, pour les appelants qui n'ont pas besoin d'écouter.
+  static bool get animationsDoucesActive => animationsDoucesNotifier.value;
   @override
   State<ScreenProfil> createState() => _ScreenProfilState();
 }
@@ -48,23 +63,31 @@ class _ScreenProfilState extends State<ScreenProfil> {
     super.initState();
     
     // 1. Remplissage et nettoyage du Prénom (Met la première lettre en majuscule dès le départ)
-    String prenomBrut = UserPrefs.prenom.trim();
-    if (prenomBrut.isEmpty) prenomBrut = "Margaux";
-    _prenomController.text = prenomBrut[0].toUpperCase() + prenomBrut.substring(1).toLowerCase();
-    
+    // Plus de valeur de repli codée en dur : un champ vide vaut mieux que le
+    // prénom ou l'email de quelqu'un d'autre affiché à un nouvel utilisateur.
+    final String prenomBrut = UserPrefs.prenom.trim();
+    _prenomController.text = prenomBrut.isEmpty
+        ? ""
+        : prenomBrut[0].toUpperCase() + prenomBrut.substring(1).toLowerCase();
+
     // 2. Remplissage de l'email
-    _emailController.text = UserPrefs.email.trim().isEmpty ? "margaux.silva@hotmail.fr" : UserPrefs.email.trim();
-    
+    _emailController.text = UserPrefs.email.trim();
+
     // 3. Initialisation du mot de passe en mode masqué
     _passwordController.text = "••••••••••••";
-    
+
     // 4. Synchronisation de la biométrie avec l'onboarding
     _biometrieActive = UserPrefs.biomatrieActive;
-    
-    
+
+
     // Sauvegarde le prénom en temps réel dans les préférences de l'appareil dès que l'utilisateur tape dedans
     _prenomController.addListener(() {
       UserPrefs.prenom = _prenomController.text.trim();
+    });
+
+    // Idem pour l'email, désormais modifiable.
+    _emailController.addListener(() {
+      UserPrefs.email = _emailController.text.trim();
     });
     
     _calculerEspaceOccupe(); // Lance le calcul réel
@@ -96,7 +119,10 @@ class _ScreenProfilState extends State<ScreenProfil> {
       context: context,
       builder: (BuildContext context) {
         return Dialog(
-          backgroundColor: currentIsDark ? const Color(0xFF1E1E1E) : white,
+          // Surface d'écran : le même blanc chaud que la home. Le blanc pur
+          // reste réservé à ce qui PORTE des souvenirs (volet historique,
+          // vignettes), pour que les couleurs de note s'en détachent.
+          backgroundColor: currentIsDark ? darkBg : lightOrange,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           child: Padding(
             padding: const EdgeInsets.all(20),
@@ -109,7 +135,7 @@ class _ScreenProfilState extends State<ScreenProfil> {
                   children: [
                     Text(
                       localizations?.alertWarningTitle ?? "Attention",
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: couleurTextePopup),
+                      style: styleTitreAction.copyWith(color: couleurTextePopup),
                     ),
                     GestureDetector(
                       onTap: () => Navigator.of(context).pop(),
@@ -120,7 +146,7 @@ class _ScreenProfilState extends State<ScreenProfil> {
                 const SizedBox(height: 16),
                 Text(
                   localizations?.profilAlertGalleryMessage ?? "Attention, si tu décides de supprimer l'accès à ta galerie photo, tu ne pourras plus enregistrer de photos dans tes souvenirs.",
-                  style: TextStyle(fontSize: 14, color: currentIsDark ? lightGrey : grey, height: 1.4),
+                  style: styleSecondaire.copyWith(color: texteDoux(currentIsDark)),
                 ),
                 const SizedBox(height: 24),
                 SizedBox(
@@ -138,7 +164,7 @@ class _ScreenProfilState extends State<ScreenProfil> {
                     },
                     child: Text(
                       localizations?.profilAlertBtnDisable ?? "Désactiver l'accès",
-                      style: const TextStyle(color: white, fontWeight: FontWeight.bold, fontSize: 15),
+                      style: styleCorps.copyWith(color: white, fontWeight: FontWeight.bold),
                     ),
                   ),
                 ),
@@ -176,6 +202,109 @@ class _ScreenProfilState extends State<ScreenProfil> {
     }
   }
 
+  /// Sélecteur d'heure adapté à la plateforme.
+  ///
+  /// Le cadran Material est déroutant sur iPhone, où l'on attend des rouleaux.
+  /// On garde donc `showTimePicker` sur Android et on présente un
+  /// `CupertinoDatePicker` sur iOS, avec les mêmes entrées et la même sortie.
+  Future<TimeOfDay?> _choisirHeure(
+    BuildContext context,
+    TimeOfDay initiale,
+    bool isDark,
+  ) async {
+    final localizations = AppLocalizations.of(context);
+    final bool format24h = MediaQuery.of(context).alwaysUse24HourFormat;
+
+    if (Platform.isIOS) {
+      TimeOfDay choisie = initiale;
+
+      final bool? valide = await showModalBottomSheet<bool>(
+        context: context,
+        backgroundColor: isDark ? darkSurface : white,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        builder: (context) {
+          return SafeArea(
+            child: SizedBox(
+              height: 300,
+              child: Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      CupertinoButton(
+                        onPressed: () => Navigator.pop(context, false),
+                        child: Text(
+                          localizations?.btnCancel ?? "Annuler",
+                          style: TextStyle(color: isDark ? lightGrey : grey),
+                        ),
+                      ),
+                      CupertinoButton(
+                        onPressed: () => Navigator.pop(context, true),
+                        child: Text(
+                          localizations?.btnValidate ?? "Valider",
+                          style: const TextStyle(
+                            color: orange,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  Expanded(
+                    child: CupertinoTheme(
+                      data: CupertinoThemeData(
+                        brightness: isDark ? Brightness.dark : Brightness.light,
+                      ),
+                      child: CupertinoDatePicker(
+                        mode: CupertinoDatePickerMode.time,
+                        use24hFormat: format24h,
+                        initialDateTime: DateTime(
+                          2000, 1, 1, initiale.hour, initiale.minute,
+                        ),
+                        onDateTimeChanged: (DateTime valeur) {
+                          choisie = TimeOfDay(
+                            hour: valeur.hour,
+                            minute: valeur.minute,
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      );
+
+      return valide == true ? choisie : null;
+    }
+
+    if (!context.mounted) return null;
+    return showTimePicker(
+      context: context,
+      initialTime: initiale,
+      builder: (BuildContext context, Widget? child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: ColorScheme.light(
+              primary: orange,
+              onPrimary: white,
+              surface: isDark ? const Color(0xFF1E1E1E) : white,
+              onSurface: isDark ? white : black,
+            ),
+            textButtonTheme: TextButtonThemeData(
+              style: TextButton.styleFrom(foregroundColor: orange),
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+  }
+
   String _getFrequencyDisplayLabel(String key) {
     final localizations = AppLocalizations.of(context);
     if (localizations == null) return key;
@@ -183,8 +312,6 @@ class _ScreenProfilState extends State<ScreenProfil> {
     switch (key) {
       case "Tous les jours":
         return localizations.notifFreqEveryDay;
-      case "Tous les 2 jours":
-        return localizations.notifFreqEveryTwoDays;
       case "Toutes les semaines":
         return localizations.notifFreqEveryWeek;
       default:
@@ -228,10 +355,14 @@ Widget build(BuildContext context) {
           ? (MediaQuery.of(context).platformBrightness == Brightness.dark)
           : (currentMode == ThemeMode.dark);
       
-      final Color couleurFond = isDark ? const Color(0xFF121212) : white;
-      final Color couleurHeaderEtConteneur = isDark ? const Color(0xFF1E1E1E) : white;
+      // Surface d'écran : le blanc chaud de la home. Le blanc pur reste
+      // réservé à ce qui PORTE des souvenirs — volet historique et vignettes.
+      final Color couleurFond = isDark ? const Color(0xFF121212) : lightOrange;
+      final Color couleurHeaderEtConteneur = isDark ? const Color(0xFF1E1E1E) : lightOrange;
       final Color couleurTextePrincipal = isDark ? white : black;
-      final Color couleurInputFond = isDark ? const Color(0xFF2A2A2A) : const Color(0xFFF5F5F5);
+      // Champ blanc sur fond chaud : il se lit comme creusé dans la page.
+      // L'ancien gris F5F5F5 tirait au froid contre le lightOrange.
+      final Color couleurInputFond = isDark ? const Color(0xFF2A2A2A) : white;
       final Color couleurSeparateur = isDark ? const Color(0xFF2D2D2D) : const Color(0xFFEEEEEE);
 
       return Scaffold(
@@ -282,10 +413,16 @@ Widget build(BuildContext context) {
                           couleurTextePrincipal: couleurTextePrincipal,
                         ),
                         const SizedBox(height: 16),
+                        _buildGenreField(
+                          localizations: localizations,
+                          couleurInputFond: couleurInputFond,
+                          couleurTextePrincipal: couleurTextePrincipal,
+                        ),
+                        const SizedBox(height: 16),
                         _buildInputField(
                           label: localizations?.email ?? "Email",
                           controller: _emailController,
-                          readOnly: true,
+                          readOnly: false,
                           couleurInputFond: couleurInputFond,
                           couleurTextePrincipal: couleurTextePrincipal,
                         ),
@@ -297,11 +434,7 @@ Widget build(BuildContext context) {
                               width: 110,
                               child: Text(
                                 localizations?.password ?? "Mot de passe",
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  color: grey,
-                                  fontWeight: FontWeight.w500,
-                                ),
+                                style: styleCorps.copyWith(color: grey),
                               ),
                             ),
                             const SizedBox(width: 32),
@@ -337,6 +470,28 @@ Widget build(BuildContext context) {
                                           _passwordController.text = _obscurePassword ? "••••••••••••" : mdpReel;
                                         });
                                       },
+                                    ),
+                                    // Le mot de passe ne se modifie pas au clavier
+                                    // ici : on passe par l'écran dédié, qui
+                                    // impose la double saisie.
+                                    GestureDetector(
+                                      onTap: () async {
+                                        await Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) => const ScreenResetPassword(),
+                                          ),
+                                        );
+                                        if (!mounted) return;
+                                        setState(() {
+                                          _obscurePassword = true;
+                                          _passwordController.text = "••••••••••••";
+                                        });
+                                      },
+                                      child: const Padding(
+                                        padding: EdgeInsets.only(left: 12),
+                                        child: Icon(Icons.edit_outlined, color: orange, size: 20),
+                                      ),
                                     ),
                                   ],
                                 ),
@@ -386,7 +541,29 @@ Widget build(BuildContext context) {
                     ),
                     const SizedBox(height: 15),
 
-                    // 1. NOTIFICATIONS
+                    // 1. PERSONNALISATION (thèmes visuels)
+                    // Auparavant enfouie dans Apparence > Thèmes : les testeurs
+                    // ne la trouvaient pas. Elle est maintenant au premier niveau.
+                    _buildMenuRow(
+                      icon: Icons.auto_fix_high,
+                      title: localizations?.personalization ?? "Personnalisation",
+                      couleurTextePrincipal: couleurTextePrincipal,
+                      onTap: () {
+                        final ThemeMode currentMode = MyApp.themeNotifier.value;
+                        final bool isDarkPerso = currentMode == ThemeMode.system
+                            ? (MediaQuery.of(context).platformBrightness == Brightness.dark)
+                            : (currentMode == ThemeMode.dark);
+
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => ScreenChoixThemes(isDarkMode: isDarkPerso),
+                          ),
+                        );
+                      },
+                    ),
+
+                    // 2. NOTIFICATIONS
 _buildMenuRow(
   icon: Icons.notifications_none_outlined,
   title: localizations?.notifications ?? "Notifications",
@@ -402,7 +579,7 @@ _buildMenuRow(
             content: [
               // --- SWITCH 1 : GRATITUDE ---
               _buildRowWithSwitch(
-                localizations?.notifLabelTitleGratitude ?? "Rappel quotidien de gratitude",
+                localizations?.notifLabelTitleGratitude ?? "Rappel de gratitude",
                 localizations?.notifLabelSubGratitude ?? "Me rappeler de noter un souvenir positif",
                 UserPrefs.rappelGratitudeActive, 
                 isDark: isDark,
@@ -418,33 +595,18 @@ _buildMenuRow(
                 // HARMONISATION : Suit la couleur du switch
                 Text(
                   localizations?.notifLabelTime ?? "Heure du rappel", 
-                  style: TextStyle(color: isDark ? lightGrey : grey, fontSize: 14)
+                  style: styleSecondaire.copyWith(color: texteDoux(isDark))
                 ),
                 const SizedBox(height: 8),
                 GestureDetector(
                   onTap: () async {
-                    TimeOfDay? picked = await showTimePicker(
-                      context: context,
-                      initialTime: TimeOfDay(
-                        hour: UserPrefs.heureRappelGratitude, 
-                        minute: UserPrefs.minuteRappelGratitude
+                    final TimeOfDay? picked = await _choisirHeure(
+                      context,
+                      TimeOfDay(
+                        hour: UserPrefs.heureRappelGratitude,
+                        minute: UserPrefs.minuteRappelGratitude,
                       ),
-                      builder: (BuildContext context, Widget? child) {
-                        return Theme(
-                          data: Theme.of(context).copyWith(
-                            colorScheme: ColorScheme.light(
-                              primary: orange,
-                              onPrimary: white,
-                              surface: isDark ? const Color(0xFF1E1E1E) : white,
-                              onSurface: isDark ? white : black,
-                            ),
-                            textButtonTheme: TextButtonThemeData(
-                              style: TextButton.styleFrom(foregroundColor: orange),
-                            ),
-                          ),
-                          child: child!,
-                        );
-                      },
+                      isDark,
                     );
                     if (picked != null) {
                       UserPrefs.heureRappelGratitude = picked.hour;
@@ -468,6 +630,49 @@ _buildMenuRow(
                     ),
                   ),
                 ),
+
+                // FRÉQUENCE DU RAPPEL DE GRATITUDE
+                const SizedBox(height: 16),
+                Text(
+                  localizations?.notifLabelFreqSettings ?? "Réglages de la fréquence",
+                  style: styleSecondaire.copyWith(color: texteDoux(isDark))
+                ),
+                const SizedBox(height: 10),
+                _buildDropdownButton<String>(
+                  value: UserPrefs.frequenceGratitude,
+                  items: const [
+                    UserPrefs.frequenceQuotidienne,
+                    UserPrefs.frequenceHebdomadaire,
+                  ],
+                  isDark: isDark,
+                  itemTranslator: _getFrequencyDisplayLabel,
+                  onChanged: (val) async {
+                    if (val != null) {
+                      UserPrefs.frequenceGratitude = val;
+                      setLocalState(() {});
+                      await NotificationService.planifierRappelGratitude();
+                    }
+                  },
+                ),
+
+                // JOUR DE LA SEMAINE (uniquement en hebdomadaire)
+                if (UserPrefs.frequenceGratitude == UserPrefs.frequenceHebdomadaire) ...[
+                  const SizedBox(height: 12),
+                  Text(
+                    localizations?.notifLabelDayOfWeek ?? "Jours de la semaine",
+                    style: styleSecondaire.copyWith(color: texteDoux(isDark))
+                  ),
+                  const SizedBox(height: 8),
+                  _buildSelecteurJours(
+                    joursCoches: UserPrefs.joursGratitude,
+                    isDark: isDark,
+                    onChanged: (jours) async {
+                      UserPrefs.joursGratitude = jours;
+                      setLocalState(() {});
+                      await NotificationService.planifierRappelGratitude();
+                    },
+                  ),
+                ],
               ],
               const SizedBox(height: 25),
               Divider(color: couleurSeparateur),
@@ -491,33 +696,18 @@ _buildMenuRow(
                 // HARMONISATION : Suit la couleur du switch
                 Text(
                   localizations?.notifLabelTime ?? "Heure du rappel", 
-                  style: TextStyle(color: isDark ? lightGrey : grey, fontSize: 14)
+                  style: styleSecondaire.copyWith(color: texteDoux(isDark))
                 ),
                 const SizedBox(height: 8),
                 GestureDetector(
                   onTap: () async {
-                    TimeOfDay? picked = await showTimePicker(
-                      context: context,
-                      initialTime: TimeOfDay(
-                        hour: UserPrefs.heureRappelSouvenirs, 
-                        minute: UserPrefs.minuteRappelSouvenirs
+                    final TimeOfDay? picked = await _choisirHeure(
+                      context,
+                      TimeOfDay(
+                        hour: UserPrefs.heureRappelSouvenirs,
+                        minute: UserPrefs.minuteRappelSouvenirs,
                       ),
-                      builder: (BuildContext context, Widget? child) {
-                        return Theme(
-                          data: Theme.of(context).copyWith(
-                            colorScheme: ColorScheme.light(
-                              primary: orange,
-                              onPrimary: white,
-                              surface: isDark ? const Color(0xFF1E1E1E) : white,
-                              onSurface: isDark ? white : black,
-                            ),
-                            textButtonTheme: TextButtonThemeData(
-                              style: TextButton.styleFrom(foregroundColor: orange),
-                            ),
-                          ),
-                          child: child!,
-                        );
-                      },
+                      isDark,
                     );
                     if (picked != null) {
                       UserPrefs.heureRappelSouvenirs = picked.hour;
@@ -546,12 +736,15 @@ _buildMenuRow(
                 // HARMONISATION : Suit la couleur du switch
                 Text(
                   localizations?.notifLabelFreqSettings ?? "Réglages de la fréquence", 
-                  style: TextStyle(color: isDark ? lightGrey : grey, fontSize: 14)
+                  style: styleSecondaire.copyWith(color: texteDoux(isDark))
                 ),
                 const SizedBox(height: 10),
                 _buildDropdownButton<String>(
                   value: UserPrefs.frequenceSouvenirs,
-                  items: const ["Tous les jours", "Tous les 2 jours", "Toutes les semaines"],
+                  items: const [
+                    UserPrefs.frequenceQuotidienne,
+                    UserPrefs.frequenceHebdomadaire,
+                  ],
                   isDark: isDark,
                   itemTranslator: _getFrequencyDisplayLabel,
                   onChanged: (val) async {
@@ -562,25 +755,20 @@ _buildMenuRow(
                     }
                   },
                 ),
-                if (UserPrefs.frequenceSouvenirs == "Toutes les semaines") ...[
+                if (UserPrefs.frequenceSouvenirs == UserPrefs.frequenceHebdomadaire) ...[
                   const SizedBox(height: 12),
-                  // HARMONISATION : Suit la couleur du switch
                   Text(
-                    localizations?.notifLabelDayOfWeek ?? "Jour de la semaine",
-                    style: TextStyle(color: isDark ? lightGrey : grey, fontSize: 14)
+                    localizations?.notifLabelDayOfWeek ?? "Jours de la semaine",
+                    style: styleSecondaire.copyWith(color: texteDoux(isDark))
                   ),
                   const SizedBox(height: 8),
-                  _buildDropdownButton<String>(
-                    value: UserPrefs.jourSemaineSouvenirs,
-                    items: const ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"],
+                  _buildSelecteurJours(
+                    joursCoches: UserPrefs.joursSouvenirs,
                     isDark: isDark,
-                    itemTranslator: _getDayDisplayLabel,
-                    onChanged: (val) async {
-                      if (val != null) {
-                        UserPrefs.jourSemaineSouvenirs = val;
-                        setLocalState(() {});
-                        await NotificationService.planifierRappelSouvenirs();
-                      }
+                    onChanged: (jours) async {
+                      UserPrefs.joursSouvenirs = jours;
+                      setLocalState(() {});
+                      await NotificationService.planifierRappelSouvenirs();
                     },
                   ),
                 ],
@@ -588,7 +776,7 @@ _buildMenuRow(
                 // HARMONISATION : Suit la couleur du switch
                 Text(
                   localizations?.notifLabelCategoriesIncluded ?? "Catégories incluses",
-                  style: TextStyle(color: isDark ? lightGrey : grey, fontSize: 14)
+                  style: styleSecondaire.copyWith(color: texteDoux(isDark))
                 ),
                 const SizedBox(height: 8),
 
@@ -641,7 +829,7 @@ _buildMenuRow(
   },
 ),
 
-                    // 2. AUTORISATIONS
+                    // 3. AUTORISATIONS
                     _buildMenuRow(
                       icon: Icons.lock_open_outlined,
                       title: localizations?.permissions ?? "Autorisations",
@@ -681,7 +869,7 @@ _buildMenuRow(
                     ),
                     // 3. ARCHIVAGE
                     _buildMenuRow(
-                      icon: Icons.file_download_outlined,
+                      icon: Icons.inventory_2_outlined,
                       title: localizations?.archiving ?? "Archivage",
                       couleurTextePrincipal: couleurTextePrincipal,
                       onTap: () {
@@ -737,6 +925,26 @@ _buildMenuRow(
                                       ],
                                     ),
                                   ),
+
+                                  const SizedBox(height: 30),
+                                  _buildActionSauvegarde(
+                                    icone: Icons.file_download_outlined,
+                                    titre: localizations?.backupExportTitle ?? "Exporter mes souvenirs",
+                                    sousTitre: localizations?.backupExportSub ?? "",
+                                    isDark: isDark,
+                                    onTap: _exporterSauvegarde,
+                                  ),
+                                  const SizedBox(height: 20),
+                                  _buildActionSauvegarde(
+                                    icone: Icons.file_upload_outlined,
+                                    titre: localizations?.backupImportTitle ?? "Restaurer une sauvegarde",
+                                    sousTitre: localizations?.backupImportSub ?? "",
+                                    isDark: isDark,
+                                    onTap: () async {
+                                      await _importerSauvegarde();
+                                      setLocalState(() {});
+                                    },
+                                  ),
                                 ],
                               ),
                             ),
@@ -784,73 +992,27 @@ _buildMenuRow(
                                       const SizedBox(height: 24),
                                       
                                       // ANIMATIONS DOUCES
-                                      _buildRowWithSwitch(
-                                        localizations?.smoothAnimations ?? "Animations douces",
-                                        localizations?.smoothAnimationsSubtitle ?? "Remplace l'effet tornade du bocal par une apparition en fondu plus légère.",
-                                        ScreenProfil.animationsDoucesActive,
-                                        isDark: localIsDark,
-                                        (val) {
-                                          setState(() {
-                                            ScreenProfil.animationsDoucesActive = val;
-                                          });
-                                          // ignore: invalid_use_of_visible_for_testing_member, invalid_use_of_protected_member
-                                          MyApp.themeNotifier.notifyListeners(); 
-                                        }
-                                      ),
-
-                                      const SizedBox(height: 24),
-
-                                      // THÈMES
-                                      InkWell(
-                                        onTap: () {
-                                          Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                              builder: (context) => ScreenChoixThemes(isDarkMode: localIsDark),
-                                            ),
+                                      // Le switch s'abonne au notifier : c'est
+                                      // lui qui redessine la case, sans passer
+                                      // par un rebuild global forcé.
+                                      ValueListenableBuilder<bool>(
+                                        valueListenable: ScreenProfil.animationsDoucesNotifier,
+                                        builder: (context, doucesActives, _) {
+                                          return _buildRowWithSwitch(
+                                            localizations?.smoothAnimations ?? "Animations douces",
+                                            localizations?.smoothAnimationsSubtitle ?? "Remplace l'effet tornade du bocal par une apparition en fondu plus légère.",
+                                            doucesActives,
+                                            isDark: localIsDark,
+                                            (val) {
+                                              ScreenProfil.animationsDoucesNotifier.value = val;
+                                            },
                                           );
                                         },
-                                        child: Row(
-                                          crossAxisAlignment: CrossAxisAlignment.center,
-                                          children: [
-                                            Expanded(
-                                              child: Column(
-                                                crossAxisAlignment: CrossAxisAlignment.start,
-                                                children: [
-                                                  Text(
-                                                    AppLocalizations.of(context)!.themesTitle,
-                                                    style: TextStyle(
-                                                      fontSize: 16,
-                                                      fontWeight: FontWeight.w600,
-                                                      color: localIsDark ? white : black,
-                                                    ),
-                                                  ),
-                                                  const SizedBox(height: 4),
-                                                  Text(
-                                                    AppLocalizations.of(context)!.themesDescription,
-                                                    style: TextStyle(
-                                                      fontSize: 13,
-                                                      color: localIsDark ? lightGrey : grey,
-                                                      height: 1.3,
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-                                            const SizedBox(width: 24),
-                                            BtnChevronDroite(
-                                              onTap: () {
-                                                Navigator.push(
-                                                  context,
-                                                  MaterialPageRoute(
-                                                    builder: (context) => ScreenChoixThemes(isDarkMode: localIsDark),
-                                                  ),
-                                                );
-                                              },
-                                            ),
-                                          ],
-                                        ),
                                       ),
+
+                                      // Les thèmes ont quitté cette section :
+                                      // ils sont désormais accessibles depuis
+                                      // Profil > Personnalisation.
                                     ],
                                   );
                                 },
@@ -1013,11 +1175,7 @@ _buildMenuRow(
           width: 110,
           child: Text(
             label,
-            style: const TextStyle(
-              fontSize: 16,
-              color: grey,
-              fontWeight: FontWeight.w500,
-            ),
+            style: styleCorps.copyWith(color: grey),
           ),
         ),
         Expanded(
@@ -1050,6 +1208,228 @@ _buildMenuRow(
           ),
         ),
       ],
+    );
+  }
+
+  /// Sélecteur de genre, aligné visuellement sur [_buildInputField].
+  ///
+  /// Le genre n'était réglable qu'à l'onboarding alors qu'il pilote l'accord
+  /// de « heureux » dans toute l'app. Il est stocké sous forme de code
+  /// ('h' / 'f' / 'n') et non du libellé traduit, pour que l'accord survive à
+  /// un changement de langue.
+  Widget _buildGenreField({
+    required AppLocalizations? localizations,
+    required Color couleurInputFond,
+    required Color couleurTextePrincipal,
+  }) {
+    final Map<String, String> libelles = {
+      UserPrefs.genreMasculin: localizations?.onboardingGenderMale ?? "Un homme",
+      UserPrefs.genreFeminin: localizations?.onboardingGenderFemale ?? "Une femme",
+      UserPrefs.genreNeutre: localizations?.onboardingGenderNone ?? "Aucun",
+    };
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        SizedBox(
+          width: 110,
+          child: Text(
+            localizations?.gender ?? "Genre",
+            style: styleCorps.copyWith(color: grey),
+          ),
+        ),
+        Expanded(
+          child: Container(
+            height: 44,
+            // Même retrait que _buildInputField : le libellé du genre doit
+            // s'aligner exactement sur le prénom et l'email.
+            padding: const EdgeInsets.only(left: 16, right: 8),
+            decoration: BoxDecoration(
+              color: couleurInputFond,
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<String>(
+                value: UserPrefs.codeGenre,
+                isExpanded: true,
+                isDense: true,
+                dropdownColor: couleurInputFond,
+                icon: Icon(Icons.arrow_drop_down, color: couleurTextePrincipal),
+                style: TextStyle(color: couleurTextePrincipal, fontSize: 15),
+                items: libelles.entries
+                    .map((e) => DropdownMenuItem<String>(
+                          value: e.key,
+                          child: Text(
+                            e.value,
+                            style: TextStyle(color: couleurTextePrincipal, fontSize: 15),
+                          ),
+                        ))
+                    .toList(),
+                onChanged: (String? value) {
+                  if (value == null) return;
+                  setState(() {
+                    UserPrefs.codeGenre = value;
+                  });
+                },
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Rangée de sept pastilles cochables (L M M J V S D).
+  ///
+  /// Un menu déroulant multi-sélection serait pénible pour sept jours qu'on
+  /// veut cocher d'un geste. On empêche de tout décocher : un rappel
+  /// hebdomadaire actif sans aucun jour serait un réglage qui ne sonne jamais.
+  Widget _buildSelecteurJours({
+    required List<String> joursCoches,
+    required bool isDark,
+    required Future<void> Function(List<String>) onChanged,
+  }) {
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: UserPrefs.joursSemaine.map((String jour) {
+        final bool coche = joursCoches.contains(jour);
+        final String libelle = _getDayDisplayLabel(jour);
+        final String initiale = libelle.isEmpty ? "?" : libelle[0].toUpperCase();
+
+        return Semantics(
+          label: libelle,
+          selected: coche,
+          button: true,
+          child: GestureDetector(
+            onTap: () {
+              final List<String> maj = List<String>.from(joursCoches);
+              if (coche) {
+                if (maj.length == 1) return; // jamais zéro jour coché
+                maj.remove(jour);
+              } else {
+                maj.add(jour);
+              }
+              // Réordonné du lundi au dimanche : l'ordre de stockage ne doit
+              // pas dépendre de l'ordre des clics.
+              maj.sort((a, b) => UserPrefs.joursSemaine
+                  .indexOf(a)
+                  .compareTo(UserPrefs.joursSemaine.indexOf(b)));
+              onChanged(maj);
+            },
+            child: Container(
+              width: 38,
+              height: 38,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: coche ? orange : Colors.transparent,
+                // Toujours orange : coché, la pastille est pleine ; décochée,
+                // elle n'est plus qu'un contour. C'est le remplissage qui dit
+                // l'état, pas un passage au gris.
+                border: Border.all(color: orange, width: 1.5),
+              ),
+              child: Text(
+                initiale,
+                style: TextStyle(
+                  color: coche ? white : orange,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                ),
+              ),
+            ),
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  /// Fabrique l'archive de sauvegarde et la remet à la feuille de partage.
+  Future<void> _exporterSauvegarde() async {
+    final l10n = AppLocalizations.of(context);
+
+    final RenderBox? boite = context.findRenderObject() as RenderBox?;
+    final Rect? origineIpad = boite != null && boite.hasSize
+        ? boite.localToGlobal(Offset.zero) & boite.size
+        : null;
+
+    final bool succes = await SauvegardeService.exporter(origineIpad: origineIpad);
+
+    if (!succes && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(l10n?.backupExportError ?? "L'export n'a pas pu aboutir."),
+        ),
+      );
+    }
+  }
+
+  /// Restaure une archive. L'opération est additive : rien n'est supprimé.
+  Future<void> _importerSauvegarde() async {
+    final l10n = AppLocalizations.of(context);
+    final ResultatImport? resultat = await SauvegardeService.importer();
+
+    // null = l'utilisateur a refermé le sélecteur, ce n'est pas une erreur.
+    if (resultat == null || !mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          resultat.succes
+              ? (l10n?.backupImportDone(resultat.ajoutes, resultat.dejaPresents) ??
+                  "${resultat.ajoutes} souvenir(s) restauré(s).")
+              : (l10n?.backupImportError ?? "Archive illisible."),
+        ),
+      ),
+    );
+
+    if (resultat.succes) _calculerEspaceOccupe();
+  }
+
+  /// Ligne d'action de la section Archivage : une icône, un titre, une
+  /// explication. Le texte compte autant que le bouton — l'utilisateur doit
+  /// comprendre où part son archive avant d'appuyer.
+  Widget _buildActionSauvegarde({
+    required IconData icone,
+    required String titre,
+    required String sousTitre,
+    required bool isDark,
+    required Future<void> Function() onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icone, color: orange, size: 24),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  titre,
+                  style: styleCorps.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: texteFort(isDark),
+                  ),
+                ),
+                if (sousTitre.isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    sousTitre,
+                    style: styleMention.copyWith(
+                      fontWeight: FontWeight.normal,
+                      color: texteDoux(isDark),
+                      height: 1.3,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -1202,7 +1582,10 @@ _buildMenuRow(
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       decoration: BoxDecoration(
-        color: isDark ? darkSurface : const Color(0xFFF5F5F5),
+        // Blanc et non le gris F5F5F5 : ce gris neutre tirait au froid contre
+        // le fond lightOrange de l'écran. Le blanc, lui, se lit comme un
+        // champ creusé dans la page — même traitement que les autres champs.
+        color: isDark ? darkSurface : white,
         borderRadius: BorderRadius.circular(radiusDefault),
       ),
       child: DropdownButtonHideUnderline(
@@ -1331,7 +1714,10 @@ _buildMenuRow(
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       decoration: BoxDecoration(
-        color: isDark ? darkSurface : const Color(0xFFF5F5F5),
+        // Blanc et non le gris F5F5F5 : ce gris neutre tirait au froid contre
+        // le fond lightOrange de l'écran. Le blanc, lui, se lit comme un
+        // champ creusé dans la page — même traitement que les autres champs.
+        color: isDark ? darkSurface : white,
         borderRadius: BorderRadius.circular(radiusDefault),
       ),
       child: DropdownButtonHideUnderline(

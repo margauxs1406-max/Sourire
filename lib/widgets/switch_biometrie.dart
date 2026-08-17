@@ -31,7 +31,7 @@ class _SwitchBiometrieState extends State<SwitchBiometrie> {
     // Détermination des couleurs selon le thème choisi
     final Color trackColor = widget.isNegative 
         ? white 
-        : (_isActive ? orange : orange.withOpacity(0.3));
+        : (_isActive ? orange : orange.withValues(alpha: 0.3));
 
     final Color thumbColor = widget.isNegative
         ? (_isActive ? orange : const Color(0xFFFCE4D6))

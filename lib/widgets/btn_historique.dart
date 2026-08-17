@@ -14,7 +14,7 @@ class BtnHistorique extends StatelessWidget {
         padding: const EdgeInsets.all(8),
         child: const Icon(
           Icons.notes_rounded, // Icône évoquant l'historique/les notes
-          color: white,
+          color: orange,
           size: 30,
         ),
       ),

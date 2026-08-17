@@ -15,7 +15,7 @@ class ScreenMesBadges extends StatelessWidget {
   void _ouvrirBadgeAgrandi(BuildContext context, int palier) {
     showDialog(
       context: context,
-      barrierColor: Colors.black.withOpacity(0.45),
+      barrierColor: Colors.black.withValues(alpha: 0.45),
       builder: (dialogContext) {
         final l10n = AppLocalizations.of(dialogContext)!;
         final texte = texteBadgePourPalier(palier, l10n);
@@ -46,7 +46,7 @@ class ScreenMesBadges extends StatelessWidget {
                   borderRadius: BorderRadius.circular(20),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.25),
+                      color: Colors.black.withValues(alpha: 0.25),
                       blurRadius: 20,
                       offset: const Offset(0, 8),
                     ),
@@ -64,10 +64,11 @@ class ScreenMesBadges extends StatelessWidget {
                     Text(
                       texte.name,
                       textAlign: TextAlign.center,
-                      style: TextStyle(
+                      style: styleTitreRecit.copyWith(
                         color: couleurTitre,
-                        fontWeight: FontWeight.bold,
-                        fontSize: (dialogWidth * 0.075).clamp(18.0, 26.0),
+                        // Une serif a besoin de plus de corps : on monte le coefficient
+                        // avant de repasser par tailleLora.
+                        fontSize: tailleLora((dialogWidth * 0.085).clamp(20.0, 28.0)),
                         height: 1.15,
                       ),
                     ),
@@ -75,10 +76,9 @@ class ScreenMesBadges extends StatelessWidget {
                     Text(
                       texte.phrase,
                       textAlign: TextAlign.center,
-                      style: TextStyle(
+                      style: styleSecondaire.copyWith(
                         color: couleurTexte,
                         fontSize: (dialogWidth * 0.05).clamp(14.0, 18.0),
-                        height: 1.4,
                       ),
                     ),
                   ],
@@ -93,9 +93,9 @@ class ScreenMesBadges extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Color bgColor = isDarkMode ? darkBg : white;
+    final Color bgColor = isDarkMode ? darkBg : lightOrange;
     final Color textColor = isDarkMode ? white : black;
-    final Color headerBgColor = isDarkMode ? darkSurface : white;
+    final Color headerBgColor = isDarkMode ? darkSurface : lightOrange;
 
     final double screenWidth = MediaQuery.of(context).size.width;
     final double titleFontSize = (screenWidth * 18) / 390;
@@ -135,9 +135,8 @@ class ScreenMesBadges extends StatelessWidget {
                   children: [
                     Text(
                       AppLocalizations.of(context)!.myBadgesTitle,
-                      style: TextStyle(
+                      style: styleSection.copyWith(
                         fontSize: titleFontSize,
-                        fontWeight: FontWeight.bold,
                         color: textColor,
                       ),
                     ),
@@ -159,7 +158,7 @@ class ScreenMesBadges extends StatelessWidget {
                             child: Container(
                               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                               decoration: BoxDecoration(
-                                color: (forceTout ? orange : Colors.grey).withOpacity(0.15),
+                                color: (forceTout ? orange : Colors.grey).withValues(alpha: 0.15),
                                 borderRadius: BorderRadius.circular(8),
                                 border: Border.all(
                                   color: forceTout ? orange : Colors.grey,
@@ -177,7 +176,7 @@ class ScreenMesBadges extends StatelessWidget {
                                   const SizedBox(width: 8),
                                   Text(
                                     forceTout
-                                        ? 'Test : tous les badges débloqués (appuyer pour annuler)'
+                                        ? 'Test : tous les badges débloqués'
                                         : 'Test : débloquer tous les badges',
                                     style: TextStyle(
                                       fontSize: 12,
@@ -237,7 +236,7 @@ class ScreenMesBadges extends StatelessWidget {
                                             )
                                           : Icon(
                                               Icons.star,
-                                              color: Colors.white.withOpacity(0.5),
+                                              color: Colors.white.withValues(alpha: 0.5),
                                               size: taille * 0.45,
                                             ),
                                     ),

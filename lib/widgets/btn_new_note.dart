@@ -20,14 +20,14 @@ class BtnNewNote extends StatelessWidget {
       child: Container(
         width: buttonSize, 
         height: buttonSize,
-        decoration: BoxDecoration(
-          color: white, 
+        decoration: const BoxDecoration(
+          color: orange,
           shape: BoxShape.circle,
-          boxShadow: shadowDrop, 
+          boxShadow: shadowDrop,
         ),
         child: Icon(
-          Icons.edit_outlined, 
-          color: orange, 
+          Icons.edit_outlined,
+          color: white,
           size: iconSize,
         ),
       ),

@@ -1,4 +1,5 @@
 import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -9,8 +10,60 @@ import 'app_localizations_fr.dart';
 
 // ignore_for_file: type=lint
 
+/// Callers can lookup localized strings with an instance of AppLocalizations
+/// returned by `AppLocalizations.of(context)`.
+///
+/// Applications need to include `AppLocalizations.delegate()` in their app's
+/// `localizationDelegates` list, and the locales they support in the app's
+/// `supportedLocales` list. For example:
+///
+/// ```dart
+/// import 'l10n/app_localizations.dart';
+///
+/// return MaterialApp(
+///   localizationsDelegates: AppLocalizations.localizationsDelegates,
+///   supportedLocales: AppLocalizations.supportedLocales,
+///   home: MyApplicationHome(),
+/// );
+/// ```
+///
+/// ## Update pubspec.yaml
+///
+/// Please make sure to update your pubspec.yaml to include the following
+/// packages:
+///
+/// ```yaml
+/// dependencies:
+///   # Internationalization support.
+///   flutter_localizations:
+///     sdk: flutter
+///   intl: any # Use the pinned version from flutter_localizations
+///
+///   # Rest of dependencies
+/// ```
+///
+/// ## iOS Applications
+///
+/// iOS applications define key application metadata, including supported
+/// locales, in an Info.plist file that is built into the application bundle.
+/// To configure the locales supported by your app, you’ll need to edit this
+/// file.
+///
+/// First, open your project’s ios/Runner.xcworkspace Xcode workspace file.
+/// Then, in the Project Navigator, open the Info.plist file under the Runner
+/// project’s Runner folder.
+///
+/// Next, select the Information Property List item, select Add Item from the
+/// Editor menu, then select Localizations from the pop-up menu.
+///
+/// Select and expand the newly-created Localizations item then, for each
+/// locale your application supports, add a new item and select the locale
+/// you wish to add from the pop-up menu in the Value field. This list should
+/// be consistent with the languages listed in the AppLocalizations.supportedLocales
+/// property.
 abstract class AppLocalizations {
-  AppLocalizations(String locale) : localeName = intl.Intl.canonicalizedLocale(locale.toString());
+  AppLocalizations(String locale)
+    : localeName = intl.Intl.canonicalizedLocale(locale.toString());
 
   final String localeName;
 
@@ -18,265 +71,1572 @@ abstract class AppLocalizations {
     return Localizations.of<AppLocalizations>(context, AppLocalizations);
   }
 
-  static const LocalizationsDelegate<AppLocalizations> delegate = _AppLocalizationsDelegate();
+  static const LocalizationsDelegate<AppLocalizations> delegate =
+      _AppLocalizationsDelegate();
 
-  static const List<LocalizationsDelegate<dynamic>> localizationsDelegates = <LocalizationsDelegate<dynamic>>[
-    delegate,
-    GlobalMaterialLocalizations.delegate,
-    GlobalCupertinoLocalizations.delegate,
-    GlobalWidgetsLocalizations.delegate,
-  ];
+  /// A list of this localizations delegate along with the default localizations
+  /// delegates.
+  ///
+  /// Returns a list of localizations delegates containing this delegate along with
+  /// GlobalMaterialLocalizations.delegate, GlobalCupertinoLocalizations.delegate,
+  /// and GlobalWidgetsLocalizations.delegate.
+  ///
+  /// Additional delegates can be added by appending to this list in
+  /// MaterialApp. This list does not have to be used at all if a custom list
+  /// of delegates is preferred or required.
+  static const List<LocalizationsDelegate<dynamic>> localizationsDelegates =
+      <LocalizationsDelegate<dynamic>>[
+        delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+      ];
 
+  /// A list of this localizations delegate's supported locales.
   static const List<Locale> supportedLocales = <Locale>[
     Locale('en'),
-    Locale('fr')
+    Locale('fr'),
   ];
 
+  /// No description provided for @titleSourire.
+  ///
+  /// In fr, this message translates to:
+  /// **'Sourire'**
   String get titleSourire;
+
+  /// No description provided for @welcomeMessage.
+  ///
+  /// In fr, this message translates to:
+  /// **'Bonjour {prenom},'**
   String welcomeMessage(String prenom);
+
+  /// No description provided for @mainQuestion.
+  ///
+  /// In fr, this message translates to:
+  /// **'Qu’est-ce qui te rend {accord} aujourd’hui ?'**
   String mainQuestion(String accord);
+
+  /// No description provided for @personalData.
+  ///
+  /// In fr, this message translates to:
+  /// **'Données personnelles'**
   String get personalData;
+
+  /// No description provided for @firstName.
+  ///
+  /// In fr, this message translates to:
+  /// **'Prénom'**
   String get firstName;
+
+  /// No description provided for @gender.
+  ///
+  /// In fr, this message translates to:
+  /// **'Genre'**
+  String get gender;
+
+  /// No description provided for @email.
+  ///
+  /// In fr, this message translates to:
+  /// **'Email'**
   String get email;
+
+  /// No description provided for @password.
+  ///
+  /// In fr, this message translates to:
+  /// **'Mot de passe'**
   String get password;
+
+  /// No description provided for @biometrics.
+  ///
+  /// In fr, this message translates to:
+  /// **'Biométrie'**
   String get biometrics;
+
+  /// No description provided for @accountSettings.
+  ///
+  /// In fr, this message translates to:
+  /// **'Paramètres du compte'**
   String get accountSettings;
+
+  /// No description provided for @notifications.
+  ///
+  /// In fr, this message translates to:
+  /// **'Notifications'**
   String get notifications;
+
+  /// No description provided for @personalization.
+  ///
+  /// In fr, this message translates to:
+  /// **'Personnalisation'**
+  String get personalization;
+
+  /// No description provided for @permissions.
+  ///
+  /// In fr, this message translates to:
+  /// **'Autorisations'**
   String get permissions;
+
+  /// No description provided for @archiving.
+  ///
+  /// In fr, this message translates to:
+  /// **'Archivage'**
   String get archiving;
+
+  /// No description provided for @accessibility.
+  ///
+  /// In fr, this message translates to:
+  /// **'Apparence'**
   String get accessibility;
+
+  /// No description provided for @langues.
+  ///
+  /// In fr, this message translates to:
+  /// **'Langues'**
   String get langues;
+
+  /// No description provided for @help.
+  ///
+  /// In fr, this message translates to:
+  /// **'Aide'**
   String get help;
+
+  /// No description provided for @logout.
+  ///
+  /// In fr, this message translates to:
+  /// **'Se déconnecter'**
   String get logout;
+
+  /// No description provided for @dailyGratitudeReminder.
+  ///
+  /// In fr, this message translates to:
+  /// **'Rappel quotidien de gratitude'**
   String get dailyGratitudeReminder;
+
+  /// No description provided for @dailyReminderSubtitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Me rappeler de noter un souvenir positif'**
   String get dailyReminderSubtitle;
+
+  /// No description provided for @reminderTime.
+  ///
+  /// In fr, this message translates to:
+  /// **'Heure du rappel'**
   String get reminderTime;
+
+  /// No description provided for @drawnMemoriesFrequency.
+  ///
+  /// In fr, this message translates to:
+  /// **'Fréquence des souvenirs tirés'**
   String get drawnMemoriesFrequency;
+
+  /// No description provided for @drawnMemoriesSubtitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Me proposer un vieux souvenir à revoir'**
   String get drawnMemoriesSubtitle;
+
+  /// No description provided for @frequencySettings.
+  ///
+  /// In fr, this message translates to:
+  /// **'Réglages de la fréquence'**
   String get frequencySettings;
+
+  /// No description provided for @categoriesIncluded.
+  ///
+  /// In fr, this message translates to:
+  /// **'Catégories incluses'**
   String get categoriesIncluded;
+
+  /// No description provided for @everyDay.
+  ///
+  /// In fr, this message translates to:
+  /// **'Tous les jours'**
   String get everyDay;
+
+  /// No description provided for @everyTwoDays.
+  ///
+  /// In fr, this message translates to:
+  /// **'Tous les 2 jours'**
   String get everyTwoDays;
+
+  /// No description provided for @everyWeek.
+  ///
+  /// In fr, this message translates to:
+  /// **'Toutes les semaines'**
   String get everyWeek;
+
+  /// No description provided for @photoGalleryAccess.
+  ///
+  /// In fr, this message translates to:
+  /// **'Accès à la galerie photo'**
   String get photoGalleryAccess;
+
+  /// No description provided for @photoGallerySubtitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Indispensable pour ajouter des photos de tes moments précieux.'**
   String get photoGallerySubtitle;
+
+  /// No description provided for @secureLocalStorage.
+  ///
+  /// In fr, this message translates to:
+  /// **'Stockage local sécurisé'**
   String get secureLocalStorage;
+
+  /// No description provided for @secureStorageSubtitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Tes souvenirs sont automatiquement sauvegardés localement sur ton espace de stockage privé.'**
   String get secureStorageSubtitle;
+
+  /// No description provided for @active.
+  ///
+  /// In fr, this message translates to:
+  /// **'Actif'**
   String get active;
+
+  /// No description provided for @spaceOccupied.
+  ///
+  /// In fr, this message translates to:
+  /// **'Espace occupé'**
   String get spaceOccupied;
+
+  /// No description provided for @storageCounter.
+  ///
+  /// In fr, this message translates to:
+  /// **'Photos : {photos} | Notes : {notes}'**
   String storageCounter(String photos, String notes);
+
+  /// No description provided for @darkMode.
+  ///
+  /// In fr, this message translates to:
+  /// **'Mode sombre'**
   String get darkMode;
+
+  /// No description provided for @darkModeSubtitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Bascule l\'interface dans des tons sombres pour reposer tes yeux le soir.'**
   String get darkModeSubtitle;
+
+  /// No description provided for @smoothAnimations.
+  ///
+  /// In fr, this message translates to:
+  /// **'Animations douces'**
   String get smoothAnimations;
+
+  /// No description provided for @smoothAnimationsSubtitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Remplace l\'effet tornade du bocal par une apparition en fondu plus légère.'**
   String get smoothAnimationsSubtitle;
+
+  /// No description provided for @francais.
+  ///
+  /// In fr, this message translates to:
+  /// **'Français'**
   String get francais;
+
+  /// No description provided for @anglais.
+  ///
+  /// In fr, this message translates to:
+  /// **'English'**
   String get anglais;
+
+  /// No description provided for @helpFaq.
+  ///
+  /// In fr, this message translates to:
+  /// **'Aide / FAQ'**
   String get helpFaq;
+
+  /// No description provided for @faqQuestion1.
+  ///
+  /// In fr, this message translates to:
+  /// **'Où sont stockés mes souvenirs ?'**
   String get faqQuestion1;
+
+  /// No description provided for @faqAnswer1.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ils restent localement dans le dossier sécurisé de ton téléphone, personne d\'autre n\'y a accès.'**
   String get faqAnswer1;
+
+  /// No description provided for @faqQuestion2.
+  ///
+  /// In fr, this message translates to:
+  /// **'Comment fonctionne le tirage au sort ?'**
   String get faqQuestion2;
+
+  /// No description provided for @faqAnswer2.
+  ///
+  /// In fr, this message translates to:
+  /// **'Secoue ton téléphone ou clique sur le bocal pour faire remonter un souvenir au hasard.'**
   String get faqAnswer2;
+
+  /// No description provided for @faqQuestion3.
+  ///
+  /// In fr, this message translates to:
+  /// **'Comment catégoriser des souvenirs ?'**
   String get faqQuestion3;
+
+  /// No description provided for @faqAnswer3.
+  ///
+  /// In fr, this message translates to:
+  /// **'Va dans l\'historique et appuie longuement sur un souvenir. Tu pourras alors en sélectionner plusieurs et choisir \'Catégoriser\'.'**
   String get faqAnswer3;
+
+  /// No description provided for @faqQuestion4.
+  ///
+  /// In fr, this message translates to:
+  /// **'Comment supprimer des souvenirs ?'**
   String get faqQuestion4;
+
+  /// No description provided for @faqAnswer4.
+  ///
+  /// In fr, this message translates to:
+  /// **'Va dans l\'historique, fais un appui long le souvenir, sélectionne-le et appuie sur le bouton \'Supprimer\'.'**
   String get faqAnswer4;
+
+  /// No description provided for @filterTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Filtrer'**
   String get filterTitle;
+
+  /// No description provided for @categoriesTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Catégories'**
   String get categoriesTitle;
+
+  /// No description provided for @catSelfLove.
+  ///
+  /// In fr, this message translates to:
+  /// **'Amour de soi'**
   String get catSelfLove;
+
+  /// No description provided for @catFriendship.
+  ///
+  /// In fr, this message translates to:
+  /// **'Amitié'**
   String get catFriendship;
+
+  /// No description provided for @catCouple.
+  ///
+  /// In fr, this message translates to:
+  /// **'Couple'**
   String get catCouple;
+
+  /// No description provided for @catFamily.
+  ///
+  /// In fr, this message translates to:
+  /// **'Famille'**
   String get catFamily;
+
+  /// No description provided for @catLeisure.
+  ///
+  /// In fr, this message translates to:
+  /// **'Loisirs'**
   String get catLeisure;
+
+  /// No description provided for @catWork.
+  ///
+  /// In fr, this message translates to:
+  /// **'Travail'**
   String get catWork;
+
+  /// No description provided for @catOthers.
+  ///
+  /// In fr, this message translates to:
+  /// **'Autres'**
   String get catOthers;
+
+  /// No description provided for @catUnclassified.
+  ///
+  /// In fr, this message translates to:
+  /// **'Non classées'**
   String get catUnclassified;
+
+  /// No description provided for @btnNewCategory.
+  ///
+  /// In fr, this message translates to:
+  /// **'Nouvelle catégorie'**
   String get btnNewCategory;
+
+  /// No description provided for @hintNewCategory.
+  ///
+  /// In fr, this message translates to:
+  /// **'Nom de la catégorie...'**
   String get hintNewCategory;
+
+  /// No description provided for @btnDeleteCategories.
+  ///
+  /// In fr, this message translates to:
+  /// **'Supprimer des catégories'**
   String get btnDeleteCategories;
+
+  /// No description provided for @noCustomCategoryToDelete.
+  ///
+  /// In fr, this message translates to:
+  /// **'Aucune catégorie personnalisée à supprimer.'**
   String get noCustomCategoryToDelete;
+
+  /// No description provided for @btnClose.
+  ///
+  /// In fr, this message translates to:
+  /// **'Fermer'**
   String get btnClose;
+
+  /// No description provided for @titleDeleteModal.
+  ///
+  /// In fr, this message translates to:
+  /// **'Gérer les catégories'**
   String get titleDeleteModal;
+
+  /// No description provided for @btnReset.
+  ///
+  /// In fr, this message translates to:
+  /// **'Rétablir'**
   String get btnReset;
+
+  /// No description provided for @btnFilter.
+  ///
+  /// In fr, this message translates to:
+  /// **'Filtrer'**
   String get btnFilter;
-  String writeHappyThought (String accord);
+
+  /// No description provided for @writeHappyThought.
+  ///
+  /// In fr, this message translates to:
+  /// **'Écris ce qui te rend {accord}...'**
+  String writeHappyThought(String accord);
+
+  /// No description provided for @btnValidate.
+  ///
+  /// In fr, this message translates to:
+  /// **'Valider'**
   String get btnValidate;
+
+  /// No description provided for @categoryQuestion.
+  ///
+  /// In fr, this message translates to:
+  /// **'À quelle(s) catégorie(s) appartient ce souvenir ?'**
   String get categoryQuestion;
+
+  /// No description provided for @btnSkip.
+  ///
+  /// In fr, this message translates to:
+  /// **'Passer'**
   String get btnSkip;
+
+  /// No description provided for @today.
+  ///
+  /// In fr, this message translates to:
+  /// **'Aujourd\'hui'**
   String get today;
+
+  /// No description provided for @yesterday.
+  ///
+  /// In fr, this message translates to:
+  /// **'Hier'**
   String get yesterday;
+
+  /// No description provided for @btnDeleteSelection.
+  ///
+  /// In fr, this message translates to:
+  /// **'Supprimer'**
   String get btnDeleteSelection;
+
+  /// No description provided for @btnCategorizeSelection.
+  ///
+  /// In fr, this message translates to:
+  /// **'Catégoriser'**
   String get btnCategorizeSelection;
+
+  /// No description provided for @galleryRecent.
+  ///
+  /// In fr, this message translates to:
+  /// **'Recent'**
   String get galleryRecent;
+
+  /// No description provided for @galleryPreview.
+  ///
+  /// In fr, this message translates to:
+  /// **'Aperçu'**
   String get galleryPreview;
+
+  /// No description provided for @btnOk.
+  ///
+  /// In fr, this message translates to:
+  /// **'OK'**
   String get btnOk;
-  String get alertWarningTitle; // <-- AJOUTÉ
-  String get galleryDisabledMessage; // <-- AJOUTÉ
+
+  /// No description provided for @alertWarningTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Attention'**
+  String get alertWarningTitle;
+
+  /// No description provided for @galleryDisabledMessage.
+  ///
+  /// In fr, this message translates to:
+  /// **'Tu as désactivé l\'accès à ta galerie photo. Active-la dans tes autorisations.'**
+  String get galleryDisabledMessage;
+
+  /// No description provided for @btnEnableAccess.
+  ///
+  /// In fr, this message translates to:
+  /// **'Activer l\'accès'**
   String get btnEnableAccess;
-  String get emptyJarMessage; // <-- AJOUTÉ
-  String get deleteConfirmMessage; // <-- AJOUTÉ
-  String get btnCancel; // <-- AJOUTÉ
-  String get btnDeleteConfirm; // <-- AJOUTÉ
-  String get recategorizeTitle; // <-- AJOUTÉ
+
+  /// No description provided for @emptyJarMessage.
+  ///
+  /// In fr, this message translates to:
+  /// **'Le bocal est vide, ajoute un souvenir !'**
+  String get emptyJarMessage;
+
+  /// No description provided for @deleteConfirmMessage.
+  ///
+  /// In fr, this message translates to:
+  /// **'Voulez-vous vraiment supprimer définitivement ces souvenirs ?'**
+  String get deleteConfirmMessage;
+
+  /// No description provided for @btnCancel.
+  ///
+  /// In fr, this message translates to:
+  /// **'Annuler'**
+  String get btnCancel;
+
+  /// No description provided for @btnDeleteConfirm.
+  ///
+  /// In fr, this message translates to:
+  /// **'Supprimer'**
+  String get btnDeleteConfirm;
+
+  /// No description provided for @recategorizeTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Sélectionnez les catégories à appliquer aux souvenirs sélectionnés :'**
+  String get recategorizeTitle;
+
+  /// No description provided for @btnSave.
+  ///
+  /// In fr, this message translates to:
+  /// **'Enregistrer'**
   String get btnSave;
-  String get profilTitlePersonalData;
-  String get profilLabelFirstName;
-  String get profilLabelEmail;
-  String get profilLabelPassword;
-  String get profilLabelBiometrics;
-  String get profilTitleAccountSettings;
-  String get profilMenuNotifications;
-  String get profilMenuLanguage;
-  String get profilMenuDarkMode;
-  String get profilMenuSoftAnimations;
-  String get profilTitleStorage;
-  String get profilLabelImportedPhotos;
-  String get profilLabelTextMemories;
-  String get profilLabelGalleryAccess;
-  String get profilBtnEmpty;
-  String profilSnackbarEmptied(String label);
-  String get profilTitleHelp;
-  String get profilHelpQuestion1;
-  String get profilHelpAnswer1;
-  String get profilHelpQuestion2;
-  String get profilHelpAnswer2;
-  String get profilAlertTitle;
-  String get profilAlertGalleryMessage;
-  String get profilAlertBtnDisable;
-  String get notifLabelTitleGratitude;
-  String get notifLabelSubGratitude;
-  String get notifLabelTime;
-  String get notifLabelTitleSouvenirs;
-  String get notifLabelSubSouvenirs;
-  String get notifLabelFreqSettings;
-  String get notifFreqEveryDay;
-  String get notifFreqEveryTwoDays;
-  String get notifFreqEveryWeek;
-  String get notifLabelDayOfWeek;
-  String get notifDayMonday;
-  String get notifDayTuesday;
-  String get notifDayWednesday;
-  String get notifDayThursday;
-  String get notifDayFriday;
-  String get notifDaySaturday;
-  String get notifDaySunday;
-  String get notifLabelCategoriesIncluded;
-  String get notifAllCategories;
-  String get notifBocalVideTitle;
-  String get notifBocalVideBody;
+
+  /// No description provided for @onboardingBtnGetStarted.
+  ///
+  /// In fr, this message translates to:
+  /// **'Commencer'**
   String get onboardingBtnGetStarted;
+
+  /// No description provided for @onboardingWelcomeMessage.
+  ///
+  /// In fr, this message translates to:
+  /// **'Bienvenue dans ton\nespace personnel conçu\npour te redonner le\nsourire !'**
   String get onboardingWelcomeMessage;
+
+  /// No description provided for @onboardingQuestionName.
+  ///
+  /// In fr, this message translates to:
+  /// **'Comment t\'appelles-tu ?'**
   String get onboardingQuestionName;
+
+  /// No description provided for @onboardingHintName.
+  ///
+  /// In fr, this message translates to:
+  /// **'Prénom'**
   String get onboardingHintName;
+
+  /// No description provided for @onboardingQuestionGender.
+  ///
+  /// In fr, this message translates to:
+  /// **'Comment dois-je m\'adresser à toi ?'**
   String get onboardingQuestionGender;
+
+  /// No description provided for @onboardingGenderMale.
+  ///
+  /// In fr, this message translates to:
+  /// **'Au masculin'**
   String get onboardingGenderMale;
+
+  /// No description provided for @onboardingGenderFemale.
+  ///
+  /// In fr, this message translates to:
+  /// **'Au féminin'**
   String get onboardingGenderFemale;
+
+  /// No description provided for @onboardingGenderNone.
+  ///
+  /// In fr, this message translates to:
+  /// **'En écriture inclusive'**
+  String get onboardingGenderNone;
+
+  /// No description provided for @onboardingSecurityTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Sécurise tes données'**
   String get onboardingSecurityTitle;
+
+  /// No description provided for @onboardingHintEmail.
+  ///
+  /// In fr, this message translates to:
+  /// **'Email'**
   String get onboardingHintEmail;
+
+  /// No description provided for @onboardingEmailValid.
+  ///
+  /// In fr, this message translates to:
+  /// **'email valide'**
   String get onboardingEmailValid;
+
+  /// No description provided for @onboardingEmailInvalid.
+  ///
+  /// In fr, this message translates to:
+  /// **'email non valide'**
   String get onboardingEmailInvalid;
+
+  /// No description provided for @onboardingHintPassword.
+  ///
+  /// In fr, this message translates to:
+  /// **'Mot de passe (6 caractères min.)'**
   String get onboardingHintPassword;
+
+  /// No description provided for @onboardingBiometricsTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Facilite ton accès à l\'application'**
   String get onboardingBiometricsTitle;
+
+  /// No description provided for @onboardingBiometricsLabel.
+  ///
+  /// In fr, this message translates to:
+  /// **'Activer la biométrie'**
   String get onboardingBiometricsLabel;
+
+  /// No description provided for @onboardingBtnNext.
+  ///
+  /// In fr, this message translates to:
+  /// **'Suivant'**
   String get onboardingBtnNext;
+
+  /// No description provided for @onboardingBtnValidate.
+  ///
+  /// In fr, this message translates to:
+  /// **'Valider'**
   String get onboardingBtnValidate;
+
+  /// No description provided for @demoSkip.
+  ///
+  /// In fr, this message translates to:
+  /// **'PASSER'**
   String get demoSkip;
+
+  /// No description provided for @demoBtnNext.
+  ///
+  /// In fr, this message translates to:
+  /// **'Suivant'**
   String get demoBtnNext;
+
+  /// No description provided for @demoBtnFinish.
+  ///
+  /// In fr, this message translates to:
+  /// **'Terminer'**
   String get demoBtnFinish;
+
+  /// No description provided for @demoPhotoTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ajouter une photo'**
   String get demoPhotoTitle;
+
+  /// No description provided for @demoPhotoDesc.
+  ///
+  /// In fr, this message translates to:
+  /// **'Clique ici pour importer tes photos préférées et les classer dans ton espace personnel.'**
   String get demoPhotoDesc;
+
+  /// No description provided for @demoNoteTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Écrire une note'**
   String get demoNoteTitle;
+
+  /// No description provided for @demoNoteDesc.
+  ///
+  /// In fr, this message translates to:
+  /// **'Enregistre une pensée, un mot doux ou un souvenir marquant textuel à conserver.'**
   String get demoNoteDesc;
+
+  /// No description provided for @demoBocalTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ton bocal à souvenirs'**
   String get demoBocalTitle;
+
+  /// No description provided for @demoBocalDesc.
+  ///
+  /// In fr, this message translates to:
+  /// **'Appuie sur le bocal à tout moment pour tirer au sort un souvenir enregistré et te redonner le sourire !'**
   String get demoBocalDesc;
+
+  /// No description provided for @demoBurgerTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ton historique'**
   String get demoBurgerTitle;
+
+  /// No description provided for @demoBurgerDesc.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ouvre ce menu à tout moment pour retrouver la liste chronologique de tous tes précieux souvenirs enregistrés.'**
   String get demoBurgerDesc;
+
+  /// No description provided for @profilTitlePersonalData.
+  ///
+  /// In fr, this message translates to:
+  /// **'Données personnelles'**
+  String get profilTitlePersonalData;
+
+  /// No description provided for @profilLabelFirstName.
+  ///
+  /// In fr, this message translates to:
+  /// **'Prénom'**
+  String get profilLabelFirstName;
+
+  /// No description provided for @profilLabelEmail.
+  ///
+  /// In fr, this message translates to:
+  /// **'Email'**
+  String get profilLabelEmail;
+
+  /// No description provided for @profilLabelPassword.
+  ///
+  /// In fr, this message translates to:
+  /// **'Mot de passe'**
+  String get profilLabelPassword;
+
+  /// No description provided for @profilLabelBiometrics.
+  ///
+  /// In fr, this message translates to:
+  /// **'Biométrie'**
+  String get profilLabelBiometrics;
+
+  /// No description provided for @profilTitleAccountSettings.
+  ///
+  /// In fr, this message translates to:
+  /// **'Paramètres du compte'**
+  String get profilTitleAccountSettings;
+
+  /// No description provided for @profilMenuNotifications.
+  ///
+  /// In fr, this message translates to:
+  /// **'Notifications'**
+  String get profilMenuNotifications;
+
+  /// No description provided for @profilMenuLanguage.
+  ///
+  /// In fr, this message translates to:
+  /// **'Langue de l\'application'**
+  String get profilMenuLanguage;
+
+  /// No description provided for @profilMenuDarkMode.
+  ///
+  /// In fr, this message translates to:
+  /// **'Thème sombre'**
+  String get profilMenuDarkMode;
+
+  /// No description provided for @profilMenuSoftAnimations.
+  ///
+  /// In fr, this message translates to:
+  /// **'Animations douces'**
+  String get profilMenuSoftAnimations;
+
+  /// No description provided for @profilTitleStorage.
+  ///
+  /// In fr, this message translates to:
+  /// **'Stockage de l\'appareil'**
+  String get profilTitleStorage;
+
+  /// No description provided for @profilLabelImportedPhotos.
+  ///
+  /// In fr, this message translates to:
+  /// **'Photos importées'**
+  String get profilLabelImportedPhotos;
+
+  /// No description provided for @profilLabelTextMemories.
+  ///
+  /// In fr, this message translates to:
+  /// **'Souvenirs textuels'**
+  String get profilLabelTextMemories;
+
+  /// No description provided for @profilLabelGalleryAccess.
+  ///
+  /// In fr, this message translates to:
+  /// **'Accès à la galerie'**
+  String get profilLabelGalleryAccess;
+
+  /// No description provided for @profilBtnEmpty.
+  ///
+  /// In fr, this message translates to:
+  /// **'Vider'**
+  String get profilBtnEmpty;
+
+  /// No description provided for @profilSnackbarEmptied.
+  ///
+  /// In fr, this message translates to:
+  /// **'{label} vidé'**
+  String profilSnackbarEmptied(String label);
+
+  /// No description provided for @profilTitleHelp.
+  ///
+  /// In fr, this message translates to:
+  /// **'Besoin d\'aide ?'**
+  String get profilTitleHelp;
+
+  /// No description provided for @profilHelpQuestion1.
+  ///
+  /// In fr, this message translates to:
+  /// **'Comment ajouter un souvenir ?'**
+  String get profilHelpQuestion1;
+
+  /// No description provided for @profilHelpAnswer1.
+  ///
+  /// In fr, this message translates to:
+  /// **'Clique sur le bouton \'+\' sur l\'écran d\'accueil pour commencer à rédiger un souvenir ou importer une photo.'**
+  String get profilHelpAnswer1;
+
+  /// No description provided for @profilHelpQuestion2.
+  ///
+  /// In fr, this message translates to:
+  /// **'Mes données sont-elles sécurisées ?'**
+  String get profilHelpQuestion2;
+
+  /// No description provided for @profilHelpAnswer2.
+  ///
+  /// In fr, this message translates to:
+  /// **'Oui. Tes souvenirs restent uniquement dans l\'espace privé de Sourire sur ton téléphone, auquel aucune autre application n\'a accès, et ne sont jamais envoyés sur Internet.'**
+  String get profilHelpAnswer2;
+
+  /// No description provided for @profilAlertTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Attention'**
+  String get profilAlertTitle;
+
+  /// No description provided for @profilAlertGalleryMessage.
+  ///
+  /// In fr, this message translates to:
+  /// **'Attention, si tu décides de supprimer l\'accès à ta galerie photo, tu ne pourras plus enregistrer de photos dans tes souvenirs.'**
+  String get profilAlertGalleryMessage;
+
+  /// No description provided for @profilAlertBtnDisable.
+  ///
+  /// In fr, this message translates to:
+  /// **'Désactiver l\'accès'**
+  String get profilAlertBtnDisable;
+
+  /// No description provided for @notifLabelTitleGratitude.
+  ///
+  /// In fr, this message translates to:
+  /// **'Rappel de gratitude'**
+  String get notifLabelTitleGratitude;
+
+  /// No description provided for @notifLabelSubGratitude.
+  ///
+  /// In fr, this message translates to:
+  /// **'Me rappeler de noter un souvenir positif'**
+  String get notifLabelSubGratitude;
+
+  /// No description provided for @notifLabelTime.
+  ///
+  /// In fr, this message translates to:
+  /// **'Heure du rappel'**
+  String get notifLabelTime;
+
+  /// No description provided for @notifLabelTitleSouvenirs.
+  ///
+  /// In fr, this message translates to:
+  /// **'Fréquence des souvenirs tirés'**
+  String get notifLabelTitleSouvenirs;
+
+  /// No description provided for @notifLabelSubSouvenirs.
+  ///
+  /// In fr, this message translates to:
+  /// **'Me proposer un vieux souvenir à revoir'**
+  String get notifLabelSubSouvenirs;
+
+  /// No description provided for @notifLabelFreqSettings.
+  ///
+  /// In fr, this message translates to:
+  /// **'Réglages de la fréquence'**
+  String get notifLabelFreqSettings;
+
+  /// No description provided for @notifFreqEveryDay.
+  ///
+  /// In fr, this message translates to:
+  /// **'Tous les jours'**
+  String get notifFreqEveryDay;
+
+  /// No description provided for @notifFreqEveryWeek.
+  ///
+  /// In fr, this message translates to:
+  /// **'Toutes les semaines'**
+  String get notifFreqEveryWeek;
+
+  /// No description provided for @notifLabelDayOfWeek.
+  ///
+  /// In fr, this message translates to:
+  /// **'Jours de la semaine'**
+  String get notifLabelDayOfWeek;
+
+  /// No description provided for @notifDayMonday.
+  ///
+  /// In fr, this message translates to:
+  /// **'Lundi'**
+  String get notifDayMonday;
+
+  /// No description provided for @notifDayTuesday.
+  ///
+  /// In fr, this message translates to:
+  /// **'Mardi'**
+  String get notifDayTuesday;
+
+  /// No description provided for @notifDayWednesday.
+  ///
+  /// In fr, this message translates to:
+  /// **'Mercredi'**
+  String get notifDayWednesday;
+
+  /// No description provided for @notifDayThursday.
+  ///
+  /// In fr, this message translates to:
+  /// **'Jeudi'**
+  String get notifDayThursday;
+
+  /// No description provided for @notifDayFriday.
+  ///
+  /// In fr, this message translates to:
+  /// **'Vendredi'**
+  String get notifDayFriday;
+
+  /// No description provided for @notifDaySaturday.
+  ///
+  /// In fr, this message translates to:
+  /// **'Samedi'**
+  String get notifDaySaturday;
+
+  /// No description provided for @notifDaySunday.
+  ///
+  /// In fr, this message translates to:
+  /// **'Dimanche'**
+  String get notifDaySunday;
+
+  /// No description provided for @notifLabelCategoriesIncluded.
+  ///
+  /// In fr, this message translates to:
+  /// **'Catégories incluses'**
+  String get notifLabelCategoriesIncluded;
+
+  /// No description provided for @notifAllCategories.
+  ///
+  /// In fr, this message translates to:
+  /// **'Toutes catégories'**
+  String get notifAllCategories;
+
+  /// No description provided for @notifBocalVideTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Bocal vide'**
+  String get notifBocalVideTitle;
+
+  /// No description provided for @notifBocalVideBody.
+  ///
+  /// In fr, this message translates to:
+  /// **'Aucun souvenir à afficher dans les catégories sélectionnées.'**
+  String get notifBocalVideBody;
+
+  /// No description provided for @resetPasswordTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Réinitialise ton mot de passe'**
   String get resetPasswordTitle;
+
+  /// No description provided for @resetPasswordHintNew.
+  ///
+  /// In fr, this message translates to:
+  /// **'Nouveau mot de passe'**
   String get resetPasswordHintNew;
+
+  /// No description provided for @resetPasswordHintConfirm.
+  ///
+  /// In fr, this message translates to:
+  /// **'Confirmez le mot de passe'**
   String get resetPasswordHintConfirm;
+
+  /// No description provided for @resetPasswordErrorEmpty.
+  ///
+  /// In fr, this message translates to:
+  /// **'Veuillez remplir tous les champs'**
   String get resetPasswordErrorEmpty;
+
+  /// No description provided for @resetPasswordErrorMismatch.
+  ///
+  /// In fr, this message translates to:
+  /// **'Les mots de passe ne correspondent pas'**
   String get resetPasswordErrorMismatch;
+
+  /// No description provided for @resetPasswordSuccess.
+  ///
+  /// In fr, this message translates to:
+  /// **'Mot de passe réinitialisé avec succès'**
   String get resetPasswordSuccess;
+
+  /// No description provided for @lockBiometricReason.
+  ///
+  /// In fr, this message translates to:
+  /// **'Verrouillage de sécurité Sourire'**
   String get lockBiometricReason;
+
+  /// No description provided for @lockInputHint.
+  ///
+  /// In fr, this message translates to:
+  /// **'Entrez votre mot de passe'**
   String get lockInputHint;
+
+  /// No description provided for @lockErrorIncorrect.
+  ///
+  /// In fr, this message translates to:
+  /// **'Mot de passe incorrect'**
   String get lockErrorIncorrect;
+
+  /// No description provided for @lockForgotPassword.
+  ///
+  /// In fr, this message translates to:
+  /// **'Mot de passe oublié ?'**
   String get lockForgotPassword;
+
+  /// No description provided for @lockBtnBiometric.
+  ///
+  /// In fr, this message translates to:
+  /// **'Utiliser l\'empreinte'**
   String get lockBtnBiometric;
+
+  /// No description provided for @purchaseAlertTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Limite atteinte'**
   String get purchaseAlertTitle;
-  String get purchaseAlertPhotosMessage;
-  String get purchaseAlertNotesMessage;
+
+  /// No description provided for @purchaseAlertMessage.
+  ///
+  /// In fr, this message translates to:
+  /// **'Tu as atteint la limite de {limite} souvenirs pour la version gratuite. Passe à la version Premium pour ajouter des souvenirs en illimité et débloquer de nouveaux thèmes !'**
+  String purchaseAlertMessage(int limite);
+
+  /// No description provided for @deleteAlertTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Veux-tu vraiment supprimer ces souvenirs ?'**
   String get deleteAlertTitle;
+
+  /// No description provided for @deleteAlertMessage.
+  ///
+  /// In fr, this message translates to:
+  /// **'Cette action est irréversible et entraînera la suppression définitive des souvenirs sélectionnés.'**
   String get deleteAlertMessage;
+
+  /// No description provided for @btnGoPremium.
+  ///
+  /// In fr, this message translates to:
+  /// **'Passer Premium'**
   String get btnGoPremium;
+
+  /// No description provided for @emptyHistory.
+  ///
+  /// In fr, this message translates to:
+  /// **'L\'historique est vide'**
   String get emptyHistory;
+
+  /// No description provided for @notifGratitudeChannelName.
+  ///
+  /// In fr, this message translates to:
+  /// **'Rappel de Gratitude'**
   String get notifGratitudeChannelName;
+
+  /// No description provided for @notifGratitudeChannelDesc.
+  ///
+  /// In fr, this message translates to:
+  /// **'Pour te rappeler de noter tes pensées positives'**
   String get notifGratitudeChannelDesc;
+
+  /// No description provided for @notifSouvenirsChannelName.
+  ///
+  /// In fr, this message translates to:
+  /// **'Souvenir heureux'**
   String get notifSouvenirsChannelName;
+
+  /// No description provided for @notifSouvenirsChannelDesc.
+  ///
+  /// In fr, this message translates to:
+  /// **'Psst, regarde ce qui vient de remonter...'**
   String get notifSouvenirsChannelDesc;
+
+  /// No description provided for @notifGratitudeTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Rappel de gratitude'**
   String get notifGratitudeTitle;
-  String get notifGratitudeBody;
+
+  /// No description provided for @notifGratitudeBodyDaily.
+  ///
+  /// In fr, this message translates to:
+  /// **'Que s\'est-il passé de positif dans ta journée ?'**
+  String get notifGratitudeBodyDaily;
+
+  /// No description provided for @notifGratitudeBodyWeekly.
+  ///
+  /// In fr, this message translates to:
+  /// **'Que s\'est-il passé de positif dans ta semaine ?'**
+  String get notifGratitudeBodyWeekly;
+
+  /// No description provided for @notifSouvenirsDefaultTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Psst, regarde ce qui vient de remonter 👀'**
   String get notifSouvenirsDefaultTitle;
+
+  /// No description provided for @notifSouvenirsEmptyTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ton bocal à bonheur est vide...'**
   String get notifSouvenirsEmptyTitle;
+
+  /// No description provided for @notifSouvenirsEmptyBody.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ajoute tes premiers souvenirs heureux pour pouvoir les revoir ! '**
   String get notifSouvenirsEmptyBody;
+
+  /// No description provided for @notifSouvenirsAllBody.
+  ///
+  /// In fr, this message translates to:
+  /// **'Jette un oeil à ce souvenir...'**
   String get notifSouvenirsAllBody;
-  String premiumSuccessSnackBar(String themeLabel);
+
+  /// No description provided for @btnPasserPremium.
+  ///
+  /// In fr, this message translates to:
+  /// **'Passer Premium'**
   String get btnPasserPremium;
+
+  /// No description provided for @btnAppliquer.
+  ///
+  /// In fr, this message translates to:
+  /// **'Appliquer'**
   String get btnAppliquer;
+
+  /// No description provided for @themesTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Thèmes'**
   String get themesTitle;
+
+  /// No description provided for @themesDescription.
+  ///
+  /// In fr, this message translates to:
+  /// **'Personnalise ton interface et tes notes à tout moment en choisissant parmi les thèmes suivants.'**
   String get themesDescription;
+
+  /// No description provided for @notesPurchaseSuccessSnackBar.
+  ///
+  /// In fr, this message translates to:
+  /// **'Achat simulé avec succès ! Notes et photos illimitées débloquées.'**
   String get notesPurchaseSuccessSnackBar;
+
+  /// No description provided for @premiumSuccessSnackBar.
+  ///
+  /// In fr, this message translates to:
+  /// **'Premium Activé ! Tous les verrous ont sauté. Thème « {themeLabel} » appliqué.'**
+  String premiumSuccessSnackBar(String themeLabel);
+
+  /// No description provided for @themeClassique.
+  ///
+  /// In fr, this message translates to:
+  /// **'Classique'**
   String get themeClassique;
+
+  /// No description provided for @themeMontagne.
+  ///
+  /// In fr, this message translates to:
+  /// **'Montagne'**
   String get themeMontagne;
+
+  /// No description provided for @themeMer.
+  ///
+  /// In fr, this message translates to:
+  /// **'Mer'**
   String get themeMer;
+
+  /// No description provided for @themeAbstrait.
+  ///
+  /// In fr, this message translates to:
+  /// **'Abstrait'**
   String get themeAbstrait;
+
+  /// No description provided for @themeSport.
+  ///
+  /// In fr, this message translates to:
+  /// **'Sport'**
   String get themeSport;
+
+  /// No description provided for @themeMusique.
+  ///
+  /// In fr, this message translates to:
+  /// **'Musique'**
   String get themeMusique;
+
+  /// No description provided for @themeCinema.
+  ///
+  /// In fr, this message translates to:
+  /// **'Cinéma'**
   String get themeCinema;
+
+  /// No description provided for @themeAnimauxMarins.
+  ///
+  /// In fr, this message translates to:
+  /// **'Animaux marins'**
   String get themeAnimauxMarins;
+
+  /// No description provided for @themeFloral.
+  ///
+  /// In fr, this message translates to:
+  /// **'Floral'**
   String get themeFloral;
+
+  /// No description provided for @themeKawaii.
+  ///
+  /// In fr, this message translates to:
+  /// **'Kawaii'**
   String get themeKawaii;
+
+  /// No description provided for @popupPalierTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Félicitations !'**
   String get popupPalierTitle;
+
+  /// No description provided for @popupPalierMessage.
+  ///
+  /// In fr, this message translates to:
+  /// **'Tu as ajouté {palier} souvenirs à ton bocal !'**
   String popupPalierMessage(int palier);
+
+  /// No description provided for @btnContinuerPalier.
+  ///
+  /// In fr, this message translates to:
+  /// **'Continuer'**
   String get btnContinuerPalier;
 
-String get badge10Name;
-String get badge10Phrase;
-String get badge50Name;
-String get badge50Phrase;
-String get badge100Name;
-String get badge100Phrase;
-String get badge200Name;
-String get badge200Phrase;
-String get badge500Name;
-String get badge500Phrase;
-String get badge1000Name;
-String get badge1000Phrase;
-String get badge1500Name;
-String get badge1500Phrase;
-String get badge2000Name;
-String get badge2000Phrase;
-String get badge2500Name;
-String get badge2500Phrase;
-String get badge3000Name;
-String get badge3000Phrase;
-String get badge3500Name;
-String get badge3500Phrase;
-String get badge4000Name;
-String get badge4000Phrase;
-String get badge4500Name;
-String get badge4500Phrase;
-String get badge5000Name;
-String get badge5000Phrase;
-String get rewardsSectionTitle;
-String get myBadgesTitle;
-String get btnSelectAll;
-String get btnDeselectAll;
-String selectedCountLabel(int count);
-String get jarFullTitle;
-String get jarFullMessage;
-String get btnNewJar;
+  /// No description provided for @badge10Name.
+  ///
+  /// In fr, this message translates to:
+  /// **'Chercheur d’Étoiles'**
+  String get badge10Name;
+
+  /// No description provided for @badge10Phrase.
+  ///
+  /// In fr, this message translates to:
+  /// **'Les plus beaux souvenirs commencent souvent tout petits.'**
+  String get badge10Phrase;
+
+  /// No description provided for @badge50Name.
+  ///
+  /// In fr, this message translates to:
+  /// **'Cueilleur de Beauté'**
+  String get badge50Name;
+
+  /// No description provided for @badge50Phrase.
+  ///
+  /// In fr, this message translates to:
+  /// **'Continue à capturer les instants qui illuminent tes journées.'**
+  String get badge50Phrase;
+
+  /// No description provided for @badge100Name.
+  ///
+  /// In fr, this message translates to:
+  /// **'Gardien des Instants'**
+  String get badge100Name;
+
+  /// No description provided for @badge100Phrase.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ton bocal devient un vrai refuge à souvenirs.'**
+  String get badge100Phrase;
+
+  /// No description provided for @badge200Name.
+  ///
+  /// In fr, this message translates to:
+  /// **'Conteur de Souvenirs'**
+  String get badge200Name;
+
+  /// No description provided for @badge200Phrase.
+  ///
+  /// In fr, this message translates to:
+  /// **'Chaque souvenir ajoute une page à ton histoire.'**
+  String get badge200Phrase;
+
+  /// No description provided for @badge500Name.
+  ///
+  /// In fr, this message translates to:
+  /// **'Émanateur de Joie'**
+  String get badge500Name;
+
+  /// No description provided for @badge500Phrase.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ton bocal se remplit de beaux moments à revivre.'**
+  String get badge500Phrase;
+
+  /// No description provided for @badge1000Name.
+  ///
+  /// In fr, this message translates to:
+  /// **'Alchimiste du Bonheur'**
+  String get badge1000Name;
+
+  /// No description provided for @badge1000Phrase.
+  ///
+  /// In fr, this message translates to:
+  /// **'Continue à garder précieusement ces petits instants de joie.'**
+  String get badge1000Phrase;
+
+  /// No description provided for @badge1500Name.
+  ///
+  /// In fr, this message translates to:
+  /// **'Fée de Lumière'**
+  String get badge1500Name;
+
+  /// No description provided for @badge1500Phrase.
+  ///
+  /// In fr, this message translates to:
+  /// **'Chaque souvenir ajouté éclaire un peu plus ton quotidien.'**
+  String get badge1500Phrase;
+
+  /// No description provided for @badge2000Name.
+  ///
+  /// In fr, this message translates to:
+  /// **'Archiviste du Cœur'**
+  String get badge2000Name;
+
+  /// No description provided for @badge2000Phrase.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ton bocal devient une vraie mémoire d’émotions.'**
+  String get badge2000Phrase;
+
+  /// No description provided for @badge2500Name.
+  ///
+  /// In fr, this message translates to:
+  /// **'Orfèvre d’Émotions'**
+  String get badge2500Name;
+
+  /// No description provided for @badge2500Phrase.
+  ///
+  /// In fr, this message translates to:
+  /// **'Tu collectionnes des souvenirs aussi précieux que rares.'**
+  String get badge2500Phrase;
+
+  /// No description provided for @badge3000Name.
+  ///
+  /// In fr, this message translates to:
+  /// **'Horloger des Instants'**
+  String get badge3000Name;
+
+  /// No description provided for @badge3000Phrase.
+  ///
+  /// In fr, this message translates to:
+  /// **'Tu transformes les instants fugaces en souvenirs durables.'**
+  String get badge3000Phrase;
+
+  /// No description provided for @badge3500Name.
+  ///
+  /// In fr, this message translates to:
+  /// **'Veilleur de Lumière'**
+  String get badge3500Name;
+
+  /// No description provided for @badge3500Phrase.
+  ///
+  /// In fr, this message translates to:
+  /// **'Même les petits moments peuvent illuminer une journée.'**
+  String get badge3500Phrase;
+
+  /// No description provided for @badge4000Name.
+  ///
+  /// In fr, this message translates to:
+  /// **'Gardien d’Éternité'**
+  String get badge4000Name;
+
+  /// No description provided for @badge4000Phrase.
+  ///
+  /// In fr, this message translates to:
+  /// **'Tu construis une collection de souvenirs hors du temps.'**
+  String get badge4000Phrase;
+
+  /// No description provided for @badge4500Name.
+  ///
+  /// In fr, this message translates to:
+  /// **'Mage des Souvenirs'**
+  String get badge4500Name;
+
+  /// No description provided for @badge4500Phrase.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ton bocal déborde déjà de moments précieux.'**
+  String get badge4500Phrase;
+
+  /// No description provided for @badge5000Name.
+  ///
+  /// In fr, this message translates to:
+  /// **'Légende de Sourire'**
+  String get badge5000Name;
+
+  /// No description provided for @badge5000Phrase.
+  ///
+  /// In fr, this message translates to:
+  /// **'Les plus beaux souvenirs sont encore à venir.'**
+  String get badge5000Phrase;
+
+  /// No description provided for @rewardsSectionTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Récompenses'**
+  String get rewardsSectionTitle;
+
+  /// No description provided for @myBadgesTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Mes badges'**
+  String get myBadgesTitle;
+
+  /// No description provided for @btnSelectAll.
+  ///
+  /// In fr, this message translates to:
+  /// **'Tout sélectionner'**
+  String get btnSelectAll;
+
+  /// No description provided for @btnDeselectAll.
+  ///
+  /// In fr, this message translates to:
+  /// **'Tout désélectionner'**
+  String get btnDeselectAll;
+
+  /// No description provided for @selectedCountLabel.
+  ///
+  /// In fr, this message translates to:
+  /// **'{count} sélectionné(s)'**
+  String selectedCountLabel(int count);
+
+  /// No description provided for @jarFullTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ton bocal est plein !'**
+  String get jarFullTitle;
+
+  /// No description provided for @jarFullMessage.
+  ///
+  /// In fr, this message translates to:
+  /// **'Un nouveau bocal t\'attend, tes souvenirs restent bien sûr tous conservés, seul l\'affichage change.'**
+  String get jarFullMessage;
+
+  /// No description provided for @btnNewJar.
+  ///
+  /// In fr, this message translates to:
+  /// **'Nouveau bocal'**
+  String get btnNewJar;
+
+  /// No description provided for @shareError.
+  ///
+  /// In fr, this message translates to:
+  /// **'Le partage n\'a pas pu aboutir. Réessaie.'**
+  String get shareError;
+
+  /// No description provided for @amorceVoyage.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ton meilleur souvenir de voyage...'**
+  String get amorceVoyage;
+
+  /// No description provided for @amorceFouRire.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ton dernier fou rire !'**
+  String get amorceFouRire;
+
+  /// No description provided for @amorceCadeau.
+  ///
+  /// In fr, this message translates to:
+  /// **'Le plus beau cadeau qu\'on t\'ait offert.'**
+  String get amorceCadeau;
+
+  /// No description provided for @amorceToi.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ce que tu aimes le plus chez toi.'**
+  String get amorceToi;
+
+  /// No description provided for @amorceFierte.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ce dont tu es le·la plus fièr·e !'**
+  String get amorceFierte;
+
+  /// No description provided for @backupExportTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Exporter mes souvenirs'**
+  String get backupExportTitle;
+
+  /// No description provided for @backupExportSub.
+  ///
+  /// In fr, this message translates to:
+  /// **'Fabrique une archive contenant tes notes et tes photos. Tu la ranges où tu veux : rien n\'est envoyé sur Internet.'**
+  String get backupExportSub;
+
+  /// No description provided for @backupImportTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Restaurer une sauvegarde'**
+  String get backupImportTitle;
+
+  /// No description provided for @backupImportSub.
+  ///
+  /// In fr, this message translates to:
+  /// **'Ajoute les souvenirs d\'une archive. Rien n\'est supprimé, et les souvenirs déjà présents sont ignorés.'**
+  String get backupImportSub;
+
+  /// No description provided for @backupExportError.
+  ///
+  /// In fr, this message translates to:
+  /// **'L\'export n\'a pas pu aboutir. Réessaie.'**
+  String get backupExportError;
+
+  /// No description provided for @backupImportError.
+  ///
+  /// In fr, this message translates to:
+  /// **'Archive illisible. Vérifie que c\'est bien un export Sourire.'**
+  String get backupImportError;
+
+  /// No description provided for @backupImportDone.
+  ///
+  /// In fr, this message translates to:
+  /// **'{ajoutes} souvenir(s) restauré(s), {ignores} déjà présent(s).'**
+  String backupImportDone(int ajoutes, int ignores);
 }
 
-class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {
+class _AppLocalizationsDelegate
+    extends LocalizationsDelegate<AppLocalizations> {
   const _AppLocalizationsDelegate();
 
   @override
@@ -285,16 +1645,26 @@ class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> 
   }
 
   @override
-  bool isSupported(Locale locale) => <String>['en', 'fr'].contains(locale.languageCode);
+  bool isSupported(Locale locale) =>
+      <String>['en', 'fr'].contains(locale.languageCode);
 
   @override
   bool shouldReload(_AppLocalizationsDelegate old) => false;
 }
 
 AppLocalizations lookupAppLocalizations(Locale locale) {
+  // Lookup logic when only language code is specified.
   switch (locale.languageCode) {
-    case 'en': return AppLocalizationsEn();
-    case 'fr': return AppLocalizationsFr();
+    case 'en':
+      return AppLocalizationsEn();
+    case 'fr':
+      return AppLocalizationsFr();
   }
-  throw FlutterError('AppLocalizations.delegate failed to load unsupported locale "$locale".');
+
+  throw FlutterError(
+    'AppLocalizations.delegate failed to load unsupported locale "$locale". This is likely '
+    'an issue with the localizations generation tool. Please file an issue '
+    'on GitHub with a reproducible sample app and the gen-l10n configuration '
+    'that was used.',
+  );
 }
