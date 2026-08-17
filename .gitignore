@@ -47,3 +47,5 @@ app.*.map.json
 key.properties
 *.jks
 *.keystore
+/ios/build/
+/macos/build/
