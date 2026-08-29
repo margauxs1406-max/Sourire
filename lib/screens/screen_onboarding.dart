@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:sourire/l10n/app_localizations.dart'; 
+import 'package:sourire/l10n/app_localizations.dart';
+import 'package:sourire/l10n/langues.dart';
 import 'package:sourire/screens/home.dart';
 import 'package:sourire/services/biometric_service.dart';
 import 'package:sourire/theme/tokens.dart';
@@ -262,10 +263,13 @@ class _ScreenOnboardingState extends State<ScreenOnboarding> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildLangueButton("Français", "fr", const Locale('fr', 'FR')),
-                const SizedBox(height: 14),
-                _buildLangueButton("English", "en", const Locale('en', 'US')),
+              // Construits depuis le catalogue : ajouter une langue à
+              // `Langues.toutes` la fait apparaître ici sans rien toucher.
+              children: <Widget>[
+                for (final LangueApp langue in Langues.toutes) ...<Widget>[
+                  _buildLangueButton(langue),
+                  if (langue != Langues.toutes.last) const SizedBox(height: 14),
+                ],
               ],
             ),
           ),
@@ -274,15 +278,15 @@ class _ScreenOnboardingState extends State<ScreenOnboarding> {
     );
   }
 
-  Widget _buildLangueButton(String label, String codeLangue, Locale locale) {
-    bool isSelected = _selectedLangue == codeLangue;
+  Widget _buildLangueButton(LangueApp langue) {
+    bool isSelected = _selectedLangue == langue.code;
     return InkWell(
       onTap: () async {
         setState(() {
-          _selectedLangue = codeLangue;
+          _selectedLangue = langue.code;
         });
-        await UserPrefs.setLangue(codeLangue);
-        MyApp.localeNotifier.value = locale; 
+        await UserPrefs.setLangue(langue.code);
+        MyApp.localeNotifier.value = langue.locale;
       },
       child: Container(
         // Plancher et non hauteur figée : au réglage d'accessibilité maximum,
@@ -302,7 +306,7 @@ class _ScreenOnboardingState extends State<ScreenOnboarding> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              label,
+              langue.nom,
               style: styleCorps.copyWith(color: texteFort(_sombre)),
             ),
             Container(

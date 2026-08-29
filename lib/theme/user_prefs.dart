@@ -215,8 +215,22 @@ class UserPrefs {
   }
 
   // --- PERSISTANCE DU THÈME VISUEL ---
+  /// Thème visuel de la HOME — le décor de fond, réglé dans
+  /// Profil > Personnalisation.
   static String get themeId => _prefs?.getString('themeId') ?? "classique";
   static set themeId(String value) => _prefs?.setString('themeId', value);
+
+  /// Thème visuel des NOTES, choisi à la baguette au moment d'écrire.
+  ///
+  /// Séparé de [themeId] : décorer son bocal et décorer ses post-it sont deux
+  /// envies distinctes, et rien n'oblige à vouloir la même ambiance pour les
+  /// deux. Sert de valeur par défaut à chaque nouvelle note — celui qui aime
+  /// le thème floral le retrouve sans rien refaire, et peut y déroger d'une
+  /// note à l'autre.
+  static String get themeNoteId =>
+      _prefs?.getString('themeNoteId') ?? "classique";
+  static set themeNoteId(String value) =>
+      _prefs?.setString('themeNoteId', value);
 
   // --- PERSISTANCE DU STATUT PREMIUM ---
   static bool get isPremium => _prefs?.getBool('isPremium') ?? false;

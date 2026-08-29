@@ -1,0 +1,367 @@
+{
+  "@@locale": "es",
+  "titleSourire": "Sourire",
+  "welcomeMessage": "Hola {prenom},",
+  "@welcomeMessage": {
+    "placeholders": {
+      "prenom": {
+        "type": "String"
+      }
+    }
+  },
+  "mainQuestion": "¿Qué te hace feliz hoy?",
+  "@mainQuestion": {
+    "placeholders": {
+      "accord": {
+        "type": "String"
+      }
+    }
+  },
+  "personalData": "Datos personales",
+  "firstName": "Nombre",
+  "gender": "Género",
+  "email": "Correo electrónico",
+  "password": "Contraseña",
+  "biometrics": "Biometría",
+  "accountSettings": "Ajustes de la cuenta",
+  "notifications": "Notificaciones",
+  "personalization": "Personalización",
+  "permissions": "Permisos",
+  "archiving": "Archivado",
+  "accessibility": "Accesibilidad",
+  "langues": "Idiomas",
+  "help": "Ayuda",
+  "logout": "Cerrar sesión",
+  "dailyGratitudeReminder": "Recordatorio diario de gratitud",
+  "dailyReminderSubtitle": "Recordarme anotar un recuerdo positivo",
+  "reminderTime": "Hora del recordatorio",
+  "drawnMemoriesFrequency": "Frecuencia de los recuerdos sorteados",
+  "drawnMemoriesSubtitle": "Proponerme un recuerdo antiguo para revivirlo",
+  "frequencySettings": "Ajustes de la frecuencia",
+  "categoriesIncluded": "Categorías incluidas",
+  "everyDay": "Todos los días",
+  "everyTwoDays": "Cada 2 días",
+  "everyWeek": "Todas las semanas",
+  "photoGalleryAccess": "Acceso a la galería de fotos",
+  "photoGallerySubtitle": "Imprescindible para añadir fotos de tus momentos preciados.",
+  "secureLocalStorage": "Almacenamiento local seguro",
+  "secureStorageSubtitle": "Tus recuerdos se guardan automáticamente en tu espacio de almacenamiento privado.",
+  "active": "Activo",
+  "spaceOccupied": "Espacio ocupado",
+  "storageCounter": "Fotos: {photos} | Notas: {notes}",
+  "@storageCounter": {
+    "placeholders": {
+      "photos": {
+        "type": "String"
+      },
+      "notes": {
+        "type": "String"
+      }
+    }
+  },
+  "darkMode": "Modo oscuro",
+  "darkModeSubtitle": "Cambia la interfaz a tonos oscuros para descansar la vista por la noche.",
+  "smoothAnimations": "Animaciones suaves",
+  "smoothAnimationsSubtitle": "Sustituye el efecto tornado del tarro por una aparición en fundido más ligera.",
+  "francais": "Français",
+  "anglais": "English",
+  "helpFaq": "Ayuda / Preguntas frecuentes",
+  "faqQuestion1": "¿Dónde se guardan mis recuerdos?",
+  "faqAnswer1": "Se quedan en la carpeta segura de tu teléfono, nadie más tiene acceso a ellos.",
+  "faqQuestion2": "¿Cómo funciona el sorteo?",
+  "faqAnswer2": "Toca el tarro para hacer subir un recuerdo al azar.",
+  "faqQuestion3": "¿Cómo se categorizan los recuerdos?",
+  "faqAnswer3": "Ve al historial y mantén pulsado un recuerdo. Entonces podrás seleccionar varios y elegir «Categorizar».",
+  "faqQuestion5": "¿Cómo categorizo mis recuerdos uno a uno?",
+  "faqAnswer5": "Para categorizar tus recuerdos uno a uno tienes 2 opciones:\n1- Importa tus recuerdos de uno en uno.\n2- Desde la pantalla de categorización del lote seleccionado, toca la foto que lleva el contador: aparece un carrusel de tus recuerdos con la opción «Categorizar de 1 en 1».",
+  "faqQuestion6": "¿Cómo elimino categorías de recuerdos?",
+  "faqAnswer6": "En la pantalla de selección de categorías, desliza hacia la izquierda la categoría que quieres eliminar.",
+  "faqQuestion4": "¿Cómo se eliminan los recuerdos?",
+  "faqAnswer4": "Ve al historial, mantén pulsado el recuerdo, selecciónalo y toca el botón «Eliminar».",
+  "catSelfLove": "Amor propio",
+  "catFriendship": "Amistad",
+  "catCouple": "Pareja",
+  "catFamily": "Familia",
+  "catLeisure": "Ocio",
+  "catWork": "Trabajo",
+  "catOthers": "Otros",
+  "catUnclassified": "Sin clasificar",
+  "btnNewCategory": "Nueva categoría",
+  "hintNewCategory": "Nombre de la categoría...",
+  "btnDeleteCategories": "Eliminar categorías",
+  "noCustomCategoryToDelete": "No hay ninguna categoría personalizada que eliminar.",
+  "btnClose": "Cerrar",
+  "titleDeleteModal": "Gestionar las categorías",
+  "btnReset": "Restablecer",
+  "btnFilter": "Filtrar",
+  "writeHappyThought": "Escribe lo que te hace feliz...",
+  "@writeHappyThought": {
+    "placeholders": {
+      "accord": {
+        "type": "String"
+      }
+    }
+  },
+  "btnValidate": "Validar",
+  "categoryQuestion": "¿A qué categoría(s) pertenece este recuerdo?",
+  "btnSkip": "Omitir",
+  "today": "Hoy",
+  "yesterday": "Ayer",
+  "btnDeleteSelection": "Eliminar",
+  "btnCategorizeSelection": "Categorizar",
+  "galleryRecent": "Recientes",
+  "galleryPreview": "Vista previa",
+  "btnOk": "OK",
+  "alertWarningTitle": "Atención",
+  "galleryDisabledMessage": "Has desactivado el acceso a tu galería de fotos. Actívalo en tus permisos.",
+  "btnEnableAccess": "Activar el acceso",
+  "emptyJarMessage": "El tarro está vacío, ¡añade un recuerdo!",
+  "deleteConfirmMessage": "¿Seguro que quieres eliminar definitivamente estos recuerdos?",
+  "btnCancel": "Cancelar",
+  "btnDeleteConfirm": "Eliminar",
+  "recategorizeTitle": "Selecciona las categorías que quieres aplicar a los recuerdos seleccionados:",
+  "btnSave": "Guardar",
+  "onboardingBtnGetStarted": "Empezar",
+  "onboardingWelcomeMessage": "¡Te damos la bienvenida\na tu espacio personal,\ncreado para devolverte\nla sonrisa!",
+  "onboardingQuestionName": "¿Cómo te llamas?",
+  "onboardingHintName": "Nombre",
+  "onboardingQuestionGender": "¿Cómo debo dirigirme a ti?",
+  "onboardingGenderMale": "En masculino",
+  "onboardingGenderFemale": "En femenino",
+  "onboardingGenderNone": "En lenguaje inclusivo",
+  "onboardingSecurityTitle": "Protege tus datos",
+  "onboardingHintEmail": "Correo electrónico",
+  "onboardingEmailValid": "correo válido",
+  "onboardingEmailInvalid": "correo no válido",
+  "onboardingHintPassword": "Contraseña (mín. 6 caracteres)",
+  "onboardingBiometricsTitle": "Facilita tu acceso a la aplicación",
+  "onboardingBiometricsLabel": "Activar la biometría",
+  "onboardingBtnNext": "Siguiente",
+  "onboardingBtnValidate": "Validar",
+  "demoSkip": "OMITIR",
+  "demoBtnNext": "Siguiente",
+  "demoBtnFinish": "Terminar",
+  "demoPhotoTitle": "Añadir una foto",
+  "demoPhotoDesc": "Toca aquí para importar tus fotos favoritas y ordenarlas en tu espacio personal.",
+  "demoNoteTitle": "Escribir una nota",
+  "demoNoteDesc": "Guarda un pensamiento, unas palabras bonitas o un recuerdo escrito que quieras conservar.",
+  "demoBocalTitle": "Tu tarro de recuerdos",
+  "demoBocalDesc": "Toca el tarro cuando quieras para sortear un recuerdo guardado y devolverte la sonrisa.",
+  "demoBurgerTitle": "Tu historial",
+  "demoBurgerDesc": "Abre este menú cuando quieras para encontrar la lista cronológica de todos tus preciados recuerdos guardados.",
+  "profilTitlePersonalData": "Datos personales",
+  "profilLabelFirstName": "Nombre",
+  "profilLabelEmail": "Correo electrónico",
+  "profilLabelPassword": "Contraseña",
+  "profilLabelBiometrics": "Biometría",
+  "profilTitleAccountSettings": "Ajustes de la cuenta",
+  "profilMenuNotifications": "Notificaciones",
+  "profilMenuLanguage": "Idioma de la aplicación",
+  "profilMenuDarkMode": "Tema oscuro",
+  "profilMenuSoftAnimations": "Animaciones suaves",
+  "profilTitleStorage": "Almacenamiento del dispositivo",
+  "profilLabelImportedPhotos": "Fotos importadas",
+  "profilLabelTextMemories": "Recuerdos escritos",
+  "profilLabelGalleryAccess": "Acceso a la galería",
+  "profilBtnEmpty": "Vaciar",
+  "profilSnackbarEmptied": "{label} vaciado",
+  "@profilSnackbarEmptied": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "profilTitleHelp": "¿Necesitas ayuda?",
+  "profilHelpQuestion1": "¿Cómo añado un recuerdo?",
+  "profilHelpAnswer1": "Toca el botón «+» en la pantalla de inicio para empezar a escribir un recuerdo o importar una foto.",
+  "profilHelpQuestion2": "¿Están seguros mis datos?",
+  "profilHelpAnswer2": "Sí. Tus recuerdos se quedan únicamente en el espacio privado de Sourire en tu teléfono, al que ninguna otra aplicación tiene acceso, y nunca se envían a Internet.",
+  "profilAlertTitle": "Atención",
+  "profilAlertGalleryMessage": "Atención: si decides quitar el acceso a tu galería de fotos, ya no podrás guardar fotos en tus recuerdos.",
+  "profilAlertBtnDisable": "Desactivar el acceso",
+  "notifLabelTitleGratitude": "Recordatorio de gratitud",
+  "notifLabelSubGratitude": "Recordarme anotar un recuerdo positivo",
+  "notifLabelTime": "Hora del recordatorio",
+  "notifLabelTitleSouvenirs": "Frecuencia de los recuerdos sorteados",
+  "notifLabelSubSouvenirs": "Proponerme un recuerdo antiguo para revivirlo",
+  "notifLabelFreqSettings": "Ajustes de la frecuencia",
+  "notifFreqEveryDay": "Todos los días",
+  "notifFreqEveryWeek": "Todas las semanas",
+  "notifLabelDayOfWeek": "Días de la semana",
+  "notifDayMonday": "Lunes",
+  "notifDayTuesday": "Martes",
+  "notifDayWednesday": "Miércoles",
+  "notifDayThursday": "Jueves",
+  "notifDayFriday": "Viernes",
+  "notifDaySaturday": "Sábado",
+  "notifDaySunday": "Domingo",
+  "notifLabelCategoriesIncluded": "Categorías incluidas",
+  "notifAllCategories": "Todas las categorías",
+  "notifBocalVideTitle": "Tarro vacío",
+  "notifBocalVideBody": "No hay ningún recuerdo que mostrar en las categorías seleccionadas.",
+  "resetPasswordTitle": "Restablece tu contraseña",
+  "resetPasswordHintNew": "Nueva contraseña",
+  "resetPasswordHintConfirm": "Confirma la contraseña",
+  "resetPasswordErrorEmpty": "Rellena todos los campos",
+  "resetPasswordErrorMismatch": "Las contraseñas no coinciden",
+  "resetPasswordSuccess": "Contraseña restablecida correctamente",
+  "lockBiometricReason": "Bloqueo de seguridad de Sourire",
+  "lockInputHint": "Introduce tu contraseña",
+  "lockErrorIncorrect": "Contraseña incorrecta",
+  "lockForgotPassword": "¿Has olvidado tu contraseña?",
+  "lockBtnBiometric": "Usar la huella",
+  "purchaseAlertTitle": "Límite alcanzado",
+  "purchaseAlertMessage": "Has alcanzado el límite de {limite} recuerdos de la versión gratuita. ¡Pásate a Premium para añadir recuerdos sin límite y desbloquear nuevos temas!",
+  "@purchaseAlertMessage": {
+    "placeholders": {
+      "limite": {
+        "type": "int"
+      }
+    }
+  },
+  "deleteAlertTitle": "¿Seguro que quieres eliminar estos recuerdos?",
+  "deleteAlertMessage": "Esta acción es irreversible y eliminará definitivamente los recuerdos seleccionados.",
+  "btnGoPremium": "Pasar a Premium",
+  "emptyHistory": "El historial está vacío",
+  "notifGratitudeChannelName": "Recordatorio de gratitud",
+  "notifGratitudeChannelDesc": "Para recordarte anotar tus pensamientos positivos",
+  "notifSouvenirsChannelName": "Recuerdo feliz",
+  "notifSouvenirsChannelDesc": "Oye, mira lo que acaba de salir...",
+  "notifGratitudeTitle": "Recordatorio de gratitud",
+  "notifGratitudeBodyDaily": "¿Qué ha pasado de bonito en tu día?",
+  "notifGratitudeBodyWeekly": "¿Qué ha pasado de bonito en tu semana?",
+  "notifSouvenirsDefaultTitle": "Oye, mira lo que acaba de salir 👀",
+  "notifSouvenirsEmptyTitle": "Tu tarro de la felicidad está vacío...",
+  "notifSouvenirsEmptyBody": "¡Añade tus primeros recuerdos felices para poder revivirlos! ",
+  "notifSouvenirsAllBody": "Echa un vistazo a este recuerdo...",
+  "btnPasserPremium": "Pasar a Premium",
+  "btnAppliquer": "Aplicar",
+  "themesTitle": "Temas de la pantalla de inicio",
+  "themesDescription": "Personaliza tu interfaz y tus notas cuando quieras eligiendo entre los siguientes temas.",
+  "notesPurchaseSuccessSnackBar": "¡Compra simulada con éxito! Notas y fotos ilimitadas desbloqueadas.",
+  "premiumSuccessSnackBar": "¡Premium activado! Todos los candados se han abierto. Tema «{themeLabel}» aplicado.",
+  "@premiumSuccessSnackBar": {
+    "placeholders": {
+      "themeLabel": {
+        "type": "String"
+      }
+    }
+  },
+  "themeClassique": "Clásico",
+  "themeMontagne": "Montaña",
+  "themeMer": "Mar",
+  "themeAbstrait": "Abstracto",
+  "themeSport": "Deporte",
+  "themeVoyage": "Viajes",
+  "themeMusique": "Música",
+  "themeCinema": "Cine",
+  "themeAnimauxMarins": "Animales marinos",
+  "themeAmour": "Amor",
+  "themeCelebration": "Celebraciones",
+  "themeNature": "Naturaleza",
+  "themeKawaii": "Kawaii",
+  "popupPalierTitle": "¡Enhorabuena!",
+  "popupPalierMessage": "¡Has añadido {palier} recuerdos a tu tarro!",
+  "@popupPalierMessage": {
+    "placeholders": {
+      "palier": {
+        "type": "int"
+      }
+    }
+  },
+  "btnContinuerPalier": "Continuar",
+  "badge10Name": "Buscador de Estrellas",
+  "badge10Phrase": "Los recuerdos más bonitos suelen empezar siendo muy pequeños.",
+  "badge50Name": "Recolector de Belleza",
+  "badge50Phrase": "Sigue capturando los instantes que iluminan tus días.",
+  "badge100Name": "Guardián de los Instantes",
+  "badge100Phrase": "Tu tarro se convierte en un verdadero refugio de recuerdos.",
+  "badge200Name": "Narrador de Recuerdos",
+  "badge200Phrase": "Cada recuerdo añade una página a tu historia.",
+  "badge500Name": "Fuente de Alegría",
+  "badge500Phrase": "Tu tarro se llena de bonitos momentos para revivir.",
+  "badge1000Name": "Alquimista de la Felicidad",
+  "badge1000Phrase": "Sigue guardando con cariño estos pequeños instantes de alegría.",
+  "badge1500Name": "Hada de Luz",
+  "badge1500Phrase": "Cada recuerdo añadido ilumina un poco más tu día a día.",
+  "badge2000Name": "Archivista del Corazón",
+  "badge2000Phrase": "Tu tarro se convierte en una verdadera memoria de emociones.",
+  "badge2500Name": "Orfebre de Emociones",
+  "badge2500Phrase": "Coleccionas recuerdos tan preciados como raros.",
+  "badge3000Name": "Relojero de los Instantes",
+  "badge3000Phrase": "Transformas los instantes fugaces en recuerdos duraderos.",
+  "badge3500Name": "Vigía de la Luz",
+  "badge3500Phrase": "Incluso los pequeños momentos pueden iluminar un día.",
+  "badge4000Name": "Guardián de la Eternidad",
+  "badge4000Phrase": "Construyes una colección de recuerdos fuera del tiempo.",
+  "badge4500Name": "Mago de los Recuerdos",
+  "badge4500Phrase": "Tu tarro ya rebosa de momentos preciados.",
+  "badge5000Name": "Leyenda de Sourire",
+  "badge5000Phrase": "Los recuerdos más bonitos están aún por llegar.",
+  "rewardsSectionTitle": "Recompensas",
+  "myBadgesTitle": "Mis insignias",
+  "btnSelectAll": "Seleccionar todo",
+  "btnDeselectAll": "Deseleccionar todo",
+  "selectedCountLabel": "{count} seleccionado(s)",
+  "@selectedCountLabel": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "jarFullTitle": "¡Tu tarro está lleno!",
+  "jarFullMessage": "Te espera un tarro nuevo. Por supuesto, todos tus recuerdos se conservan: solo cambia la presentación.",
+  "btnNewJar": "Nuevo tarro",
+  "shareError": "No se ha podido compartir. Inténtalo de nuevo.",
+  "amorceVoyage": "Tu mejor recuerdo de viaje...",
+  "amorceFouRire": "¡Tu último ataque de risa!",
+  "amorceCadeau": "El regalo más bonito que te han hecho.",
+  "amorceToi": "Lo que más te gusta de ti.",
+  "amorceFierte": "¡Tu mayor motivo de orgullo!",
+  "backupExportTitle": "Exportar mis recuerdos",
+  "backupExportSub": "Crea un archivo con tus notas y tus fotos. Lo guardas donde quieras: no se envía nada a Internet.",
+  "backupImportTitle": "Restaurar una copia de seguridad",
+  "backupImportSub": "Añade los recuerdos de un archivo. No se borra nada, y los recuerdos ya presentes se ignoran.",
+  "backupExportError": "La exportación no se ha podido completar. Inténtalo de nuevo.",
+  "backupImportError": "Archivo ilegible. Comprueba que sea realmente una exportación de Sourire.",
+  "backupImportDone": "{ajoutes} recuerdo(s) restaurado(s), {ignores} ya presente(s).",
+  "@backupImportDone": {
+    "placeholders": {
+      "ajoutes": {
+        "type": "int"
+      },
+      "ignores": {
+        "type": "int"
+      }
+    }
+  },
+  "restoreDefaultCategoriesTitle": "Restaurar las categorías por defecto",
+  "restoreDefaultCategoriesSub": "Devuelve Amor propio, Amistad, Pareja, Familia, Ocio y Trabajo si las has eliminado. Tus recuerdos no se modifican.",
+  "restoreDefaultCategoriesDone": "Categorías por defecto restauradas.",
+  "batchCategoryQuestion": "¿A qué categoría(s) pertenecen estos recuerdos?",
+  "batchCategorizeOneByOne": "Categorizar de 1 en 1",
+  "deleteCategoryConfirmTitle": "¿Eliminar «{categorie}»?",
+  "@deleteCategoryConfirmTitle": {
+    "placeholders": {
+      "categorie": {
+        "type": "String"
+      }
+    }
+  },
+  "deleteCategoryConfirmBody": "{nombre, plural, one{Un recuerdo perderá esta categoría.} other{{nombre} recuerdos perderán esta categoría.}} No se elimina ningún recuerdo.",
+  "@deleteCategoryConfirmBody": {
+    "placeholders": {
+      "nombre": {
+        "type": "int"
+      }
+    }
+  },
+  "filterByPeriod": "Por periodo",
+  "filterByCategory": "Por categoría",
+  "btnApply": "Aplicar",
+  "themePreviewQuestion": "¿Qué te hace feliz hoy?",
+  "notesThemesPurchaseMessage": "Viste tus notas con el decorado que quieras. Pásate a Premium para desbloquear todos los temas.",
+  "themesTitleNotes": "Temas de las notas"
+}

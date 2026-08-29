@@ -6,8 +6,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:sourire/l10n/app_localizations.dart';
 import 'package:sourire/l10n/app_localizations_en.dart';
+import 'package:sourire/l10n/app_localizations_es.dart';
 import 'package:sourire/l10n/app_localizations_fr.dart';
-import 'package:sourire/models/theme_app.dart';
+import 'package:sourire/l10n/langues.dart';
 import 'package:sourire/screens/home.dart';
 import 'package:sourire/screens/screen_boot.dart'; 
 import 'package:sourire/screens/screen_lock.dart';
@@ -60,8 +61,13 @@ void main() async {
   // vide, on peut tirer immédiatement, et ce sont autant d'invitations à
   // écrire. Sans effet si le bocal contient déjà quelque chose.
   if (!UserPrefs.amorcageEffectue) {
-    final AppLocalizations textes =
-        UserPrefs.langue == 'en' ? AppLocalizationsEn() : AppLocalizationsFr();
+    // Traductions choisies à la main : on est avant `runApp`, donc sans
+    // contexte ni `AppLocalizations.of`.
+    final AppLocalizations textes = switch (UserPrefs.langue) {
+      'en' => AppLocalizationsEn(),
+      'es' => AppLocalizationsEs(),
+      _ => AppLocalizationsFr(),
+    };
 
     await DatabaseService().amorcerBocal(
       [
@@ -71,7 +77,9 @@ void main() async {
         textes.amorceToi,
         textes.amorceFierte,
       ],
-      UserPrefs.themeId,
+      // Les souvenirs d'amorçage sont des notes : ils portent le thème des
+      // NOTES, pas celui du décor de la home.
+      UserPrefs.themeNoteId,
     );
     UserPrefs.amorcageEffectue = true;
   }
@@ -88,13 +96,9 @@ void main() async {
     isAppLockedNotifier.value = false;
   }
   
-  final String savedThemeId = UserPrefs.themeId;
-  final themeSauvegarde = ThemeRepository.tousLesThemes.firstWhere(
-    (t) => t.id == savedThemeId,
-    orElse: () => ThemeRepository.themeClassique,
-  );
-  
-  ThemeService.themeVisuelNotifier.value = themeSauvegarde;
+  // Deux thèmes à restaurer, et non plus un : le décor de la home et celui
+  // des notes vivent séparément depuis que la baguette existe.
+  ThemeService.chargerThemeSauvegarde();
 
   // IMPORTANT : NotificationService.init() se contente de préparer le
   // plugin et de créer les canaux Android — ça ne demande AUCUNE
@@ -130,8 +134,8 @@ class MyApp extends StatefulWidget {
   const MyApp({super.key});
 
   static final ValueNotifier<ThemeMode> themeNotifier = ValueNotifier(ThemeMode.system);
-  static final ValueNotifier<Locale> localeNotifier = ValueNotifier(
-    Locale(UserPrefs.langue == 'en' ? 'en' : 'fr', UserPrefs.langue == 'en' ? 'US' : 'FR'),
+  static final ValueNotifier<Locale> localeNotifier = ValueNotifier<Locale>(
+    Langues.parCode(UserPrefs.langue).locale,
   );
 
   @override
@@ -315,7 +319,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
                 GlobalWidgetsLocalizations.delegate,
                 GlobalCupertinoLocalizations.delegate,
               ],
-              supportedLocales: const [Locale('fr', 'FR'), Locale('en', 'US')],
+              supportedLocales: Langues.locales,
               
               home: ValueListenableBuilder<bool>(
                 valueListenable: isAppLockedNotifier,

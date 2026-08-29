@@ -28,7 +28,7 @@
   "personalization": "Personalization",
   "permissions": "Permissions",
   "archiving": "Archiving",
-  "accessibility": "Appearance",
+  "accessibility": "Accessibility",
   "langues": "Languages",
   "help": "Help",
   "logout": "Log out",
@@ -69,13 +69,15 @@
   "faqQuestion1": "Where are my memories stored?",
   "faqAnswer1": "They remain locally in your phone's secure folder, no one else has access to them.",
   "faqQuestion2": "How does the lucky draw work?",
-  "faqAnswer2": "Shake your phone or click on the jar to bring up a random memory.",
+  "faqAnswer2": "Tap the jar to bring up a random memory.",
   "faqQuestion3": "How to categorize memories?",
   "faqAnswer3": "Go to history and long-press a memory. You can then select multiple items and choose 'Categorize'.",
+  "faqQuestion5": "How do I categorize my memories one by one?",
+  "faqAnswer5": "There are 2 ways to categorize your memories one by one:\n1- Import your memories one at a time.\n2- On the categorization screen for the selected batch, tap the photo with the counter: a carousel of your memories appears, along with the “Categorize one by one” option.",
+  "faqQuestion6": "How do I delete memory categories?",
+  "faqAnswer6": "On the category selection screen, swipe the category you want to delete to the left.",
   "faqQuestion4": "How to delete memories?",
   "faqAnswer4": "Go to history, long-press the memory, select it and press the 'Delete' button.",
-  "filterTitle": "Filter",
-  "categoriesTitle": "Categories",
   "catSelfLove": "Self-love",
   "catFriendship": "Friendship",
   "catCouple": "Couple",
@@ -235,7 +237,7 @@
   "notifSouvenirsAllBody": "Take a look at this souvenir...",
   "btnPasserPremium": "Go Premium",
   "btnAppliquer": "Apply",
-  "themesTitle": "Themes",
+  "themesTitle": "Home screen themes",
   "themesDescription": "Customize your interface and notes at any time by choosing from the following themes.",
   "notesPurchaseSuccessSnackBar": "Purchase successfully simulated! Unlimited notes and photos unlocked.",
   "premiumSuccessSnackBar": "Premium Activated! All locks have been removed. Theme “{themeLabel}” applied.",
@@ -251,10 +253,13 @@
   "themeMer": "Ocean",
   "themeAbstrait": "Abstract",
   "themeSport": "Sports",
+  "themeVoyage": "Travel",
   "themeMusique": "Music",
   "themeCinema": "Cinema",
   "themeAnimauxMarins": "Marine Animals",
-  "themeFloral": "Floral",
+  "themeAmour": "Love",
+  "themeCelebration": "Celebrations",
+  "themeNature": "Nature",
   "themeKawaii": "Kawaii",
   "popupPalierTitle": "Congratulations!",
   "popupPalierMessage": "You've added {palier} memories to your jar!",
@@ -331,5 +336,32 @@
         "type": "int"
       }
     }
-  }
+  },
+  "restoreDefaultCategoriesTitle": "Restore default categories",
+  "restoreDefaultCategoriesSub": "Brings back Self-love, Friendship, Couple, Family, Leisure and Work if you deleted them. Your memories are left untouched.",
+  "restoreDefaultCategoriesDone": "Default categories restored.",
+  "batchCategoryQuestion": "Which categories do these memories belong to?",
+  "batchCategorizeOneByOne": "Categorize one by one",
+  "deleteCategoryConfirmTitle": "Delete “{categorie}”?",
+  "@deleteCategoryConfirmTitle": {
+    "placeholders": {
+      "categorie": {
+        "type": "String"
+      }
+    }
+  },
+  "deleteCategoryConfirmBody": "{nombre, plural, one{One memory will lose this category.} other{{nombre} memories will lose this category.}} No memory is deleted.",
+  "@deleteCategoryConfirmBody": {
+    "placeholders": {
+      "nombre": {
+        "type": "int"
+      }
+    }
+  },
+  "filterByPeriod": "By period",
+  "filterByCategory": "By category",
+  "btnApply": "Apply",
+  "themePreviewQuestion": "What made you happy today?",
+  "notesThemesPurchaseMessage": "Dress your notes in the decor of your choice. Go Premium to unlock every theme.",
+  "themesTitleNotes": "Note themes"
 }

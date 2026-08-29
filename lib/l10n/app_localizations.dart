@@ -6,6 +6,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:intl/intl.dart' as intl;
 
 import 'app_localizations_en.dart';
+import 'app_localizations_es.dart';
 import 'app_localizations_fr.dart';
 
 // ignore_for_file: type=lint
@@ -95,6 +96,7 @@ abstract class AppLocalizations {
   /// A list of this localizations delegate's supported locales.
   static const List<Locale> supportedLocales = <Locale>[
     Locale('en'),
+    Locale('es'),
     Locale('fr'),
   ];
 
@@ -185,7 +187,7 @@ abstract class AppLocalizations {
   /// No description provided for @accessibility.
   ///
   /// In fr, this message translates to:
-  /// **'Apparence'**
+  /// **'Accessibilité'**
   String get accessibility;
 
   /// No description provided for @langues.
@@ -371,7 +373,7 @@ abstract class AppLocalizations {
   /// No description provided for @faqAnswer2.
   ///
   /// In fr, this message translates to:
-  /// **'Secoue ton téléphone ou clique sur le bocal pour faire remonter un souvenir au hasard.'**
+  /// **'Clique sur le bocal pour faire remonter un souvenir au hasard.'**
   String get faqAnswer2;
 
   /// No description provided for @faqQuestion3.
@@ -386,6 +388,30 @@ abstract class AppLocalizations {
   /// **'Va dans l\'historique et appuie longuement sur un souvenir. Tu pourras alors en sélectionner plusieurs et choisir \'Catégoriser\'.'**
   String get faqAnswer3;
 
+  /// No description provided for @faqQuestion5.
+  ///
+  /// In fr, this message translates to:
+  /// **'Comment catégoriser mes souvenirs un par un ?'**
+  String get faqQuestion5;
+
+  /// No description provided for @faqAnswer5.
+  ///
+  /// In fr, this message translates to:
+  /// **'Pour catégoriser tes souvenirs un par un, tu as 2 options :\n1- Importe tes souvenirs un par un.\n2- Depuis l\'écran de catégorisation du lot de souvenirs sélectionnés, clique sur la photo qui porte la pastille : un carrousel de tes souvenirs apparaît, avec l\'option « Catégoriser 1 par 1 ».'**
+  String get faqAnswer5;
+
+  /// No description provided for @faqQuestion6.
+  ///
+  /// In fr, this message translates to:
+  /// **'Comment supprimer des catégories de souvenirs ?'**
+  String get faqQuestion6;
+
+  /// No description provided for @faqAnswer6.
+  ///
+  /// In fr, this message translates to:
+  /// **'Dans l\'écran de sélection des catégories, fais glisser la catégorie que tu veux supprimer vers la gauche.'**
+  String get faqAnswer6;
+
   /// No description provided for @faqQuestion4.
   ///
   /// In fr, this message translates to:
@@ -397,18 +423,6 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Va dans l\'historique, fais un appui long le souvenir, sélectionne-le et appuie sur le bouton \'Supprimer\'.'**
   String get faqAnswer4;
-
-  /// No description provided for @filterTitle.
-  ///
-  /// In fr, this message translates to:
-  /// **'Filtrer'**
-  String get filterTitle;
-
-  /// No description provided for @categoriesTitle.
-  ///
-  /// In fr, this message translates to:
-  /// **'Catégories'**
-  String get categoriesTitle;
 
   /// No description provided for @catSelfLove.
   ///
@@ -1241,7 +1255,7 @@ abstract class AppLocalizations {
   /// No description provided for @themesTitle.
   ///
   /// In fr, this message translates to:
-  /// **'Thèmes'**
+  /// **'Thèmes de l\'écran d\'accueil'**
   String get themesTitle;
 
   /// No description provided for @themesDescription.
@@ -1292,6 +1306,12 @@ abstract class AppLocalizations {
   /// **'Sport'**
   String get themeSport;
 
+  /// No description provided for @themeVoyage.
+  ///
+  /// In fr, this message translates to:
+  /// **'Voyage'**
+  String get themeVoyage;
+
   /// No description provided for @themeMusique.
   ///
   /// In fr, this message translates to:
@@ -1310,11 +1330,23 @@ abstract class AppLocalizations {
   /// **'Animaux marins'**
   String get themeAnimauxMarins;
 
-  /// No description provided for @themeFloral.
+  /// No description provided for @themeAmour.
   ///
   /// In fr, this message translates to:
-  /// **'Floral'**
-  String get themeFloral;
+  /// **'Amour'**
+  String get themeAmour;
+
+  /// No description provided for @themeCelebration.
+  ///
+  /// In fr, this message translates to:
+  /// **'Célébrations'**
+  String get themeCelebration;
+
+  /// No description provided for @themeNature.
+  ///
+  /// In fr, this message translates to:
+  /// **'Nature'**
+  String get themeNature;
 
   /// No description provided for @themeKawaii.
   ///
@@ -1633,6 +1665,84 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'{ajoutes} souvenir(s) restauré(s), {ignores} déjà présent(s).'**
   String backupImportDone(int ajoutes, int ignores);
+
+  /// No description provided for @restoreDefaultCategoriesTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Restaurer les catégories par défaut'**
+  String get restoreDefaultCategoriesTitle;
+
+  /// No description provided for @restoreDefaultCategoriesSub.
+  ///
+  /// In fr, this message translates to:
+  /// **'Fait revenir Amour de soi, Amitié, Couple, Famille, Loisirs et Travail si tu les as supprimées. Tes souvenirs ne sont pas modifiés.'**
+  String get restoreDefaultCategoriesSub;
+
+  /// No description provided for @restoreDefaultCategoriesDone.
+  ///
+  /// In fr, this message translates to:
+  /// **'Catégories par défaut restaurées.'**
+  String get restoreDefaultCategoriesDone;
+
+  /// No description provided for @batchCategoryQuestion.
+  ///
+  /// In fr, this message translates to:
+  /// **'À quelle(s) catégorie(s) appartiennent ces souvenirs ?'**
+  String get batchCategoryQuestion;
+
+  /// No description provided for @batchCategorizeOneByOne.
+  ///
+  /// In fr, this message translates to:
+  /// **'Catégoriser 1 par 1'**
+  String get batchCategorizeOneByOne;
+
+  /// No description provided for @deleteCategoryConfirmTitle.
+  ///
+  /// In fr, this message translates to:
+  /// **'Supprimer « {categorie} » ?'**
+  String deleteCategoryConfirmTitle(String categorie);
+
+  /// No description provided for @deleteCategoryConfirmBody.
+  ///
+  /// In fr, this message translates to:
+  /// **'{nombre, plural, one{Un souvenir perdra cette catégorie.} other{{nombre} souvenirs perdront cette catégorie.}} Aucun souvenir n\'est supprimé.'**
+  String deleteCategoryConfirmBody(int nombre);
+
+  /// No description provided for @filterByPeriod.
+  ///
+  /// In fr, this message translates to:
+  /// **'Par période'**
+  String get filterByPeriod;
+
+  /// No description provided for @filterByCategory.
+  ///
+  /// In fr, this message translates to:
+  /// **'Par catégorie'**
+  String get filterByCategory;
+
+  /// No description provided for @btnApply.
+  ///
+  /// In fr, this message translates to:
+  /// **'Appliquer'**
+  String get btnApply;
+
+  /// No description provided for @themePreviewQuestion.
+  ///
+  /// In fr, this message translates to:
+  /// **'Qu\'est-ce qui te rend heureux·se aujourd\'hui ?'**
+  String get themePreviewQuestion;
+
+  /// No description provided for @notesThemesPurchaseMessage.
+  ///
+  /// In fr, this message translates to:
+  /// **'Habille tes notes du décor de ton choix. Passe à la version Premium pour débloquer tous les thèmes.'**
+  String get notesThemesPurchaseMessage;
+
+  /// No description provided for @themesTitleNotes.
+  ///
+  /// In fr, this message translates to:
+  /// **'Thèmes des notes'**
+  String get themesTitleNotes;
 }
 
 class _AppLocalizationsDelegate
@@ -1646,7 +1756,7 @@ class _AppLocalizationsDelegate
 
   @override
   bool isSupported(Locale locale) =>
-      <String>['en', 'fr'].contains(locale.languageCode);
+      <String>['en', 'es', 'fr'].contains(locale.languageCode);
 
   @override
   bool shouldReload(_AppLocalizationsDelegate old) => false;
@@ -1657,6 +1767,8 @@ AppLocalizations lookupAppLocalizations(Locale locale) {
   switch (locale.languageCode) {
     case 'en':
       return AppLocalizationsEn();
+    case 'es':
+      return AppLocalizationsEs();
     case 'fr':
       return AppLocalizationsFr();
   }

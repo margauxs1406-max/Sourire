@@ -3,7 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:sourire/main.dart';
 import 'package:sourire/theme/tokens.dart';
+import 'package:sourire/models/note_model.dart';
+import 'package:sourire/screens/screen_choix_theme_note.dart';
+import 'package:sourire/theme/theme_service.dart';
+import 'package:sourire/widgets/btn_rond_souvenir.dart';
+import 'package:sourire/widgets/modale_premium.dart';
 import 'package:sourire/models/theme_app.dart';
+import 'package:sourire/services/database_service.dart';
 import 'package:sourire/theme/user_prefs.dart'; 
 import 'package:sourire/widgets/logo_sourire.dart';
 import 'package:sourire/widgets/btn_chevron_gauche.dart';
@@ -15,11 +21,26 @@ class ScreenNewNote extends StatefulWidget {
   final SourireTheme couleur; 
   final ThemeApp themeVisuel; 
 
+  /// Souvenir à RÉÉCRIRE, ou `null` pour en écrire un nouveau.
+  ///
+  /// Le même écran sert aux deux, et c'est délibéré : il porte déjà le clavier,
+  /// le recentrage du texte, la typographie Lora et le fond thématique. Rendre
+  /// le souvenir modifiable sur place, dans la fenêtre de tirage, aurait voulu
+  /// dire réécrire tout cela dans un widget aujourd'hui en lecture seule.
+  ///
+  /// En modification, seul le TEXTE change : la date d'entrée dans le bocal,
+  /// la couleur et les catégories sont conservées. On ne repasse donc pas par
+  /// l'écran de catégorisation, on enregistre et on referme.
+  final NoteSourire? souvenirAModifier;
+
   const ScreenNewNote({
     required this.couleur,
     required this.themeVisuel,
+    this.souvenirAModifier,
     super.key,
   });
+
+  bool get enModification => souvenirAModifier != null;
 
   @override
   State<ScreenNewNote> createState() => _ScreenNewNoteState();
@@ -27,6 +48,9 @@ class ScreenNewNote extends StatefulWidget {
 
 class _ScreenNewNoteState extends State<ScreenNewNote> {
   final TextEditingController _controller = TextEditingController();
+
+  /// Décor du post-it. Part de celui reçu, puis suit la baguette.
+  late ThemeApp _themeVisuel;
   
   // Utilisation d'un ValueNotifier pour éviter le setState global sur tout l'écran
   final ValueNotifier<bool> _canValidateNotifier = ValueNotifier<bool>(false);
@@ -34,7 +58,14 @@ class _ScreenNewNoteState extends State<ScreenNewNote> {
   @override
   void initState() {
     super.initState();
+    _themeVisuel = widget.themeVisuel;
+    _controller.text = widget.souvenirAModifier?.text ?? '';
+    // Curseur en fin de texte : en modification, on vient presque toujours
+    // ajouter ou corriger la fin d'une phrase, pas repartir du début.
+    _controller.selection =
+        TextSelection.collapsed(offset: _controller.text.length);
     _controller.addListener(_updateValidationState);
+    _updateValidationState();
   }
 
   void _updateValidationState() {
@@ -42,6 +73,89 @@ class _ScreenNewNoteState extends State<ScreenNewNote> {
     if (_canValidateNotifier.value != isNotEmpty) {
       _canValidateNotifier.value = isNotEmpty;
     }
+  }
+
+  /// Enregistre, puis part là où il faut.
+  ///
+  /// Écriture d'un nouveau souvenir : on enchaîne sur la catégorisation, le
+  /// souvenir n'existe pas encore en base.
+  ///
+  /// Modification : on écrit le nouveau texte et on referme. Le souvenir a
+  /// déjà ses catégories, sa couleur et sa date — reposer la question des
+  /// catégories pour une correction de faute de frappe serait absurde. On
+  /// remonte le souvenir mis à jour à l'écran appelant, qui repeint aussitôt.
+  void _valider() {
+    final String texte = _controller.text;
+
+    if (widget.enModification) {
+      final NoteSourire misAJour =
+          widget.souvenirAModifier!.copyWith(text: texte);
+      DatabaseService().updateNote(misAJour);
+      Navigator.pop(context, misAJour);
+      return;
+    }
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ScreenCategorisationNote(
+          note: texte,
+          theme: widget.couleur,
+          themeVisuel: _themeVisuel,
+        ),
+      ),
+    );
+  }
+
+  /// Ouvre le choix du décor, et applique ce qui en revient.
+  ///
+  /// L'aperçu envoyé est un souvenir ÉPHÉMÈRE : la note n'existe pas encore en
+  /// base, on n'en fabrique une copie que pour la donner à peindre.
+  Future<void> _ouvrirChoixTheme() async {
+    final NoteSourire apercu = NoteSourire(
+      text: _controller.text,
+      themeLabel: _themeVisuel.id,
+      colorLabel: widget.couleur.label,
+      categories: const <String>[],
+      date: DateTime.now(),
+    );
+
+    final Object? resultat = await Navigator.push<Object?>(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ScreenChoixThemeNote(
+          apercu: apercu,
+          couleur: widget.couleur,
+          themeInitial: _themeVisuel,
+        ),
+      ),
+    );
+
+    if (!mounted || resultat == null) return;
+
+    // Thème verrouillé : on propose le Premium ICI, avec un argumentaire qui
+    // parle des notes.
+    //
+    // L'ancienne version renvoyait vers l'écran des thèmes de la home : le
+    // parcours se terminait sur une page qui vend autre chose que ce qu'on
+    // venait de demander. Quatrième point d'achat, donc, et pas un détour.
+    if (estAppelPremium(resultat)) {
+      final bool achete = await afficherModalePremium(
+        context,
+        titre: AppLocalizations.of(context)!.themesTitleNotes,
+        message: AppLocalizations.of(context)!.notesThemesPurchaseMessage,
+      );
+      if (!achete || !mounted) return;
+      // Premium tout juste acquis : on rouvre le choix, où tout est désormais
+      // déverrouillé. Refaire chercher la baguette serait une punition.
+      return _ouvrirChoixTheme();
+    }
+
+    if (resultat is! ThemeApp) return;
+    setState(() => _themeVisuel = resultat);
+    // Mémorisé comme défaut des prochaines notes — sans toucher au thème
+    // de la home, qui vit maintenant de son côté.
+    ThemeService.changerThemeNote(resultat);
   }
 
   @override
@@ -57,9 +171,11 @@ class _ScreenNewNoteState extends State<ScreenNewNote> {
     double screenHeight = MediaQuery.of(context).size.height;
     double screenWidth = MediaQuery.of(context).size.width;
 
-    double responsiveFontSize = screenWidth * 0.05; 
-    double largeurBouton = screenWidth * 0.4;
-    double hauteurBouton = screenHeight * 0.065;
+    // Bornées : sur un iPad, 40 % de la largeur donnaient un bouton de 410 pt
+    // de large, et 6,5 % de la hauteur un bouton de 89 pt de haut.
+    double responsiveFontSize = (screenWidth * 0.05).clamp(16.0, 24.0);
+    double largeurBouton = (screenWidth * 0.4).clamp(140.0, 260.0);
+    double hauteurBouton = (screenHeight * 0.065).clamp(46.0, 64.0);
 
     final String accordAffiche = UserPrefs.accordHeureux;
 
@@ -73,7 +189,7 @@ class _ScreenNewNoteState extends State<ScreenNewNote> {
         
         final Color iconColor = isDarkMode 
             ? Colors.white.withValues(alpha: 0.25) 
-            : widget.couleur.main.withValues(alpha: widget.themeVisuel.noteIconOpacity);
+            : widget.couleur.main.withValues(alpha: _themeVisuel.noteIconOpacity);
 
         return Scaffold(
           backgroundColor: isDarkMode ? darkBg : white,
@@ -117,11 +233,18 @@ class _ScreenNewNoteState extends State<ScreenNewNote> {
 
                               return Container(
                                 decoration: BoxDecoration(
-                                  color: isDarkMode ? darkSurface : widget.couleur.light, 
+                                  // `fond` et non `darkSurface` : le gris
+                                  // uniforme faisait perdre à la note sa
+                                  // couleur au moment même où on la choisit,
+                                  // et ne correspondait pas au fond des
+                                  // pastilles de l'écran de thèmes.
+                                  color: widget.couleur.fond(isDarkMode),
                                   borderRadius: BorderRadius.circular(radiusDefault),
                                   boxShadow: isDarkMode ? null : shadowDrop,
                                   border: Border.all(
-                                    color: isDarkMode ? darkSeparateur : widget.couleur.main.withValues(alpha: 0.2),
+                                    color: isDarkMode
+                                        ? darkSeparateur
+                                        : widget.couleur.main.withValues(alpha: 0.2),
                                     width: 1.5,
                                   ),
                                 ),
@@ -133,7 +256,7 @@ class _ScreenNewNoteState extends State<ScreenNewNote> {
                                       children: [
                                         
                                         // --- 1. LES ICÔNES DE FOND (Ne bougent plus, dessinées une seule fois) ---
-                                        ...widget.themeVisuel.noteIcons.map((config) {
+                                        ..._themeVisuel.noteIcons.map((config) {
                                           final double width = config.getWidth(postItSize);
                                           final double height = config.getHeight(postItSize);
                                           final double left = config.getX(postItSize);
@@ -194,6 +317,30 @@ class _ScreenNewNoteState extends State<ScreenNewNote> {
                                             ),
                                           ),
                                         ),
+
+                                        // --- 3. LA BAGUETTE ---
+                                        //
+                                        // Même pastille que le partage et la
+                                        // réécriture d'un souvenir : ce sont
+                                        // toutes des actions posées SUR une
+                                        // note, elles se ressemblent donc.
+                                        //
+                                        // Visible pour tout le monde, y compris
+                                        // sans premium : c'est ici, au moment
+                                        // où l'on écrit, que l'envie d'un beau
+                                        // décor se manifeste — donc ici que
+                                        // l'offre a le plus de sens.
+                                        Positioned(
+                                          right: 12,
+                                          bottom: 12,
+                                          child: Opacity(
+                                            opacity: 0.8,
+                                            child: BtnRondSouvenir(
+                                              icone: Icons.auto_fix_high,
+                                              onTap: _ouvrirChoixTheme,
+                                            ),
+                                          ),
+                                        ),
                                       ],
                                     ),
                                   ),
@@ -226,18 +373,7 @@ class _ScreenNewNoteState extends State<ScreenNewNote> {
                               // Le orange de la marque, pas la couleur tirée au
                               // sort : seule la note elle-même se colore.
                               color: orange,
-                              onTap: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => ScreenCategorisationNote(
-                                      note: _controller.text,
-                                      theme: widget.couleur,      
-                                      themeVisuel: widget.themeVisuel, 
-                                    ),
-                                  ),
-                                );
-                              }, 
+                              onTap: _valider, 
                             );
                           },
                         ),

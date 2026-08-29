@@ -23,13 +23,6 @@ import 'package:sourire/models/note_model.dart';
 import 'package:sourire/widgets/bocal_pastilles.dart';
 import 'package:sourire/services/milestones_service.dart';
 import 'package:sourire/widgets/popup_palier.dart';
-import 'package:sourire/screens/screen_testeurs.dart';
-
-/// Passe à `true` pour réafficher le bouton "Espace testeurs" sur la Home
-/// (utile pendant la phase de test), et à `false` pour le masquer avant
-/// de prendre des captures d'écran destinées aux stores.
-const bool afficherBoutonEspaceTesteurs = true;
-
 // --- LE VERRE DU BOCAL --------------------------------------------------------
 //
 // Deux calques, et l'ordre compte : la STRUCTURE passe derrière les billes,
@@ -44,10 +37,16 @@ const bool afficherBoutonEspaceTesteurs = true;
 const Color _verreClair = Color(0xB81E1408); // encre chaude, 72 %
 const Color _verreSombre = Color(0xBFFFFFFF); // lumière froide, 75 %
 
-/// Hautes lumières du verre, devant les billes. Toujours blanches : un reflet
-/// est de la lumière, quelle que soit la couleur du fond.
-const Color _refletClair = Color(0xB2FFFFFF); // 70 % (était 75)
-const Color _refletSombre = Color(0xB2FFFFFF); // 70 % (était 80)
+/// Hautes lumières du verre, devant les billes.
+///
+/// En mode CLAIR le reflet est un blanc franc : posé sur un fond crème, il se
+/// lit comme de la lumière. En mode SOMBRE le même blanc à la même opacité
+/// devient une source lumineuse en soi — il crève l'écran et efface les
+/// billes qu'il traverse. On y descend donc l'opacité et on quitte le blanc
+/// pur pour un gris bleuté : le reflet redevient de la lumière AMBIANTE
+/// renvoyée par la paroi, et non une lampe allumée derrière le bocal.
+const Color _refletClair = Color(0xB2FFFFFF); // blanc pur, 70 %
+const Color _refletSombre = Color(0x73C6D2DE); // gris bleuté, 45 %
 
 class Home extends StatefulWidget {
   const Home({super.key});
@@ -444,48 +443,68 @@ void _verifierEtDeclencherSouvenir() async {
       // depuis. On revérifie avant de passer le context au sélecteur.
       if (!context.mounted) return;
 
-      final List<AssetEntity>? result = await AssetPicker.pickAssets(
-        context,
-        pickerConfig: AssetPickerConfig(
-          maxAssets: maxAssetsAutorises,
-          requestType: RequestType.image,
-          textDelegate: const FrenchAssetPickerTextDelegate(),
-          gridThumbnailSize: const ThumbnailSize.square(240),
-          dragToSelect: false,
-          pickerTheme: AssetPicker.themeData(orange).copyWith(
-            colorScheme: const ColorScheme.dark(
-              primary: orange,
-              secondary: orange,
-            ),
-            checkboxTheme: CheckboxThemeData(
-              fillColor: WidgetStateProperty.resolveWith<Color?>((states) {
-                if (states.contains(WidgetState.selected)) {
-                  return orange; 
-                }
-                return Colors.white.withValues(alpha: 0.2); 
-              }),
-              checkColor: WidgetStateProperty.all(Colors.white),
-            ),
-            elevatedButtonTheme: ElevatedButtonThemeData(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: orange, 
-                foregroundColor: Colors.white, 
-                disabledBackgroundColor: Colors.grey[800], 
+      // Boucle volontaire : le chevron de retour du premier écran de
+      // catégorisation renvoie `retourVersGalerie`, et on ROUVRE alors le
+      // sélecteur au lieu de retomber sur l'accueil. La galerie n'est pas une
+      // page de l'app — c'est une fonction qui s'ouvre et se referme — donc
+      // « revenir à la galerie » ne peut pas être un simple `pop`.
+      //
+      // La sélection précédente est repassée au sélecteur : on retrouve ses
+      // photos déjà cochées, exactement comme on les avait laissées.
+      List<AssetEntity>? selectionPrecedente;
+
+      while (true) {
+        final List<AssetEntity>? result = await AssetPicker.pickAssets(
+          context,
+          pickerConfig: AssetPickerConfig(
+            maxAssets: maxAssetsAutorises,
+            selectedAssets: selectionPrecedente,
+            requestType: RequestType.image,
+            textDelegate: const FrenchAssetPickerTextDelegate(),
+            gridThumbnailSize: const ThumbnailSize.square(240),
+            dragToSelect: false,
+            pickerTheme: AssetPicker.themeData(orange).copyWith(
+              colorScheme: const ColorScheme.dark(
+                primary: orange,
+                secondary: orange,
+              ),
+              checkboxTheme: CheckboxThemeData(
+                fillColor: WidgetStateProperty.resolveWith<Color?>((states) {
+                  if (states.contains(WidgetState.selected)) {
+                    return orange; 
+                  }
+                  return Colors.white.withValues(alpha: 0.2); 
+                }),
+                checkColor: WidgetStateProperty.all(Colors.white),
+              ),
+              elevatedButtonTheme: ElevatedButtonThemeData(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: orange, 
+                  foregroundColor: Colors.white, 
+                  disabledBackgroundColor: Colors.grey[800], 
+                ),
               ),
             ),
           ),
-        ),
-      );
+        );
 
-      if (result != null && result.isNotEmpty) {
+        // Sélecteur fermé sans rien choisir : l'utilisateur voulait sortir.
+        if (result == null || result.isEmpty) return;
         if (!context.mounted) return;
 
-        Navigator.push(
+        selectionPrecedente = result;
+
+        final Object? retour = await Navigator.push<Object?>(
           context,
           MaterialPageRoute(
             builder: (context) => ScreenCategorisationPhoto(photos: result),
           ),
         );
+
+        // Tout sauf `retourVersGalerie` signifie que le parcours est terminé :
+        // souvenirs enregistrés, ou abandon depuis un écran plus profond.
+        if (retour != retourVersGalerie) return;
+        if (!context.mounted) return;
       }
     } catch (e) {
       debugPrint("Erreur : $e");
@@ -777,8 +796,11 @@ Widget build(BuildContext context) {
   final String accordAffiche = UserPrefs.accordHeureux;
   final DatabaseService databaseService = DatabaseService();
 
-  double responsiveWelcomeFontSize = screenWidth * 0.05; 
-  double responsiveQuestionFontSize = screenWidth * 0.07; 
+  // Tailles proportionnelles à la largeur, mais BORNÉES. Sans borne, la
+  // question d'accueil passait à 72 pt sur un iPad tenu en portrait, et à
+  // 95 pt en paysage — un écran d'affichage de gare, pas une app intime.
+  double responsiveWelcomeFontSize = (screenWidth * 0.05).clamp(18.0, 26.0);
+  double responsiveQuestionFontSize = (screenWidth * 0.07).clamp(24.0, 36.0);
 
   // `MyApp.themeNotifier` pilote le `themeMode` du MaterialApp : tout
   // changement reconstruit cet écran, il n'y a donc rien à écouter ici.
@@ -871,16 +893,24 @@ Positioned.fill(
                     child: Stack( 
                       children: [
                         Positioned(
-                          top: heightScreen * 0.15, 
+                          top: heightScreen * 0.15,
                           left: screenWidth * 0.1,
                           right: screenWidth * 0.1,
-                          child: Column(
+                          // Sur tablette, 80 % de la largeur font une ligne de
+                          // texte d'un mètre : l'œil perd le début de la ligne
+                          // suivante. On borne la colonne et on la centre —
+                          // sans effet sur téléphone, déjà plus étroit.
+                          child: ContenuCentre(
+                            child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
+                              // L'accueil et sa question ne se touchent pas :
+                              // ils restent en encre. Dans cette application,
+                              // l'orange signale une action.
                               Text(
                                 l10n.welcomeMessage(prenomAffiche),
                                 style: styleTitreLora.copyWith(
-                                  color: orange, 
+                                  color: texteTitre(isDarkMode),
                                   fontSize: tailleLora(responsiveWelcomeFontSize),
                                 ),
                               ),
@@ -888,46 +918,13 @@ Positioned.fill(
                               Text(
                                 l10n.mainQuestion(accordAffiche), 
                                 style: styleTitreLora.copyWith(
-                                  color: orange, 
+                                  color: texteTitre(isDarkMode),
                                   fontSize: tailleLora(responsiveQuestionFontSize),
                                   height: 1.2,
                                 ),
                               ),
-                              // --- BOUTON "ESPACE TESTEURS" : masqué temporairement
-                              // pour les captures d'écran Play Store / App Store.
-                              // Repasse `afficherBoutonEspaceTesteurs` à `true` en
-                              // haut de ce fichier pour le faire réapparaître.
-                              if (afficherBoutonEspaceTesteurs) ...[
-                                const SizedBox(height: 12),
-                                GestureDetector(
-                                  onTap: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(builder: (context) => const ScreenTesteurs()),
-                                    );
-                                  },
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                                    decoration: BoxDecoration(
-                                      color: orange.withValues(alpha: 0.12),
-                                      borderRadius: BorderRadius.circular(20),
-                                      border: Border.all(color: orange.withValues(alpha: 0.35), width: 1),
-                                    ),
-                                    child: const Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Icon(Icons.science_outlined, color: orange, size: 16),
-                                        SizedBox(width: 6),
-                                        Text(
-                                          "Espace testeurs",
-                                          style: TextStyle(color: orange, fontSize: 13, fontWeight: FontWeight.w600),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ],
                             ],
+                            ),
                           ),
                         ),
 
@@ -945,45 +942,84 @@ Positioned.fill(
         child: Stack(
           clipBehavior: Clip.none,
           children: [
-            // 1. Ombre AU SOL, en deux couches pour donner de la profondeur.
-            //    L'ancienne ombre reprenait la silhouette entière du PNG et
-            //    donnait l'impression que le bocal flottait dans le vide.
+            // 1. Ombre AU SOL, en TROIS couches. L'ancienne ombre reprenait la
+            //    silhouette entière du PNG et donnait l'impression que le
+            //    bocal flottait dans le vide.
             //
-            //    1a. La nappe : large et très floue, elle décolle le bocal du
-            //        fond et tient lieu de lumière ambiante.
+            //    UNE SEULE SOURCE, POSÉE À GAUCHE. Les trois couches sont donc
+            //    décalées vers la DROITE : leur bord gauche rentre sous le
+            //    bocal, leur bord droit déborde franchement. Une ombre
+            //    symétrique voudrait dire une lumière au zénith exact — c'est
+            //    ce qui donnait l'impression d'un objet en lévitation.
+            //
+            //    ET ELLES SONT APLATIES. La hauteur de chaque ellipse et le
+            //    flou VERTICAL sont bien plus faibles que leurs équivalents
+            //    horizontaux : une ombre projetée sur une table s'étale au
+            //    ras de la surface, elle ne monte pas.
+            //
+            //    Enfin, les trois couches racontent la même chose à trois
+            //    distances : plus une couche est loin du bocal, plus elle est
+            //    large, floue et pâle. C'est ce dégradé-là qui fait la
+            //    profondeur — une ombre unique, si dense soit-elle, reste un
+            //    autocollant.
+            //
+            //    1a. Le halo : la traîne la plus lointaine, celle qui part le
+            //        plus loin sur la droite et se perd dans le fond.
             Positioned(
-              left: bocalWidth * 0.05,
-              right: bocalWidth * 0.05,
-              bottom: -bocalHeight * 0.012,
-              height: bocalHeight * 0.085,
+              left: bocalWidth * 0.10,
+              right: -bocalWidth * 0.32,
+              bottom: -bocalHeight * 0.010,
+              height: bocalHeight * 0.105,
               child: ImageFiltered(
-                imageFilter: ImageFilter.blur(sigmaX: 22.0, sigmaY: 13.0, tileMode: TileMode.decal),
+                imageFilter: ImageFilter.blur(sigmaX: 44.0, sigmaY: 11.0, tileMode: TileMode.decal),
                 child: DecoratedBox(
                   decoration: BoxDecoration(
-                    color: black.withValues(alpha: 0.16),
+                    color: black.withValues(alpha: 0.10),
                     borderRadius: BorderRadius.all(
-                      Radius.elliptical(bocalWidth, bocalHeight * 0.085),
+                      Radius.elliptical(bocalWidth, bocalHeight * 0.105),
                     ),
                   ),
                 ),
               ),
             ),
 
-            //    1b. Le contact : resserré et plus dense, juste sous le verre.
-            //        C'est cette seconde couche qui donne le sentiment que le
-            //        bocal est POSÉ, et non simplement dessiné par-dessus.
+            //    1b. La nappe : le corps de l'ombre, encore floue mais déjà
+            //        lisible comme une forme.
             Positioned(
-              left: bocalWidth * 0.21,
-              right: bocalWidth * 0.21,
-              bottom: bocalHeight * 0.014,
-              height: bocalHeight * 0.032,
+              left: bocalWidth * 0.14,
+              right: -bocalWidth * 0.16,
+              bottom: -bocalHeight * 0.012,
+              height: bocalHeight * 0.068,
               child: ImageFiltered(
-                imageFilter: ImageFilter.blur(sigmaX: 8.0, sigmaY: 5.0, tileMode: TileMode.decal),
+                imageFilter: ImageFilter.blur(sigmaX: 24.0, sigmaY: 8.0, tileMode: TileMode.decal),
                 child: DecoratedBox(
                   decoration: BoxDecoration(
-                    color: black.withValues(alpha: 0.24),
+                    color: black.withValues(alpha: 0.17),
                     borderRadius: BorderRadius.all(
-                      Radius.elliptical(bocalWidth, bocalHeight * 0.032),
+                      Radius.elliptical(bocalWidth, bocalHeight * 0.068),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+
+            //    1c. Le contact : resserré et plus dense, juste sous le verre.
+            //        C'est cette dernière couche qui donne le sentiment que le
+            //        bocal est POSÉ, et non simplement dessiné par-dessus.
+            //        Elle est la moins décalée des trois : au point de contact,
+            //        l'ombre touche encore l'objet.
+            Positioned(
+              left: bocalWidth * 0.23,
+              right: bocalWidth * 0.07,
+              bottom: bocalHeight * 0.012,
+              height: bocalHeight * 0.026,
+              child: ImageFiltered(
+                imageFilter: ImageFilter.blur(sigmaX: 8.0, sigmaY: 3.0, tileMode: TileMode.decal),
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: black.withValues(alpha: 0.30),
+                    borderRadius: BorderRadius.all(
+                      Radius.elliptical(bocalWidth, bocalHeight * 0.026),
                     ),
                   ),
                 ),
@@ -1107,7 +1143,9 @@ BtnNewNote(
       final SourireTheme couleurChoisie = couleursDisponibles.first;
       _derniereCouleurNote = couleurChoisie;
 
-      final ThemeApp themeVisuelSelectionne = ThemeService.themeVisuelNotifier.value;
+      // Le thème des NOTES, pas celui du décor : depuis la baguette, les deux
+      // vivent séparément. Voir ThemeService.
+      final ThemeApp themeVisuelSelectionne = ThemeService.themeNoteNotifier.value;
 
       if (!context.mounted) return;
       Navigator.push(

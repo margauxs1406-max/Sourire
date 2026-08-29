@@ -3,6 +3,7 @@ import 'dart:io' show Platform;
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:sourire/l10n/app_localizations.dart';
+import 'package:sourire/l10n/langues.dart';
 import 'package:sourire/main.dart';
 import 'package:sourire/screens/screen_choix_themes.dart';
 import 'package:sourire/screens/screen_template_reglages.dart';
@@ -945,6 +946,35 @@ _buildMenuRow(
                                       setLocalState(() {});
                                     },
                                   ),
+                                  const SizedBox(height: 20),
+                                  // Ramène les six catégories par défaut que
+                                  // l'utilisateur aurait supprimées. Action non
+                                  // destructive : elle ne fait que lever les
+                                  // masquages, aucun souvenir n'est touché.
+                                  // Recréer « Famille » à la main donnerait une
+                                  // catégorie en texte brut, qui resterait
+                                  // française même en anglais — d'où ce bouton.
+                                  _buildActionSauvegarde(
+                                    icone: Icons.label_outline,
+                                    titre: localizations?.restoreDefaultCategoriesTitle
+                                        ?? "Restaurer les catégories par défaut",
+                                    sousTitre: localizations?.restoreDefaultCategoriesSub ?? "",
+                                    isDark: isDark,
+                                    onTap: () async {
+                                      await _databaseService.restaurerCategoriesParDefaut();
+                                      if (!context.mounted) return;
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(
+                                          content: Text(
+                                            localizations?.restoreDefaultCategoriesDone
+                                                ?? "Catégories par défaut restaurées.",
+                                          ),
+                                          backgroundColor: orange,
+                                        ),
+                                      );
+                                      setLocalState(() {});
+                                    },
+                                  ),
                                 ],
                               ),
                             ),
@@ -956,7 +986,7 @@ _buildMenuRow(
                     // 4. APPARENCE
                     _buildMenuRow(
                       icon: Icons.accessibility_new_outlined,
-                      title: localizations?.accessibility ?? "Apparence",
+                      title: localizations?.accessibility ?? "Accessibilité",
                       couleurTextePrincipal: couleurTextePrincipal,
                       onTap: () {
                         Navigator.push(
@@ -1041,34 +1071,29 @@ _buildMenuRow(
             return ScreenTemplateReglages(
               isDarkMode: isDark,
               titre: localLocalizations?.langues ?? "Langues",
-              content: [
-                WidgetRadioLangue(
-                  label: localLocalizations?.francais ?? "Français",
-                  isSelected: langueSelectionnee == "fr",
-                  onTap: () async {
-                    langueSelectionnee = "fr";
-                    await UserPrefs.setLangue("fr");
-                    MyApp.localeNotifier.value = const Locale('fr', 'FR');
+              // Une ligne par langue du catalogue. Le libellé vient de
+              // `langue.nom` et non des traductions : chaque langue s'écrit
+              // dans sa propre langue, sinon quelqu'un qui a mis l'app en
+              // espagnol par erreur ne saurait plus retrouver la sienne.
+              content: <Widget>[
+                for (final LangueApp langue in Langues.toutes) ...<Widget>[
+                  WidgetRadioLangue(
+                    label: langue.nom,
+                    isSelected: langueSelectionnee == langue.code,
+                    onTap: () async {
+                      langueSelectionnee = langue.code;
+                      await UserPrefs.setLangue(langue.code);
+                      MyApp.localeNotifier.value = langue.locale;
 
-                    // --- AJOUT : Force l'OS à reprogrammer les pushs en Français ---
-                    await NotificationService.planifierRappelGratitude();
-                    await NotificationService.planifierRappelSouvenirs();
-                  },
-                ),
-                const SizedBox(height: 12),
-                WidgetRadioLangue(
-                  label: localLocalizations?.anglais ?? "English",
-                  isSelected: langueSelectionnee == "en",
-                  onTap: () async {
-                    langueSelectionnee = "en";
-                    await UserPrefs.setLangue("en");
-                    MyApp.localeNotifier.value = const Locale('en', 'US');
-
-                    // --- AJOUT : Force l'OS à reprogrammer les pushs en Anglais ---
-                    await NotificationService.planifierRappelGratitude();
-                    await NotificationService.planifierRappelSouvenirs();
-                  },
-                ),
+                      // Les notifications sont programmées côté OS avec leur
+                      // texte figé : sans reprogrammation, elles arriveraient
+                      // encore dans l'ancienne langue.
+                      await NotificationService.planifierRappelGratitude();
+                      await NotificationService.planifierRappelSouvenirs();
+                    },
+                  ),
+                  if (langue != Langues.toutes.last) const SizedBox(height: 12),
+                ],
               ],
             );
           },
@@ -1099,13 +1124,32 @@ _buildMenuRow(
                                   isDark
                                 ),
                                 _buildFAQItem(
-                                  localizations?.faqQuestion2 ?? "Comment fonctionne le tirage au sort ?", 
-                                  localizations?.faqAnswer2 ?? "Secoue ton téléphone ou clique sur le bocal pour faire remonter un souvenir au hasard.", 
+                                  localizations?.faqQuestion2 ?? "Comment fonctionne le tirage au sort ?",
+                                  // La secousse n'a jamais été branchée : la
+                                  // réponse promettait un geste qui ne marche
+                                  // pas.
+                                  localizations?.faqAnswer2 ?? "Clique sur le bocal pour faire remonter un souvenir au hasard.",
                                   isDark
                                 ),
                                 _buildFAQItem(
-                                  localizations?.faqQuestion3 ?? "Comment catégoriser des souvenirs ?", 
-                                  localizations?.faqAnswer3 ?? "Va dans l'historique et appuie longuement sur un souvenir. Tu pourras alors en sélectionner plusieurs et choisir 'Catégoriser'.", 
+                                  localizations?.faqQuestion3 ?? "Comment catégoriser des souvenirs ?",
+                                  localizations?.faqAnswer3 ?? "Va dans l'historique et appuie longuement sur un souvenir. Tu pourras alors en sélectionner plusieurs et choisir 'Catégoriser'.",
+                                  isDark
+                                ),
+                                // Juste après la catégorisation par lot : c'est
+                                // en la découvrant qu'on se demande comment
+                                // faire autrement.
+                                _buildFAQItem(
+                                  localizations?.faqQuestion5 ?? "Comment catégoriser mes souvenirs un par un ?",
+                                  localizations?.faqAnswer5 ?? "Pour catégoriser tes souvenirs un par un, tu as 2 options :\n1- Importe tes souvenirs un par un.\n2- Depuis l'écran de catégorisation du lot de souvenirs sélectionnés, clique sur la photo qui porte la pastille : un carrousel de tes souvenirs apparaît, avec l'option « Catégoriser 1 par 1 ».",
+                                  isDark
+                                ),
+                                // Les catégories avant les souvenirs : on
+                                // regroupe ce qui parle de rangement, et la
+                                // suppression des souvenirs reste en dernier.
+                                _buildFAQItem(
+                                  localizations?.faqQuestion6 ?? "Comment supprimer des catégories de souvenirs ?",
+                                  localizations?.faqAnswer6 ?? "Dans l'écran de sélection des catégories, fais glisser la catégorie que tu veux supprimer vers la gauche.",
                                   isDark
                                 ),
                                 _buildFAQItem(

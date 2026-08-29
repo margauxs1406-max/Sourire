@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:sourire/l10n/app_localizations.dart';
 import 'package:sourire/main.dart'; 
 import 'package:sourire/theme/tokens.dart';
-import 'package:sourire/widgets/item_categorie.dart';
 import 'package:sourire/widgets/btn_action.dart';
 import 'package:sourire/widgets/logo_sourire.dart';
 import 'package:sourire/widgets/btn_chevron_gauche.dart';
 import 'package:sourire/models/note_model.dart';
+import 'package:sourire/screens/screen_apercu_lot.dart';
 import 'package:sourire/services/database_service.dart';
+import 'package:sourire/widgets/categorie_glissable.dart';
+import 'package:sourire/widgets/pastille_nombre.dart';
 import 'package:sourire/widgets/souvenir_historique.dart';
 import 'package:sourire/widgets/btn_action_categorie.dart';
 
@@ -15,9 +17,23 @@ class ScreenRecategorisationHistorique extends StatefulWidget {
   final List<NoteSourire> souvenirs;
   final int currentIndex;
 
+  /// Recatégoriser TOUS les souvenirs sélectionnés d'un coup.
+  ///
+  /// Comportement par défaut d'une sélection multiple dans l'historique, avec
+  /// une échappatoire vers le mode unitaire. Voir la documentation du même
+  /// champ dans `ScreenCategorisationPhoto`.
+  ///
+  /// Sans effet sur un souvenir seul.
+  final bool modeLot;
+
+  /// Catégories déjà cochées à l'ouverture, pour le passage du lot à l'unité.
+  final List<String>? categoriesInitiales;
+
   const ScreenRecategorisationHistorique({
     required this.souvenirs,
     this.currentIndex = 0,
+    this.modeLot = true,
+    this.categoriesInitiales,
     super.key,
   });
 
@@ -32,16 +48,33 @@ class _ScreenRecategorisationHistoriqueState extends State<ScreenRecategorisatio
   bool _isAddingNew = false;
   bool get isLast => widget.currentIndex == widget.souvenirs.length - 1;
 
+  /// `true` quand l'écran range plusieurs souvenirs d'un seul geste.
+  bool get enLot => widget.modeLot && widget.souvenirs.length > 1;
+
+  /// Nombre de souvenirs qui SUIVENT celui montré en vignette — le « +9 ».
+  int get souvenirsSuivants => widget.souvenirs.length - 1;
+
   @override
   void initState() {
     super.initState();
-    _selectedCategories.addAll(
-      widget.souvenirs[widget.currentIndex].categories.where((cat) => 
-        cat != "sans_categorie" && 
-        cat != "Non classées" && 
-        cat != "Non classé"
-      )
-    );
+
+    // En arrivant du mode lot, on repart des catégories déjà cochées pour
+    // l'ensemble. Sinon on part de celles du souvenir courant.
+    //
+    // En mode lot lui-même, on part d'une ardoise VIDE et non des catégories
+    // du premier souvenir : valider écrasera celles de tous les autres, il
+    // serait déloyal de pré-cocher au nom d'un seul.
+    if (widget.categoriesInitiales != null) {
+      _selectedCategories.addAll(widget.categoriesInitiales!);
+    } else if (!enLot) {
+      _selectedCategories.addAll(
+        widget.souvenirs[widget.currentIndex].categories.where((cat) => 
+          cat != "sans_categorie" && 
+          cat != "Non classées" && 
+          cat != "Non classé"
+        )
+      );
+    }
   }
 
   @override
@@ -76,75 +109,68 @@ class _ScreenRecategorisationHistoriqueState extends State<ScreenRecategorisatio
     }
   }
 
-  void _ouvrirModaleSuppression(BuildContext context, bool isDarkMode) {
-    final localizations = AppLocalizations.of(context)!;
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return StreamBuilder<List<String>>(
-          stream: _databaseService.getCategoriesStream(),
-          builder: (context, snapshot) {
-            final categoriesList = snapshot.data ?? _databaseService.getAllCategories();
-            const systemKeys = ["self_love", "friendship", "couple", "family", "leisure", "work"];
-            final customList = categoriesList.where((cat) => !systemKeys.contains(cat)).toList();
-            
-            return AlertDialog(
-              backgroundColor: isDarkMode ? const Color(0xFF1E1E1E) : Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-              title: Text(
-                localizations.titleDeleteModal,
-                style: styleTitreAction.copyWith(color: texteFort(isDarkMode)),
-              ),
-              content: customList.isEmpty
-                  ? Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 20),
-                      child: Text(
-                        localizations.noCustomCategoryToDelete,
-                        style: TextStyle(color: isDarkMode ? Colors.white70 : Colors.black54),
-                        textAlign: TextAlign.center,
-                      ),
-                    )
-                  : SizedBox(
-                      width: double.maxFinite,
-                      height: 250,
-                      child: ListView.builder(
-                        shrinkWrap: true,
-                        itemCount: customList.length,
-                        itemBuilder: (context, index) {
-                          final currentCat = customList[index];
-                          return ListTile(
-                            contentPadding: EdgeInsets.zero,
-                            title: Text(
-                              currentCat,
-                              style: TextStyle(color: isDarkMode ? Colors.white : Colors.black),
-                            ),
-                            trailing: IconButton(
-                              icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
-                              onPressed: () {
-                                _databaseService.deleteCategory(currentCat);
-                                setState(() {
-                                  _selectedCategories.remove(currentCat);
-                                });
-                              },
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: Text(localizations.btnClose, style: const TextStyle(color: orange, fontWeight: FontWeight.bold)),
-                ),
-              ],
-            );
-          },
-        );
-      },
+  /// Applique les catégories cochées à TOUS les souvenirs du lot.
+  void _validerLeLot() {
+    final List<String> nouvelles = _selectedCategories.isEmpty
+        ? ["sans_categorie"]
+        : List<String>.from(_selectedCategories);
+
+    for (int i = 0; i < widget.souvenirs.length; i++) {
+      final NoteSourire misAJour =
+          widget.souvenirs[i].copyWith(categories: nouvelles);
+      _databaseService.updateNote(misAJour);
+      widget.souvenirs[i] = misAJour;
+    }
+
+    if (mounted) Navigator.of(context).pop(widget.souvenirs);
+  }
+
+  /// Ouvre le carrousel du lot, et écoute ce qu'il en revient.
+  Future<void> _ouvrirApercuDuLot() async {
+    final bool? unParUn = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ScreenApercuLot(
+          nombre: widget.souvenirs.length,
+          // WidgetSouvenirHistorique met tout à l'échelle de la largeur qu'on
+          // lui donne — texte comme icônes de thème. Le même widget sert donc
+          // de vignette de 80 px et d'aperçu plein écran.
+          constructeurApercu: (context, index) =>
+              WidgetSouvenirHistorique(souvenir: widget.souvenirs[index]),
+        ),
+      ),
     );
+
+    if (unParUn == true && mounted) _basculerEnUnParUn();
+  }
+
+  /// Bascule du mode lot vers le mode unitaire en gardant la pré-sélection.
+  ///
+  /// `push` et non `pushReplacement` : l'écran de lot reste en dessous, si
+  /// bien que le chevron de retour depuis le premier souvenir y ramène. On
+  /// peut donc essayer le mode une par une et changer d'avis.
+  void _basculerEnUnParUn() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ScreenRecategorisationHistorique(
+          souvenirs: widget.souvenirs,
+          modeLot: false,
+          categoriesInitiales: List<String>.from(_selectedCategories),
+        ),
+      ),
+    ).then((resultat) {
+      // La liste mise à jour remonte de souvenir en souvenir jusqu'ici ; sans
+      // ce relais, elle s'arrêterait sur l'écran de lot et l'historique ne se
+      // rafraîchirait pas.
+      if (mounted && resultat != null) {
+        Navigator.of(context).pop(resultat);
+      }
+    });
   }
 
   void _validerOuSuivant() {
+    if (enLot) return _validerLeLot();
     final souvenirActuel = widget.souvenirs[widget.currentIndex];
     final nouvellesCategories = _selectedCategories.isEmpty 
         ? ["sans_categorie"] 
@@ -193,7 +219,11 @@ class _ScreenRecategorisationHistoriqueState extends State<ScreenRecategorisatio
     final double echelleTexte =
         MediaQuery.textScalerOf(context).scale(1.0).clamp(1.0, 1.6);
     const double topBarHeight = 60.0; 
-    final double titleHeight = 120.0 * echelleTexte;
+    // Le bandeau est calé sur son contenu : 15 px au-dessus, l'aperçu de
+    // 80 px, puis 8 px en dessous. Il restait auparavant du vide sous le
+    // titre. Le facteur d'échelle du texte est conservé : il redonne de la
+    // marge quand l'utilisateur grossit la police du système.
+    final double titleHeight = 103.0 * echelleTexte;
     final double bottomBarHeight = 110.0 * echelleTexte;
 
     return GestureDetector(
@@ -257,29 +287,56 @@ class _ScreenRecategorisationHistoriqueState extends State<ScreenRecategorisatio
                           height: titleHeight,
                           child: Container(
                             color: isDarkMode ? darkBg : white,
-                            padding: const EdgeInsets.only(top: 15, bottom: 10),
+                            padding: const EdgeInsets.only(top: 15, bottom: 8),
                             child: Row(
                               crossAxisAlignment: CrossAxisAlignment.center,
                               children: [
                                 Expanded(
                                   child: Text(
-                                    localizations.categoryQuestion,
+                                    enLot
+                                        ? localizations.batchCategoryQuestion
+                                        : localizations.categoryQuestion,
                                     style: styleTitreLora.copyWith(
-                                      color: isDarkMode ? Colors.white : orange,
+                                      // Un titre ne se touche pas : il reste en encre.
+                                      color: texteTitre(isDarkMode),
                                       fontSize: tailleLora(screenWidth < 360 ? 18 : 22),
                                       height: 1.2,
                                     ),
                                   ),
                                 ),
                                 const SizedBox(width: 15),
-                                SizedBox(
-                                  width: 80,
-                                  height: 80,
-                                  child: WidgetSouvenirHistorique(
-                                    souvenir: souvenir,
-                                  ),
+                                // La vignette montre le PREMIER souvenir du
+                                // lot, surmonté d'une pastille « +9 » : on
+                                // doit voir d'un coup d'œil combien de
+                                // souvenirs le choix va ranger.
+                                Stack(
+                                  clipBehavior: Clip.none,
+                                  children: [
+                                    GestureDetector(
+                                      // En lot, la vignette ouvre le
+                                      // carrousel du lot entier : la
+                                      // pastille « +9 » dit COMBIEN de
+                                      // souvenirs on s'apprête à ranger,
+                                      // elle ne dit pas LESQUELS.
+                                      onTap: enLot ? _ouvrirApercuDuLot : null,
+                                      child: SizedBox(
+                                        width: 80,
+                                        height: 80,
+                                        child: WidgetSouvenirHistorique(
+                                          souvenir: souvenir,
+                                        ),
+                                      ),
+                                    ),
+                                    if (enLot)
+                                      Positioned(
+                                        right: -6,
+                                        top: -6,
+                                        child: PastilleNombre(
+                                            nombre: souvenirsSuivants),
+                                      ),
+                                  ],
                                 ),
-                              ],
+                            ],
                             ),
                           ),
                         ),
@@ -299,7 +356,8 @@ class _ScreenRecategorisationHistoriqueState extends State<ScreenRecategorisatio
 
                               return ListView.builder(
                                 padding: const EdgeInsets.only(top: 5, bottom: 10),
-                                itemCount: categoriesList.length + 2,
+                                // Les catégories, puis « Nouvelle catégorie ».
+                                itemCount: categoriesList.length + 1,
                                 itemBuilder: (context, index) {
                                   if (index == categoriesList.length) {
                                     if (_isAddingNew) {
@@ -341,6 +399,13 @@ class _ScreenRecategorisationHistoriqueState extends State<ScreenRecategorisatio
                                       icon: Icons.add,
                                       color: orange,
                                       hasCircle: true,
+                                      // Filet sous la ligne et « + » à la
+                                      // suite du texte : « Nouvelle catégorie »
+                                      // se lit comme la dernière entrée de la
+                                      // liste, son libellé aligné sur les noms
+                                      // de catégories.
+                                      separateur: true,
+                                      iconeEnFin: true,
                                       isDarkMode: isDarkMode,
                                       useThemeStyleForText: false,
                                       onTap: () {
@@ -350,26 +415,20 @@ class _ScreenRecategorisationHistoriqueState extends State<ScreenRecategorisatio
                                       },
                                     );
                                   }
-                                  if (index == categoriesList.length + 1) {
-                                    return BoutonActionCategorie(
-                                      label: localizations.btnDeleteCategories,
-                                      icon: Icons.delete_outline,
-                                      color: orange,
-                                      hasCircle: false,
-                                      isDarkMode: isDarkMode,
-                                      useThemeStyleForText: true,
-                                      onTap: () => _ouvrirModaleSuppression(context, isDarkMode),
-                                    );
-                                  }
                                   final categoryKey = categoriesList[index];
-                                  return ItemCategorie(
+                                  return CategorieGlissable(
+                                    cleCategorie: categoryKey,
                                     label: _getCategoryDisplayLabel(categoryKey, context),
                                     isSelected: _selectedCategories.contains(categoryKey),
-                                    color: orange,
                                     isDarkMode: isDarkMode,
                                     onSelectionChanged: (val) {
                                       setState(() {
                                         val ? _selectedCategories.add(categoryKey) : _selectedCategories.remove(categoryKey);
+                                      });
+                                    },
+                                    onSuppression: () {
+                                      setState(() {
+                                        _selectedCategories.remove(categoryKey);
                                       });
                                     },
                                   );
@@ -392,7 +451,9 @@ class _ScreenRecategorisationHistoriqueState extends State<ScreenRecategorisatio
                               width: double.infinity, 
                               height: 56, 
                               child: BtnAction(
-                                text: isLast ? localizations.btnValidate : (localizations.localeName == 'fr' ? "Suivant" : "Next"),
+                                text: (enLot || isLast)
+                                    ? localizations.btnValidate
+                                    : (localizations.localeName == 'fr' ? "Suivant" : "Next"),
                                 isActive: _selectedCategories.isNotEmpty,
                                 color: orange,
                                 onTap: _validerOuSuivant,

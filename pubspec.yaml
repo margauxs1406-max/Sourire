@@ -2,7 +2,7 @@ name: sourire
 description: "A new Flutter project."
 publish_to: 'none'
 
-version: 1.0.0+12
+version: 1.0.0+13
 
 environment:
   sdk: ^3.11.5
@@ -66,16 +66,17 @@ flutter:
   assets:
     - assets/
     - assets/badges/
-    - assets/bibliotheque/
-    - assets/themes/abstrait/
+    - assets/themes/amour/
     - assets/themes/animaux_marins/
+    - assets/themes/celebration/
     - assets/themes/cinema/
     - assets/themes/kawaii/
-    - assets/themes/floral/
+    - assets/themes/nature/
     - assets/themes/mer/
     - assets/themes/montagne/
     - assets/themes/musique/
     - assets/themes/sport/
+    - assets/themes/voyage/
 
   fonts:
     # Police d'interface, posée par défaut UNIQUEMENT sur Android (voir

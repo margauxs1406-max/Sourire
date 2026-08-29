@@ -55,7 +55,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get archiving => 'Archiving';
 
   @override
-  String get accessibility => 'Appearance';
+  String get accessibility => 'Accessibility';
 
   @override
   String get langues => 'Languages';
@@ -156,8 +156,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get faqQuestion2 => 'How does the lucky draw work?';
 
   @override
-  String get faqAnswer2 =>
-      'Shake your phone or click on the jar to bring up a random memory.';
+  String get faqAnswer2 => 'Tap the jar to bring up a random memory.';
 
   @override
   String get faqQuestion3 => 'How to categorize memories?';
@@ -167,17 +166,25 @@ class AppLocalizationsEn extends AppLocalizations {
       'Go to history and long-press a memory. You can then select multiple items and choose \'Categorize\'.';
 
   @override
+  String get faqQuestion5 => 'How do I categorize my memories one by one?';
+
+  @override
+  String get faqAnswer5 =>
+      'There are 2 ways to categorize your memories one by one:\n1- Import your memories one at a time.\n2- On the categorization screen for the selected batch, tap the photo with the counter: a carousel of your memories appears, along with the “Categorize one by one” option.';
+
+  @override
+  String get faqQuestion6 => 'How do I delete memory categories?';
+
+  @override
+  String get faqAnswer6 =>
+      'On the category selection screen, swipe the category you want to delete to the left.';
+
+  @override
   String get faqQuestion4 => 'How to delete memories?';
 
   @override
   String get faqAnswer4 =>
       'Go to history, long-press the memory, select it and press the \'Delete\' button.';
-
-  @override
-  String get filterTitle => 'Filter';
-
-  @override
-  String get categoriesTitle => 'Categories';
 
   @override
   String get catSelfLove => 'Self-love';
@@ -619,7 +626,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get btnAppliquer => 'Apply';
 
   @override
-  String get themesTitle => 'Themes';
+  String get themesTitle => 'Home screen themes';
 
   @override
   String get themesDescription =>
@@ -650,6 +657,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get themeSport => 'Sports';
 
   @override
+  String get themeVoyage => 'Travel';
+
+  @override
   String get themeMusique => 'Music';
 
   @override
@@ -659,7 +669,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get themeAnimauxMarins => 'Marine Animals';
 
   @override
-  String get themeFloral => 'Floral';
+  String get themeAmour => 'Love';
+
+  @override
+  String get themeCelebration => 'Celebrations';
+
+  @override
+  String get themeNature => 'Nature';
 
   @override
   String get themeKawaii => 'Kawaii';
@@ -840,4 +856,56 @@ class AppLocalizationsEn extends AppLocalizations {
   String backupImportDone(int ajoutes, int ignores) {
     return '$ajoutes memory/ies restored, $ignores already present.';
   }
+
+  @override
+  String get restoreDefaultCategoriesTitle => 'Restore default categories';
+
+  @override
+  String get restoreDefaultCategoriesSub =>
+      'Brings back Self-love, Friendship, Couple, Family, Leisure and Work if you deleted them. Your memories are left untouched.';
+
+  @override
+  String get restoreDefaultCategoriesDone => 'Default categories restored.';
+
+  @override
+  String get batchCategoryQuestion =>
+      'Which categories do these memories belong to?';
+
+  @override
+  String get batchCategorizeOneByOne => 'Categorize one by one';
+
+  @override
+  String deleteCategoryConfirmTitle(String categorie) {
+    return 'Delete “$categorie”?';
+  }
+
+  @override
+  String deleteCategoryConfirmBody(int nombre) {
+    String _temp0 = intl.Intl.pluralLogic(
+      nombre,
+      locale: localeName,
+      other: '$nombre memories will lose this category.',
+      one: 'One memory will lose this category.',
+    );
+    return '$_temp0 No memory is deleted.';
+  }
+
+  @override
+  String get filterByPeriod => 'By period';
+
+  @override
+  String get filterByCategory => 'By category';
+
+  @override
+  String get btnApply => 'Apply';
+
+  @override
+  String get themePreviewQuestion => 'What made you happy today?';
+
+  @override
+  String get notesThemesPurchaseMessage =>
+      'Dress your notes in the decor of your choice. Go Premium to unlock every theme.';
+
+  @override
+  String get themesTitleNotes => 'Note themes';
 }

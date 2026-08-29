@@ -8,6 +8,7 @@ import 'package:path/path.dart' as p;
 import 'package:sourire/theme/tokens.dart';
 import 'package:sourire/models/note_model.dart';
 import 'package:sourire/models/theme_app.dart';
+import 'package:sourire/theme/theme_service.dart';
 
 // --- CACHE PARTAGÉ DES PHOTOS ------------------------------------------------
 //
@@ -94,7 +95,24 @@ Future<void> preloadHistoriqueImage(String? photoPath) async {
 class WidgetSouvenirHistorique extends StatefulWidget {
   final NoteSourire souvenir;
 
-  const WidgetSouvenirHistorique({required this.souvenir, super.key});
+  /// Fait suivre à la note le mode d'affichage de l'application : fond assombri
+  /// et encre éclaircie la nuit, via [SourireTheme.fond] et
+  /// [SourireTheme.encre].
+  ///
+  /// `false` par défaut, et c'est un choix. Dans l'historique, ce widget est
+  /// une vignette parmi cinquante posées sur du noir, et ce sont justement
+  /// leurs pastels qui donnent au volet son allure de bocal de billes
+  /// colorées : les assombrir toutes rendrait la grille terne et illisible.
+  /// En plein écran — l'aperçu du choix de thème — la même note pastel devient
+  /// un aplat éblouissant, et elle suit alors le mode d'affichage comme le
+  /// souvenir tiré au sort.
+  final bool suitLeModeSombre;
+
+  const WidgetSouvenirHistorique({
+    required this.souvenir,
+    this.suitLeModeSombre = false,
+    super.key,
+  });
 
   @override
   State<WidgetSouvenirHistorique> createState() => _WidgetSouvenirHistoriqueState();
@@ -163,10 +181,11 @@ class _WidgetSouvenirHistoriqueState extends State<WidgetSouvenirHistorique> {
     final themeCouleur = SourireTheme.fromLabel(widget.souvenir.colorLabel);
     final bool isPhoto = widget.souvenir.photoPath != null && widget.souvenir.photoPath!.trim().isNotEmpty;
 
-    final ThemeApp themeGraphique = ThemeRepository.tousLesThemes.firstWhere(
-      (t) => t.id.toLowerCase() == widget.souvenir.themeLabel.toLowerCase(),
-      orElse: () => ThemeRepository.themeClassique,
-    );
+    final ThemeApp themeGraphique =
+        ThemeService.parId(widget.souvenir.themeLabel);
+
+    final bool sombre = widget.suitLeModeSombre &&
+        Theme.of(context).brightness == Brightness.dark;
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -176,13 +195,13 @@ class _WidgetSouvenirHistoriqueState extends State<WidgetSouvenirHistorique> {
           width: size,
           height: size,
           decoration: BoxDecoration(
-            color: isPhoto ? const Color(0xFF1E1E1E) : themeCouleur.light,
-            borderRadius: BorderRadius.circular(6), 
-            border: isPhoto 
-                ? null 
+            color: isPhoto ? const Color(0xFF1E1E1E) : themeCouleur.fond(sombre),
+            borderRadius: BorderRadius.circular(6),
+            border: isPhoto
+                ? null
                 : Border.all(
-                    color: themeCouleur.main,
-                    width: 1, 
+                    color: themeCouleur.encre(sombre),
+                    width: 1,
                   ),
           ),
           child: ClipRRect(
@@ -203,7 +222,7 @@ class _WidgetSouvenirHistoriqueState extends State<WidgetSouvenirHistorique> {
                           child: SvgPicture.asset(
                             iconConfig.assetPath,
                             colorFilter: ColorFilter.mode(
-                              themeCouleur.main,
+                              themeCouleur.encre(sombre),
                               BlendMode.srcIn,
                             ),
                           ),
@@ -249,7 +268,7 @@ class _WidgetSouvenirHistoriqueState extends State<WidgetSouvenirHistorique> {
                             maxLines: 4,
                             overflow: TextOverflow.ellipsis,
                             style: styleNoteLarge.copyWith(
-                              color: themeCouleur.main,
+                              color: themeCouleur.encre(sombre),
                               fontSize: tailleLora(size * 0.09),
                             ),
                           ),

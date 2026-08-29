@@ -3,7 +3,7 @@ import 'package:sourire/main.dart';
 import 'package:sourire/models/theme_app.dart';
 import 'package:sourire/theme/tokens.dart';
 import 'package:sourire/widgets/btn_categorisation.dart';
-import 'package:sourire/widgets/item_categorie.dart';
+import 'package:sourire/widgets/categorie_glissable.dart';
 import 'package:sourire/widgets/logo_sourire.dart';
 import 'package:sourire/widgets/souvenir_historique.dart';
 import 'package:sourire/widgets/btn_chevron_gauche.dart';
@@ -167,75 +167,6 @@ class _ScreenCategorisationNoteState extends State<ScreenCategorisationNote> {
     }
   }
 
-  void _ouvrirModaleSuppression(BuildContext context, bool isDarkMode) {
-    final localizations = AppLocalizations.of(context)!;
-    
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return StreamBuilder<List<String>>(
-          stream: _databaseService.getCategoriesStream(),
-          builder: (context, snapshot) {
-            final categoriesList = snapshot.data ?? _databaseService.getAllCategories();
-            const systemKeys = ["self_love", "friendship", "couple", "family", "leisure", "work"];
-            final customList = categoriesList.where((cat) => !systemKeys.contains(cat)).toList();
-
-            return AlertDialog(
-              backgroundColor: isDarkMode ? const Color(0xFF1E1E1E) : Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-              title: Text(
-                localizations.titleDeleteModal,
-                style: styleTitreAction.copyWith(color: texteFort(isDarkMode)),
-              ),
-              content: customList.isEmpty
-                  ? Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 20),
-                      child: Text(
-                        localizations.noCustomCategoryToDelete,
-                        style: TextStyle(color: isDarkMode ? Colors.white70 : Colors.black54),
-                        textAlign: TextAlign.center,
-                      ),
-                    )
-                  : SizedBox(
-                      width: double.maxFinite,
-                      height: 250,
-                      child: ListView.builder(
-                        shrinkWrap: true,
-                        itemCount: customList.length,
-                        itemBuilder: (context, index) {
-                          final currentCat = customList[index];
-                          return ListTile(
-                            contentPadding: EdgeInsets.zero,
-                            title: Text(
-                              currentCat,
-                              style: TextStyle(color: isDarkMode ? Colors.white : Colors.black),
-                            ),
-                            trailing: IconButton(
-                              icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
-                              onPressed: () {
-                                _databaseService.deleteCategory(currentCat);
-                                setState(() {
-                                  _selectedCategories.remove(currentCat);
-                                });
-                              },
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: Text(localizations.btnClose, style: TextStyle(color: orange, fontWeight: FontWeight.bold)),
-                ),
-              ],
-            );
-          },
-        );
-      },
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     double screenWidth = MediaQuery.of(context).size.width;
@@ -252,7 +183,11 @@ class _ScreenCategorisationNoteState extends State<ScreenCategorisationNote> {
     const double topBarHeight = 60.0; 
     // 120 et non 90 : c'est la hauteur qu'il faut pour loger l'aperçu de
     // 80 px à droite du titre, comme dans l'écran de recatégorisation.
-    final double titleHeight = 120.0 * echelleTexte;
+    // Le bandeau est calé sur son contenu : 15 px au-dessus, l'aperçu de
+    // 80 px, puis 8 px en dessous. Il restait auparavant du vide sous le
+    // titre. Le facteur d'échelle du texte est conservé : il redonne de la
+    // marge quand l'utilisateur grossit la police du système.
+    final double titleHeight = 103.0 * echelleTexte;
     final double bottomBarHeight = 110.0 * echelleTexte;
 
     return GestureDetector(
@@ -324,7 +259,7 @@ class _ScreenCategorisationNoteState extends State<ScreenCategorisationNote> {
                           height: titleHeight,
                           child: Container(
                             color: isDarkMode ? darkBg : white,
-                            padding: const EdgeInsets.only(top: 15, bottom: 10),
+                            padding: const EdgeInsets.only(top: 15, bottom: 8),
                             child: Row(
                               crossAxisAlignment: CrossAxisAlignment.center,
                               children: [
@@ -332,7 +267,8 @@ class _ScreenCategorisationNoteState extends State<ScreenCategorisationNote> {
                                   child: Text(
                                     localizations.categoryQuestion,
                                     style: styleTitreLora.copyWith(
-                                      color: isDarkMode ? Colors.white : orange,
+                                      // Un titre ne se touche pas : il reste en encre.
+                                          color: texteTitre(isDarkMode),
                                       fontSize: tailleLora(screenWidth < 360 ? 18 : 22),
                                       height: 1.2,
                                     ),
@@ -371,7 +307,8 @@ class _ScreenCategorisationNoteState extends State<ScreenCategorisationNote> {
                               
                               return ListView.builder(
                                 padding: const EdgeInsets.only(top: 5, bottom: 10),
-                                itemCount: categoriesList.length + 2, 
+                                // Les catégories, puis « Nouvelle catégorie ».
+                                itemCount: categoriesList.length + 1,
                                 itemBuilder: (context, index) {
                                   
                                   if (index == categoriesList.length) {
@@ -415,6 +352,13 @@ class _ScreenCategorisationNoteState extends State<ScreenCategorisationNote> {
                                       icon: Icons.add,
                                       color: orange,
                                       hasCircle: true,
+                                      // Filet sous la ligne et « + » à la
+                                      // suite du texte : « Nouvelle catégorie »
+                                      // se lit comme la dernière entrée de la
+                                      // liste, son libellé aligné sur les noms
+                                      // de catégories.
+                                      separateur: true,
+                                      iconeEnFin: true,
                                       isDarkMode: isDarkMode,
                                       useThemeStyleForText: false,
                                       onTap: () {
@@ -425,28 +369,22 @@ class _ScreenCategorisationNoteState extends State<ScreenCategorisationNote> {
                                     );
                                   }
 
-                                  if (index == categoriesList.length + 1) {
-                                    return BoutonActionCategorie(
-                                      label: localizations.btnDeleteCategories,
-                                      icon: Icons.delete_outline,
-                                      color: orange,
-                                      hasCircle: false,
-                                      isDarkMode: isDarkMode,
-                                      useThemeStyleForText: true,
-                                      onTap: () => _ouvrirModaleSuppression(context, isDarkMode),
-                                    );
-                                  }
 
                                   final categoryKey = categoriesList[index];
-                                  return ItemCategorie(
+                                  return CategorieGlissable(
+                                    cleCategorie: categoryKey,
                                     label: _getCategoryDisplayLabel(categoryKey, context),
                                     isSelected: _selectedCategories.contains(categoryKey),
-                                    color: orange,
                                     isDarkMode: isDarkMode,
                                     onSelectionChanged: (val) {
                                       setState(() {
                                         val ? _selectedCategories.add(categoryKey)
                                             : _selectedCategories.remove(categoryKey);
+                                      });
+                                    },
+                                    onSuppression: () {
+                                      setState(() {
+                                        _selectedCategories.remove(categoryKey);
                                       });
                                     },
                                   );

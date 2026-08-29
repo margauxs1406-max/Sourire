@@ -20,10 +20,9 @@ class ScreenTemplateReglages extends StatelessWidget {
     // Si isDarkMode est fourni on l'utilise, sinon on interroge le système
     final bool isDark = isDarkMode ?? (Theme.of(context).brightness == Brightness.dark);
 
-    // Calcul de la taille de police responsive basée sur la largeur de l'écran
-    // 18 est la taille de référence sur un écran classique (ex: largeur ~390-400dp)
-    final double screenWidth = MediaQuery.of(context).size.width;
-    final double responsiveFontSize = (screenWidth * 18) / 390;
+    // 18 pt sur l'écran de référence, mis à l'échelle de façon BORNÉE : sans
+    // la borne, la même formule donnait un titre de 47 pt sur un iPad.
+    final double responsiveFontSize = tailleAdaptee(context, 18);
 
     return Scaffold(
       // Surface d'écran : blanc chaud, comme la home et le profil.
@@ -56,7 +55,11 @@ class ScreenTemplateReglages extends StatelessWidget {
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.only(left: 30, right: 30, top: 20, bottom: 30),
-                child: Column(
+                // Sur tablette, les lignes de réglages s'étireraient sur toute
+                // la dalle : un libellé à gauche, sa valeur à un demi-mètre à
+                // droite. La colonne est donc bornée et centrée.
+                child: ContenuCentre(
+                  child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
@@ -70,6 +73,7 @@ class ScreenTemplateReglages extends StatelessWidget {
                     const SizedBox(height: 25),
                     ...content, // Injecte la liste des widgets spécifiques
                   ],
+                  ),
                 ),
               ),
             ),

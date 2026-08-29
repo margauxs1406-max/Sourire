@@ -11,7 +11,9 @@ class BtnChevronDroite extends StatelessWidget {
       onTap: onTap,
       child: const Icon(
         Icons.chevron_right_rounded,
-        color: lightGrey, // A6A6A6
+        // Orange, comme tout ce qui se touche dans l'app. Le gris disait
+        // « décoration » alors que ce chevron ouvre un écran.
+        color: orange,
         size: 32,
       ),
     );

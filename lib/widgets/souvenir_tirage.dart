@@ -4,14 +4,19 @@ import 'dart:math' as math;
 import 'dart:ui' as ui; // Importation essentielle pour le décodeur brut
 import 'package:flutter/material.dart';
 // Fournit l'haptique ET réexporte dart:typed_data (Uint8List).
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:sourire/l10n/app_localizations.dart';
+import 'package:sourire/services/database_service.dart';
 import 'package:sourire/services/partage_service.dart';
 import 'package:sourire/theme/tokens.dart';
 import 'package:sourire/models/note_model.dart';
+import 'package:sourire/screens/screen_new_note.dart';
 import 'package:sourire/screens/screen_profil.dart';
 import 'package:sourire/models/theme_app.dart';
+import 'package:sourire/theme/theme_service.dart';
+import 'package:sourire/widgets/btn_rond_souvenir.dart';
 import 'package:sourire/widgets/souvenir_historique.dart'; // Cache partagé
 
 // La résolution d'un label de couleur vit dans SourireTheme.fromLabel
@@ -19,6 +24,11 @@ import 'package:sourire/widgets/souvenir_historique.dart'; // Cache partagé
 // couleurs sur huit : un souvenir jaune, violet, rouge ou turquoise
 // retombait silencieusement sur l'orange dès qu'il passait par le tirage,
 // l'affichage en grand ou le partage.
+
+/// Opacité des deux pastilles posées PAR-DESSUS un souvenir : la date à
+/// gauche, le partage à droite. Légèrement translucides, elles s'effacent
+/// devant la photo sans jamais devenir difficiles à lire ou à viser.
+const double _opaciteSurcouche = 0.8;
 
 class WidgetSouvenirTirage extends StatefulWidget {
   final NoteSourire souvenir;
@@ -47,6 +57,29 @@ class _WidgetSouvenirTirageState extends State<WidgetSouvenirTirage> {
   Size? _lastCalculatedSize;
   Uint8List? _imageBytes;
   bool _isLoaded = false;
+
+  /// Date corrigée à la main par l'utilisateur pendant cette session.
+  ///
+  /// `null` tant qu'il n'a rien touché — on affiche alors la date du souvenir
+  /// tel qu'il vient de la base. On ne recharge pas le souvenir depuis SQLite
+  /// après l'écriture : le flux de la base rafraîchira l'historique de son
+  /// côté, ici il suffit de peindre tout de suite la bonne date.
+  DateTime? _dateCorrigee;
+
+  /// Texte réécrit par l'utilisateur pendant cette session. Voir [_dateCorrigee].
+  String? _texteCorrige;
+
+  /// Le souvenir tel qu'il doit s'afficher MAINTENANT, corrections comprises.
+  NoteSourire get _souvenir {
+    NoteSourire courant = widget.souvenir;
+    if (_dateCorrigee != null) {
+      courant = courant.copyWith(datePrise: _dateCorrigee);
+    }
+    if (_texteCorrige != null) {
+      courant = courant.copyWith(text: _texteCorrige);
+    }
+    return courant;
+  }
 
   @override
   void initState() {
@@ -127,10 +160,14 @@ class _WidgetSouvenirTirageState extends State<WidgetSouvenirTirage> {
     final themeCouleur = SourireTheme.fromLabel(widget.souvenir.colorLabel);
     final bool isPhoto = widget.souvenir.photoPath != null && widget.souvenir.photoPath!.trim().isNotEmpty;
 
-    final ThemeApp themeGraphique = ThemeRepository.tousLesThemes.firstWhere(
-      (t) => t.id.toLowerCase() == widget.souvenir.themeLabel.toLowerCase(),
-      orElse: () => ThemeRepository.themeClassique,
-    );
+    // Le souvenir en grand est ouvert par-dessus la home ou l'historique, tous
+    // deux déjà sombres la nuit : un pastel presque blanc plein écran y était
+    // un flash. `Theme.of` suffit — c'est `MaterialApp` qui applique le
+    // réglage, et le contexte en hérite jusque dans les dialogues.
+    final bool sombre = Theme.of(context).brightness == Brightness.dark;
+
+    final ThemeApp themeGraphique =
+        ThemeService.parId(widget.souvenir.themeLabel);
 
     if (!_isLoaded && _imageBytes == null) {
       return const Center(
@@ -146,7 +183,7 @@ class _WidgetSouvenirTirageState extends State<WidgetSouvenirTirage> {
           width: size,
           height: size,
           decoration: BoxDecoration(
-            color: isPhoto ? Colors.transparent : themeCouleur.light,
+            color: isPhoto ? Colors.transparent : themeCouleur.fond(sombre),
             borderRadius: BorderRadius.circular(20),
           ),
           child: ClipRRect(
@@ -167,7 +204,7 @@ class _WidgetSouvenirTirageState extends State<WidgetSouvenirTirage> {
                           child: SvgPicture.asset(
                             iconConfig.assetPath,
                             colorFilter: ColorFilter.mode(
-                              themeCouleur.main,
+                              themeCouleur.encre(sombre),
                               BlendMode.srcIn,
                             ),
                           ),
@@ -230,10 +267,10 @@ class _WidgetSouvenirTirageState extends State<WidgetSouvenirTirage> {
                             alignment: Alignment.center,
                             padding: const EdgeInsets.all(25),
                             child: Text(
-                              widget.souvenir.text ?? "",
+                              _souvenir.text ?? "",
                               textAlign: TextAlign.center,
                               style: styleNoteLarge.copyWith(
-                                color: themeCouleur.main,
+                                color: themeCouleur.encre(sombre),
                                 fontSize: tailleLora(24),
                               ),
                             ),
@@ -246,16 +283,185 @@ class _WidgetSouvenirTirageState extends State<WidgetSouvenirTirage> {
                 Positioned(
                   left: 12,
                   bottom: 12,
-                  child: _PastilleDate(date: widget.souvenir.dateAffichee),
+                  child: Opacity(
+                    opacity: _opaciteSurcouche,
+                    child: _PastilleDate(
+                      date: _souvenir.dateAffichee,
+                      onTap: _modifierDate,
+                    ),
+                  ),
                 ),
 
-                // BOUTON DE PARTAGE, par-dessus le souvenir
-                if (widget.afficherPartage)
-                  Positioned(
-                    right: 12,
-                    bottom: 12,
-                    child: _BoutonPartage(souvenir: widget.souvenir),
+                // ACTIONS, en bas à droite : réécrire, puis partager.
+                //
+                // Le crayon n'apparaît QUE sur les notes. Une photo ne se
+                // réécrit pas — et proposer une action inopérante coûte plus
+                // cher en confusion qu'elle ne rapporte en symétrie.
+                Positioned(
+                  right: 12,
+                  bottom: 12,
+                  child: Opacity(
+                    opacity: _opaciteSurcouche,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (!isPhoto) ...[
+                          BtnRondSouvenir(
+                            icone: Icons.edit_outlined,
+                            onTap: () => _modifierTexte(themeCouleur, themeGraphique),
+                          ),
+                          const SizedBox(width: 10),
+                        ],
+                        if (widget.afficherPartage)
+                          _BoutonPartage(souvenir: _souvenir),
+                      ],
+                    ),
                   ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  // --- RÉÉCRITURE DU TEXTE ---------------------------------------------------
+
+  /// Rouvre l'écran d'écriture, cette fois en mode modification.
+  ///
+  /// On ne modifie pas le texte SUR PLACE, dans cette fenêtre : il y faudrait
+  /// un champ de saisie, la gestion du clavier et le recentrage du texte quand
+  /// il remonte — trois choses que `ScreenNewNote` sait déjà faire, et qu'il
+  /// aurait fallu réécrire ici, dans un widget que l'historique partage.
+  Future<void> _modifierTexte(
+    SourireTheme couleur,
+    ThemeApp themeVisuel,
+  ) async {
+    HapticFeedback.selectionClick();
+
+    final NoteSourire? misAJour = await Navigator.push<NoteSourire>(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ScreenNewNote(
+          couleur: couleur,
+          themeVisuel: themeVisuel,
+          souvenirAModifier: _souvenir,
+        ),
+      ),
+    );
+
+    if (misAJour == null || !mounted) return;
+    // L'écriture en base est déjà faite par ScreenNewNote ; ici on ne fait que
+    // repeindre tout de suite, sans attendre le tour du flux.
+    setState(() => _texteCorrige = misAJour.text);
+  }
+
+  // --- CORRECTION DE LA DATE -------------------------------------------------
+
+  /// Ouvre le sélecteur de date de la plateforme et enregistre le choix.
+  ///
+  /// On n'écrit QUE `datePrise`, jamais `date`. La première est la date
+  /// RACONTÉE : celle qu'on lit sur le souvenir, celle qui figure sur le
+  /// polaroid partagé. La seconde est la date d'ENTRÉE dans le bocal, et
+  /// c'est elle qui ordonne l'historique et la pile de billes. Les séparer
+  /// permet de corriger une photo mal datée par la galerie sans que le
+  /// souvenir replonge d'un coup au fond de l'historique.
+  Future<void> _modifierDate() async {
+    HapticFeedback.selectionClick();
+
+    final DateTime affichee = _souvenir.dateAffichee;
+    final DateTime actuelle = DateTime(affichee.year, affichee.month, affichee.day);
+    final DateTime aujourdhui = DateUtils.dateOnly(DateTime.now());
+    final DateTime premiere = DateTime(1900);
+
+    // Un souvenir ne peut pas venir du futur. Si la galerie a menti sur la
+    // date — horloge déréglée, métadonnées corrompues — on ramène le curseur
+    // à aujourd'hui plutôt que de laisser le sélecteur refuser de s'ouvrir.
+    final DateTime initiale = actuelle.isAfter(aujourdhui) ? aujourdhui : actuelle;
+
+    // En `if/else` et non en ternaire : dans une ternaire, les deux branches
+    // appartiennent à la MÊME expression, et l'analyseur voit le `await` de la
+    // branche iOS comme une coupure asynchrone précédant la lecture de
+    // `context` dans l'autre branche. C'est un faux positif — les deux
+    // branches s'excluent — mais l'écrire en if/else est plus lisible de toute
+    // façon, et laisse `flutter analyze` silencieux.
+    final DateTime? choisie;
+    if (Platform.isIOS) {
+      choisie = await _selecteurCupertino(initiale, premiere, aujourdhui);
+    } else {
+      choisie = await showDatePicker(
+        context: context,
+        initialDate: initiale,
+        firstDate: premiere,
+        lastDate: aujourdhui,
+      );
+    }
+
+    if (choisie == null || !mounted) return;
+
+    final DateTime retenue = DateUtils.dateOnly(choisie);
+    if (retenue == actuelle) return;
+
+    setState(() => _dateCorrigee = retenue);
+    DatabaseService().updateNote(widget.souvenir.copyWith(datePrise: retenue));
+  }
+
+  /// Roue de date iOS, présentée dans une feuille qui remonte du bas.
+  ///
+  /// `showDatePicker` afficherait un calendrier Material jusque sur iPhone :
+  /// juste, mais étranger. La roue est le geste que l'utilisateur iOS connaît.
+  /// Elle ne valide rien d'elle-même — d'où les deux boutons au-dessus.
+  Future<DateTime?> _selecteurCupertino(
+    DateTime initiale,
+    DateTime premiere,
+    DateTime derniere,
+  ) {
+    DateTime provisoire = initiale;
+    final bool sombre = Theme.of(context).brightness == Brightness.dark;
+
+    return showCupertinoModalPopup<DateTime>(
+      context: context,
+      builder: (contexteModale) {
+        final MaterialLocalizations mots = MaterialLocalizations.of(contexteModale);
+        return Container(
+          height: 300,
+          color: sombre ? darkSurface : white,
+          child: SafeArea(
+            top: false,
+            child: Column(
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    CupertinoButton(
+                      onPressed: () => Navigator.of(contexteModale).pop(),
+                      child: Text(
+                        mots.cancelButtonLabel,
+                        style: styleCorps.copyWith(color: texteDoux(sombre)),
+                      ),
+                    ),
+                    CupertinoButton(
+                      onPressed: () => Navigator.of(contexteModale).pop(provisoire),
+                      child: Text(
+                        mots.okButtonLabel,
+                        style: styleCorps.copyWith(
+                          color: orange,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                Expanded(
+                  child: CupertinoDatePicker(
+                    mode: CupertinoDatePickerMode.date,
+                    initialDateTime: initiale,
+                    minimumDate: premiere,
+                    maximumDate: derniere,
+                    onDateTimeChanged: (valeur) => provisoire = valeur,
+                  ),
+                ),
               ],
             ),
           ),
@@ -281,30 +487,44 @@ class _WidgetSouvenirTirageState extends State<WidgetSouvenirTirage> {
 class _PastilleDate extends StatelessWidget {
   final DateTime date;
 
-  const _PastilleDate({required this.date});
+  /// Appelé au toucher : ouvre le sélecteur de date.
+  final VoidCallback onTap;
+
+  const _PastilleDate({required this.date, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
+    const BorderRadius arrondi = BorderRadius.all(Radius.circular(999));
+
     return DecoratedBox(
       decoration: const BoxDecoration(
-        color: white,
-        borderRadius: BorderRadius.all(Radius.circular(999)),
+        borderRadius: arrondi,
         boxShadow: shadowPastille,
       ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        child: Text(
-          formaterDateSouvenir(date),
-          style: styleMention.copyWith(color: orange),
+      child: Material(
+        color: white,
+        borderRadius: arrondi,
+        child: InkWell(
+          borderRadius: arrondi,
+          // Comme pour le bouton de partage : en consommant le geste ici, on
+          // empêche le GestureDetector de l'historique de refermer la fenêtre
+          // au moment où l'on touche la date.
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            child: Text(
+              formaterDateSouvenir(date),
+              style: styleMention.copyWith(color: orange),
+            ),
+          ),
         ),
       ),
     );
   }
 }
 
-/// L'icône suit la convention de la plateforme : l'avion en papier sur iOS,
-/// les trois nœuds reliés sur Android. Le fond blanc translucide garde
-/// l'icône lisible aussi bien sur une photo sombre que sur une note claire.
+/// Partage : l'icône suit la convention de la plateforme — le carré à flèche
+/// montante sur iOS, les trois nœuds reliés sur Android.
 class _BoutonPartage extends StatelessWidget {
   final NoteSourire souvenir;
 
@@ -312,46 +532,12 @@ class _BoutonPartage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return DecoratedBox(
-      // Material.elevation ne permet pas de choisir le décalage : on dessine
-      // l'ombre nous-mêmes pour la porter légèrement sur la droite plutôt que
-      // vers le bas.
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        boxShadow: [
-          BoxShadow(
-            color: black.withValues(alpha: 0.18),
-            blurRadius: 5,
-            offset: const Offset(2, 2),
-          ),
-        ],
-      ),
-      child: Material(
-        color: white.withValues(alpha: 0.92),
-        shape: const CircleBorder(),
-        child: InkWell(
-          customBorder: const CircleBorder(),
-          // Le GestureDetector de l'historique referme la fenêtre au moindre
-          // tap : en consommant le geste ici, on l'empêche de remonter.
-          onTap: () {
-            HapticFeedback.selectionClick();
-            _ouvrirPartage(context, souvenir);
-          },
-          child: Padding(
-            padding: const EdgeInsets.all(11),
-            child: Icon(
-              // `ios_share` est le carré à flèche montante du système iOS ;
-              // `share_outlined` est le partage à trois points d'Android.
-              Platform.isIOS ? Icons.ios_share : Icons.share_outlined,
-              // Toujours l'orange de la marque, jamais la couleur du
-              // souvenir : le partage est une action de l'app, pas une
-              // propriété du souvenir. Idem pour la roue d'attente.
-              color: orange,
-              size: 22,
-            ),
-          ),
-        ),
-      ),
+    return BtnRondSouvenir(
+      icone: Platform.isIOS ? Icons.ios_share : Icons.share_outlined,
+      onTap: () {
+        HapticFeedback.selectionClick();
+        _ouvrirPartage(context, souvenir);
+      },
     );
   }
 }

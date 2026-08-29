@@ -55,7 +55,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get archiving => 'Archivage';
 
   @override
-  String get accessibility => 'Apparence';
+  String get accessibility => 'Accessibilité';
 
   @override
   String get langues => 'Langues';
@@ -157,7 +157,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get faqAnswer2 =>
-      'Secoue ton téléphone ou clique sur le bocal pour faire remonter un souvenir au hasard.';
+      'Clique sur le bocal pour faire remonter un souvenir au hasard.';
 
   @override
   String get faqQuestion3 => 'Comment catégoriser des souvenirs ?';
@@ -167,17 +167,25 @@ class AppLocalizationsFr extends AppLocalizations {
       'Va dans l\'historique et appuie longuement sur un souvenir. Tu pourras alors en sélectionner plusieurs et choisir \'Catégoriser\'.';
 
   @override
+  String get faqQuestion5 => 'Comment catégoriser mes souvenirs un par un ?';
+
+  @override
+  String get faqAnswer5 =>
+      'Pour catégoriser tes souvenirs un par un, tu as 2 options :\n1- Importe tes souvenirs un par un.\n2- Depuis l\'écran de catégorisation du lot de souvenirs sélectionnés, clique sur la photo qui porte la pastille : un carrousel de tes souvenirs apparaît, avec l\'option « Catégoriser 1 par 1 ».';
+
+  @override
+  String get faqQuestion6 => 'Comment supprimer des catégories de souvenirs ?';
+
+  @override
+  String get faqAnswer6 =>
+      'Dans l\'écran de sélection des catégories, fais glisser la catégorie que tu veux supprimer vers la gauche.';
+
+  @override
   String get faqQuestion4 => 'Comment supprimer des souvenirs ?';
 
   @override
   String get faqAnswer4 =>
       'Va dans l\'historique, fais un appui long le souvenir, sélectionne-le et appuie sur le bouton \'Supprimer\'.';
-
-  @override
-  String get filterTitle => 'Filtrer';
-
-  @override
-  String get categoriesTitle => 'Catégories';
 
   @override
   String get catSelfLove => 'Amour de soi';
@@ -623,7 +631,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get btnAppliquer => 'Appliquer';
 
   @override
-  String get themesTitle => 'Thèmes';
+  String get themesTitle => 'Thèmes de l\'écran d\'accueil';
 
   @override
   String get themesDescription =>
@@ -654,6 +662,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get themeSport => 'Sport';
 
   @override
+  String get themeVoyage => 'Voyage';
+
+  @override
   String get themeMusique => 'Musique';
 
   @override
@@ -663,7 +674,13 @@ class AppLocalizationsFr extends AppLocalizations {
   String get themeAnimauxMarins => 'Animaux marins';
 
   @override
-  String get themeFloral => 'Floral';
+  String get themeAmour => 'Amour';
+
+  @override
+  String get themeCelebration => 'Célébrations';
+
+  @override
+  String get themeNature => 'Nature';
 
   @override
   String get themeKawaii => 'Kawaii';
@@ -844,4 +861,59 @@ class AppLocalizationsFr extends AppLocalizations {
   String backupImportDone(int ajoutes, int ignores) {
     return '$ajoutes souvenir(s) restauré(s), $ignores déjà présent(s).';
   }
+
+  @override
+  String get restoreDefaultCategoriesTitle =>
+      'Restaurer les catégories par défaut';
+
+  @override
+  String get restoreDefaultCategoriesSub =>
+      'Fait revenir Amour de soi, Amitié, Couple, Famille, Loisirs et Travail si tu les as supprimées. Tes souvenirs ne sont pas modifiés.';
+
+  @override
+  String get restoreDefaultCategoriesDone =>
+      'Catégories par défaut restaurées.';
+
+  @override
+  String get batchCategoryQuestion =>
+      'À quelle(s) catégorie(s) appartiennent ces souvenirs ?';
+
+  @override
+  String get batchCategorizeOneByOne => 'Catégoriser 1 par 1';
+
+  @override
+  String deleteCategoryConfirmTitle(String categorie) {
+    return 'Supprimer « $categorie » ?';
+  }
+
+  @override
+  String deleteCategoryConfirmBody(int nombre) {
+    String _temp0 = intl.Intl.pluralLogic(
+      nombre,
+      locale: localeName,
+      other: '$nombre souvenirs perdront cette catégorie.',
+      one: 'Un souvenir perdra cette catégorie.',
+    );
+    return '$_temp0 Aucun souvenir n\'est supprimé.';
+  }
+
+  @override
+  String get filterByPeriod => 'Par période';
+
+  @override
+  String get filterByCategory => 'Par catégorie';
+
+  @override
+  String get btnApply => 'Appliquer';
+
+  @override
+  String get themePreviewQuestion =>
+      'Qu\'est-ce qui te rend heureux·se aujourd\'hui ?';
+
+  @override
+  String get notesThemesPurchaseMessage =>
+      'Habille tes notes du décor de ton choix. Passe à la version Premium pour débloquer tous les thèmes.';
+
+  @override
+  String get themesTitleNotes => 'Thèmes des notes';
 }

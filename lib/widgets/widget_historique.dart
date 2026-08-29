@@ -7,6 +7,7 @@ import 'package:sourire/models/note_model.dart';
 import 'package:sourire/widgets/btn_filtrer.dart';
 import 'package:sourire/widgets/btn_categorisation.dart';
 import 'package:sourire/widgets/btn_chevron_bas.dart';
+import 'package:sourire/models/periode_filtre.dart';
 import 'package:sourire/widgets/ecran_filtrer.dart'; 
 import 'package:sourire/services/database_service.dart';
 import 'package:sourire/screens/screen_recategorisation_historique.dart';
@@ -31,9 +32,57 @@ class WidgetHistorique extends StatefulWidget {
   State<WidgetHistorique> createState() => _WidgetHistoriqueState();
 }
 
-class _WidgetHistoriqueState extends State<WidgetHistorique> {
+class _WidgetHistoriqueState extends State<WidgetHistorique>
+    with SingleTickerProviderStateMixin {
   final DatabaseService databaseService = DatabaseService();
   List<String> _filtresActifs = [];
+
+  /// Tranche de temps active, ou `null` si l'historique n'est pas borné.
+  PeriodeFiltre? _periodeActive;
+
+  /// Déploiement du tiroir de filtres : 0 replié, 1 entièrement descendu.
+  ///
+  /// Un contrôleur explicite plutôt qu'un `AnimatedSize` : le panneau doit
+  /// pouvoir être replié depuis l'extérieur — quand le volet d'historique
+  /// redescend — sans reconstruire l'arbre.
+  late final AnimationController _controleurTiroir = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 260),
+    reverseDuration: const Duration(milliseconds: 200),
+  );
+
+  /// Hauteur de l'en-tête du volet : la barre « Filtrer » + chevron, et la
+  /// barre de sélection quand elle est là.
+  ///
+  /// Sert à deux endroits qui doivent rester d'accord — le vide réservé en
+  /// tête de liste, pour que le premier souvenir ne passe pas sous l'en-tête,
+  /// et l'ancrage du panneau de filtres, qui se pose juste dessous.
+  double get _hauteurEnTete => _modeSelection ? 96 : 60;
+
+  void _basculerTiroir() {
+    if (_controleurTiroir.status == AnimationStatus.forward ||
+        _controleurTiroir.status == AnimationStatus.completed) {
+      _controleurTiroir.reverse();
+    } else {
+      _controleurTiroir.forward();
+    }
+  }
+
+  /// Course du panneau, adoucie. Construite une seule fois : une
+  /// `CurvedAnimation` créée à chaque `build` s'abonnerait au contrôleur sans
+  /// jamais s'en détacher.
+  late final CurvedAnimation _courbeTiroir = CurvedAnimation(
+    parent: _controleurTiroir,
+    curve: Curves.easeOutCubic,
+    reverseCurve: Curves.easeInCubic,
+  );
+
+  /// Années pour lesquelles le bocal contient au moins un souvenir.
+  ///
+  /// Sur la date AFFICHÉE, comme le filtre lui-même : une photo de 2019
+  /// importée hier appartient à 2019 pour qui la cherche.
+  List<int> _anneesDisponibles(List<NoteSourire> notes) =>
+      notes.map((NoteSourire note) => note.dateAffichee.year).toSet().toList();
   bool _modeSelection = false;
   final List<NoteSourire> _souvenirsSelectionnes = [];
   
@@ -161,6 +210,8 @@ class _WidgetHistoriqueState extends State<WidgetHistorique> {
   @override
   void dispose() {
     widget.controller?.removeListener(_ecouterFermetureVolet);
+    _courbeTiroir.dispose();
+    _controleurTiroir.dispose();
     super.dispose();
   }
 
@@ -183,10 +234,19 @@ class _WidgetHistoriqueState extends State<WidgetHistorique> {
         });
       }
  
-      if (tailleActuelle == 0.0 && _filtresActifs.isNotEmpty) {
+      if (tailleActuelle == 0.0 &&
+          (_filtresActifs.isNotEmpty || _periodeActive != null)) {
         setState(() {
           _filtresActifs.clear();
+          _periodeActive = null;
         });
+      }
+
+      // Le panneau se replie avec le volet : sans cela il resterait ouvert
+      // sous le bocal et réapparaîtrait tel quel à la prochaine remontée,
+      // alors que ses filtres, eux, viennent d'être levés.
+      if (tailleActuelle == 0.0) {
+        _controleurTiroir.value = 0;
       }
  
       // Réinitialise le mode sélection multiple quand le volet se ferme
@@ -206,8 +266,17 @@ class _WidgetHistoriqueState extends State<WidgetHistorique> {
   /// par le regroupement par date ET par le "Tout sélectionner" (qui doit
   /// sélectionner exactement ce que l'utilisateur voit à l'écran).
   List<NoteSourire> _filtrerListe(List<NoteSourire> liste) {
-    if (_filtresActifs.isEmpty) return liste;
+    if (_filtresActifs.isEmpty && _periodeActive == null) return liste;
+
     return liste.where((note) {
+      // La période se lit sur la date AFFICHÉE — celle que porte le souvenir
+      // à l'écran. Filtrer sur la date d'entrée en base donnerait des
+      // résultats incompréhensibles pour une photo ancienne importée hier.
+      if (_periodeActive != null && !_periodeActive!.contient(note.dateAffichee)) {
+        return false;
+      }
+      if (_filtresActifs.isEmpty) return true;
+
       final categoriesDeLaNote = note.categories;
       if (_filtresActifs.contains("unclassified") && categoriesDeLaNote.contains("unclassified")) {
         return true;
@@ -332,6 +401,11 @@ class _WidgetHistoriqueState extends State<WidgetHistorique> {
                           final listeVisibleActuelle = _voletEstOuvert
                               ? _filtrerListe(toutesLesNotes)
                               : <NoteSourire>[];
+                          // Calculées ici, une fois par arrivée de souvenirs,
+                          // et non dans le `builder` de l'animation, qui
+                          // s'exécute à chaque image du tiroir.
+                          final List<int> anneesDisponibles =
+                              _anneesDisponibles(toutesLesNotes);
                           final localizations = AppLocalizations.of(context)!;
 
                           return Stack(
@@ -348,7 +422,7 @@ class _WidgetHistoriqueState extends State<WidgetHistorique> {
                                     ? const [SliverToBoxAdapter(child: SizedBox.shrink())]
                                     : [
                                   SliverToBoxAdapter(
-                                    child: SizedBox(height: _modeSelection ? 96 : 60),
+                                    child: SizedBox(height: _hauteurEnTete),
                                   ),
 
                                   if (toutesLesNotes.isEmpty)
@@ -526,24 +600,21 @@ class _WidgetHistoriqueState extends State<WidgetHistorique> {
                                               ),
                                             ),
                                             Align(
-                                              alignment: Alignment.centerRight,
+                                              // À GAUCHE, et non plus à droite :
+                                              // le panneau se déplie juste sous
+                                              // ce mot, et le regard descend
+                                              // alors dans le sens de la
+                                              // lecture.
+                                              alignment: Alignment.centerLeft,
                                               child: BtnFiltrer(
-                                                nombreDeFiltres: _filtresActifs.length,
-                                                onTap: () {
-                                                  showModalBottomSheet(
-                                                    context: context,
-                                                    isScrollControlled: true,
-                                                    backgroundColor: Colors.transparent,
-                                                    builder: (context) => EcranFiltrer(
-                                                      categoriesSelectionneesInitiales: _filtresActifs,
-                                                      onFiltrerApplique: (nouvelleSelection) {
-                                                        setState(() {
-                                                          _filtresActifs = nouvelleSelection;
-                                                        });
-                                                      },
-                                                    ),
-                                                  );
-                                                },
+                                                // La période compte pour un
+                                                // filtre : sans cela, le
+                                                // décompte resterait à zéro
+                                                // alors que l'historique est
+                                                // bel et bien restreint.
+                                                nombreDeFiltres: _filtresActifs.length +
+                                                    (_periodeActive == null ? 0 : 1),
+                                                onTap: _basculerTiroir,
                                               ),
                                             ),
                                           ],
@@ -587,11 +658,58 @@ class _WidgetHistoriqueState extends State<WidgetHistorique> {
                                           ),
                                         ),
                                       Divider(
-                                        height: 1, 
+                                        height: 1,
                                         color: isDarkMode ? const Color(0xFF2D2D2D) : const Color(0xFFE0E0E0)
                                       ),
+
                                     ],
                                   ),
+                                ),
+                              ),
+
+                              // LE PANNEAU DE FILTRES.
+                              //
+                              // Empilé APRÈS l'en-tête, donc au-dessus de lui
+                              // comme de la liste, et posé à l'aplomb du mot
+                              // « Filtrer ». Il ne touche à rien de ce qui est
+                              // dessous : ni voile, ni décalage, ni fond
+                              // repeint — seule son ombre portée le détache.
+                              Positioned(
+                                top: _hauteurEnTete,
+                                left: 20,
+                                child: AnimatedBuilder(
+                                  animation: _controleurTiroir,
+                                  builder: (context, _) {
+                                    // Replié, il quitte l'arbre : son écoute
+                                    // des catégories s'arrête, et la liste
+                                    // reste intégralement touchable.
+                                    if (_controleurTiroir.isDismissed) {
+                                      return const SizedBox.shrink();
+                                    }
+                                    return SizeTransition(
+                                      sizeFactor: _courbeTiroir,
+                                      // -1 : le panneau se déroule par le haut,
+                                      // comme un store. Par défaut il
+                                      // s'ouvrirait depuis son centre.
+                                      axisAlignment: -1,
+                                      child: EcranFiltrer(
+                                        categories: _filtresActifs,
+                                        periode: _periodeActive,
+                                        anneesDisponibles: anneesDisponibles,
+                                        sombre: isDarkMode,
+                                        // Les filtres s'appliquent à chaque
+                                        // touche : on voit l'historique se
+                                        // resserrer derrière le panneau, donc
+                                        // il n'y a rien à valider.
+                                        onChange: (categories, periode) {
+                                          setState(() {
+                                            _filtresActifs = categories;
+                                            _periodeActive = periode;
+                                          });
+                                        },
+                                      ),
+                                    );
+                                  },
                                 ),
                               ),
                               

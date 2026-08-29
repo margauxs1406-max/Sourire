@@ -9,6 +9,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:sourire/models/note_model.dart';
 import 'package:sourire/models/theme_app.dart';
+import 'package:sourire/theme/theme_service.dart';
 import 'package:sourire/theme/tokens.dart';
 import 'package:sourire/widgets/souvenir_historique.dart';
 
@@ -354,10 +355,7 @@ class PartageService {
     String themeLabel,
     double hauteurVignette,
   ) async {
-    final ThemeApp theme = ThemeRepository.tousLesThemes.firstWhere(
-      (t) => t.id.toLowerCase() == themeLabel.toLowerCase(),
-      orElse: () => ThemeRepository.themeClassique,
-    );
+    final ThemeApp theme = ThemeService.parId(themeLabel);
     if (theme.noteIcons.isEmpty) return const <_IconeVignette>[];
 
     final List<_IconeVignette> icones = <_IconeVignette>[];

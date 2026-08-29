@@ -11,7 +11,10 @@ class BtnChevronGauche extends StatelessWidget {
       onTap: onTap,
       child: const Icon(
         Icons.chevron_left_rounded,
-        color: grey, // A6A6A6
+        // Orange, comme le chevron droit et comme tout ce qui se touche dans
+        // l'app. En gris, il se lisait comme une décoration : on le voyait
+        // sans comprendre qu'il ramenait en arrière.
+        color: orange,
         size: 32,
       ),
     );

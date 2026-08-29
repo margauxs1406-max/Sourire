@@ -42,7 +42,7 @@ class DatabaseService {
 
     return await openDatabase(
       path,
-      version: 3,
+      version: 4,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -60,6 +60,16 @@ class DatabaseService {
       // Date d'origine d'une photo. Nullable : les souvenirs déjà en base
       // n'en ont pas, et retomberont sur leur date d'entrée.
       await db.execute("ALTER TABLE notes ADD COLUMN datePrise TEXT");
+    }
+    if (ancienne < 4) {
+      // Les six catégories par défaut deviennent supprimables. On ne peut pas
+      // les effacer d'une table — elles n'y ont jamais été, elles vivent en
+      // dur dans [_systemCategories]. On mémorise donc les MASQUAGES.
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS categories_masquees(
+          name TEXT PRIMARY KEY
+        )
+      ''');
     }
   }
 
@@ -81,6 +91,13 @@ class DatabaseService {
 
     await db.execute('''
       CREATE TABLE custom_categories(
+        name TEXT PRIMARY KEY
+      )
+    ''');
+
+    // Catégories par défaut que l'utilisateur a supprimées. Voir _onUpgrade.
+    await db.execute('''
+      CREATE TABLE categories_masquees(
         name TEXT PRIMARY KEY
       )
     ''');
@@ -121,13 +138,95 @@ class DatabaseService {
     return List.generate(maps.length, (i) => NoteSourire.fromMap(maps[i]));
   }
 
+  /// Toutes les catégories disponibles, TRIÉES PAR FRÉQUENCE D'USAGE.
+  ///
+  /// Trois règles, dans cet ordre :
+  /// 1. les catégories par défaut supprimées par l'utilisateur disparaissent ;
+  /// 2. les plus utilisées remontent — c'est ce qui fait qu'après quelques
+  ///    semaines, les deux ou trois catégories qui comptent vraiment pour
+  ///    quelqu'un sont sous son pouce sans qu'il ait à chercher ;
+  /// 3. à égalité, l'ordre historique est conservé (les six par défaut dans
+  ///    leur ordre d'origine, puis les personnalisées par ordre de création).
+  ///    Sans cette troisième règle, les catégories jamais utilisées
+  ///    danseraient d'un affichage à l'autre.
   Future<List<String>> _fetchCategoriesFromDb() async {
     final db = await database;
-    final List<Map<String, dynamic>> maps = await db.query('custom_categories');
-    
-    // Fusionner les catégories système et les catégories custom stockées en base
-    final List<String> customList = maps.map((m) => m['name'] as String).toList();
-    return [..._systemCategories, ...customList];
+
+    final List<Map<String, dynamic>> perso = await db.query('custom_categories');
+    final List<Map<String, dynamic>> masquees = await db.query('categories_masquees');
+
+    final Set<String> aMasquer =
+        masquees.map((m) => m['name'] as String).toSet();
+
+    final List<String> disponibles = [
+      ..._systemCategories.where((c) => !aMasquer.contains(c)),
+      ...perso.map((m) => m['name'] as String),
+    ];
+
+    final Map<String, int> usages = await _compterUsagesCategories();
+
+    // Tri STABLE : `List.sort` ne l'est pas en Dart, on départage donc
+    // explicitement par la position d'origine.
+    final List<String> tri = List<String>.from(disponibles);
+    tri.sort((a, b) {
+      final int ecart = (usages[b] ?? 0).compareTo(usages[a] ?? 0);
+      if (ecart != 0) return ecart;
+      return disponibles.indexOf(a).compareTo(disponibles.indexOf(b));
+    });
+    return tri;
+  }
+
+  /// Nombre de souvenirs portant chaque catégorie.
+  ///
+  /// Les catégories sont stockées en une seule colonne texte, "Cat1,Cat2" :
+  /// pas de table de liaison, donc pas de `GROUP BY` possible. On compte donc
+  /// en mémoire — sur quelques milliers de souvenirs c'est instantané, et
+  /// cette lecture est déjà faite à chaque rafraîchissement du flux.
+  Future<Map<String, int>> _compterUsagesCategories() async {
+    final db = await database;
+    final List<Map<String, dynamic>> lignes =
+        await db.query('notes', columns: ['categories']);
+
+    final Map<String, int> usages = <String, int>{};
+    for (final ligne in lignes) {
+      final String brut = (ligne['categories'] as String?) ?? '';
+      if (brut.isEmpty) continue;
+      for (final String categorie in brut.split(',')) {
+        final String nom = categorie.trim();
+        if (nom.isEmpty || nom == 'sans_categorie') continue;
+        usages[nom] = (usages[nom] ?? 0) + 1;
+      }
+    }
+    return usages;
+  }
+
+  /// Nombre de souvenirs portant [categorie].
+  ///
+  /// Sert à décider s'il faut confirmer une suppression : effacer une
+  /// catégorie que personne n'utilise ne mérite pas de question.
+  Future<int> compterSouvenirsAvecCategorie(String categorie) async {
+    final Map<String, int> usages = await _compterUsagesCategories();
+    return usages[categorie] ?? 0;
+  }
+
+  /// Rétablit les six catégories par défaut supprimées.
+  ///
+  /// Elles reviennent en tant que CLÉS (`family`, `work`…), donc traduites.
+  /// Recréer « Famille » à la main donnerait une catégorie en texte brut, qui
+  /// resterait française même en anglais — d'où ce bouton.
+  Future<void> restaurerCategoriesParDefaut() async {
+    final db = await database;
+    await db.delete('categories_masquees');
+    debugPrint("--- BDD SQL : catégories par défaut restaurées ---");
+    _notifierChangementCategories();
+  }
+
+  /// `true` si au moins une catégorie par défaut a été supprimée — sert à
+  /// n'afficher le bouton de restauration que quand il a un sens.
+  Future<bool> aDesCategoriesParDefautMasquees() async {
+    final db = await database;
+    final List<Map<String, dynamic>> maps = await db.query('categories_masquees');
+    return maps.isNotEmpty;
   }
 
   // --- EN EXCLUSIVITÉ : SANS CHANGEMENT DE SIGNATURE POUR TES ÉCRANS ---
@@ -267,11 +366,20 @@ class DatabaseService {
 
   // 2. Supprimer une catégorie et mettre à jour les notes
   void deleteCategory(String categoryKey) async {
-    if (_systemCategories.contains(categoryKey)) return;
-
     final db = await database;
-    // Supprimer de la table catégorie
-    await db.delete('custom_categories', where: 'name = ?', whereArgs: [categoryKey]);
+
+    if (_systemCategories.contains(categoryKey)) {
+      // Une catégorie par défaut n'existe dans aucune table : elle est écrite
+      // en dur dans [_systemCategories]. On ne peut donc pas la supprimer, on
+      // la MASQUE — et le masquage, lui, est persistant.
+      await db.insert(
+        'categories_masquees',
+        {'name': categoryKey},
+        conflictAlgorithm: ConflictAlgorithm.ignore,
+      );
+    } else {
+      await db.delete('custom_categories', where: 'name = ?', whereArgs: [categoryKey]);
+    }
 
     // Parcourir et mettre à jour les notes qui contenailettent cette catégorie
     final notes = await _fetchNotesFromDb();

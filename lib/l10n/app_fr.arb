@@ -28,7 +28,7 @@
   "personalization": "Personnalisation",
   "permissions": "Autorisations",
   "archiving": "Archivage",
-  "accessibility": "Apparence",
+  "accessibility": "Accessibilité",
   "langues": "Langues",
   "help": "Aide",
   "logout": "Se déconnecter",
@@ -69,13 +69,15 @@
   "faqQuestion1": "Où sont stockés mes souvenirs ?",
   "faqAnswer1": "Ils restent localement dans le dossier sécurisé de ton téléphone, personne d'autre n'y a accès.",
   "faqQuestion2": "Comment fonctionne le tirage au sort ?",
-  "faqAnswer2": "Secoue ton téléphone ou clique sur le bocal pour faire remonter un souvenir au hasard.",
+  "faqAnswer2": "Clique sur le bocal pour faire remonter un souvenir au hasard.",
   "faqQuestion3": "Comment catégoriser des souvenirs ?",
   "faqAnswer3": "Va dans l'historique et appuie longuement sur un souvenir. Tu pourras alors en sélectionner plusieurs et choisir 'Catégoriser'.",
+  "faqQuestion5": "Comment catégoriser mes souvenirs un par un ?",
+  "faqAnswer5": "Pour catégoriser tes souvenirs un par un, tu as 2 options :\n1- Importe tes souvenirs un par un.\n2- Depuis l'écran de catégorisation du lot de souvenirs sélectionnés, clique sur la photo qui porte la pastille : un carrousel de tes souvenirs apparaît, avec l'option « Catégoriser 1 par 1 ».",
+  "faqQuestion6": "Comment supprimer des catégories de souvenirs ?",
+  "faqAnswer6": "Dans l'écran de sélection des catégories, fais glisser la catégorie que tu veux supprimer vers la gauche.",
   "faqQuestion4": "Comment supprimer des souvenirs ?",
   "faqAnswer4": "Va dans l'historique, fais un appui long le souvenir, sélectionne-le et appuie sur le bouton 'Supprimer'.",
-  "filterTitle": "Filtrer",
-  "categoriesTitle": "Catégories",
   "catSelfLove": "Amour de soi",
   "catFriendship": "Amitié",
   "catCouple": "Couple",
@@ -235,7 +237,7 @@
   "notifSouvenirsAllBody": "Jette un oeil à ce souvenir...",
   "btnPasserPremium": "Passer Premium",
   "btnAppliquer": "Appliquer",
-  "themesTitle": "Thèmes",
+  "themesTitle": "Thèmes de l'écran d'accueil",
   "themesDescription": "Personnalise ton interface et tes notes à tout moment en choisissant parmi les thèmes suivants.",
   "notesPurchaseSuccessSnackBar": "Achat simulé avec succès ! Notes et photos illimitées débloquées.",
   "premiumSuccessSnackBar": "Premium Activé ! Tous les verrous ont sauté. Thème « {themeLabel} » appliqué.",
@@ -251,10 +253,13 @@
   "themeMer": "Mer",
   "themeAbstrait": "Abstrait",
   "themeSport": "Sport",
+  "themeVoyage": "Voyage",
   "themeMusique": "Musique",
   "themeCinema": "Cinéma",
   "themeAnimauxMarins": "Animaux marins",
-  "themeFloral": "Floral",
+  "themeAmour": "Amour",
+  "themeCelebration": "Célébrations",
+  "themeNature": "Nature",
   "themeKawaii": "Kawaii",
   "popupPalierTitle": "Félicitations !",
   "popupPalierMessage": "Tu as ajouté {palier} souvenirs à ton bocal !",
@@ -331,5 +336,32 @@
         "type": "int"
       }
     }
-  }
+  },
+  "restoreDefaultCategoriesTitle": "Restaurer les catégories par défaut",
+  "restoreDefaultCategoriesSub": "Fait revenir Amour de soi, Amitié, Couple, Famille, Loisirs et Travail si tu les as supprimées. Tes souvenirs ne sont pas modifiés.",
+  "restoreDefaultCategoriesDone": "Catégories par défaut restaurées.",
+  "batchCategoryQuestion": "À quelle(s) catégorie(s) appartiennent ces souvenirs ?",
+  "batchCategorizeOneByOne": "Catégoriser 1 par 1",
+  "deleteCategoryConfirmTitle": "Supprimer « {categorie} » ?",
+  "@deleteCategoryConfirmTitle": {
+    "placeholders": {
+      "categorie": {
+        "type": "String"
+      }
+    }
+  },
+  "deleteCategoryConfirmBody": "{nombre, plural, one{Un souvenir perdra cette catégorie.} other{{nombre} souvenirs perdront cette catégorie.}} Aucun souvenir n'est supprimé.",
+  "@deleteCategoryConfirmBody": {
+    "placeholders": {
+      "nombre": {
+        "type": "int"
+      }
+    }
+  },
+  "filterByPeriod": "Par période",
+  "filterByCategory": "Par catégorie",
+  "btnApply": "Appliquer",
+  "themePreviewQuestion": "Qu'est-ce qui te rend heureux·se aujourd'hui ?",
+  "notesThemesPurchaseMessage": "Habille tes notes du décor de ton choix. Passe à la version Premium pour débloquer tous les thèmes.",
+  "themesTitleNotes": "Thèmes des notes"
 }

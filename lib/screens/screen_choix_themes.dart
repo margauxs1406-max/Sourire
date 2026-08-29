@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:sourire/l10n/app_localizations.dart';
 import 'package:sourire/models/theme_app.dart';
 import 'package:sourire/theme/theme_service.dart';
-import 'package:sourire/theme/tokens.dart'; 
+import 'package:sourire/theme/tokens.dart';
+import 'package:sourire/widgets/apercu_theme_home.dart'; 
 import 'package:sourire/theme/user_prefs.dart';
 import 'package:sourire/widgets/logo_sourire.dart';
 import 'package:sourire/widgets/btn_chevron_gauche.dart';
@@ -39,13 +40,14 @@ class _ScreenChoixThemesState extends State<ScreenChoixThemes> {
     showDialog(
       context: context,
       builder: (BuildContext dialogContext) {
-        final double screenWidth = MediaQuery.of(dialogContext).size.width;
         final double screenHeight = MediaQuery.of(dialogContext).size.height;
 
-        // Facteurs responsives pour la modale d'aperçu
-        final double textScaleFactor = screenWidth / 390;
-        final double sizeTitle = (screenWidth * 18) / 390;
-        final double sizeButtonText = (screenWidth * 15) / 390;
+        // Facteurs responsives pour la modale d'aperçu, BORNÉS : sans borne,
+        // ces formules indexées sur un écran de 390 pt donnaient un titre de
+        // 47 pt sur un iPad.
+        final double textScaleFactor = echelleEcran(dialogContext);
+        final double sizeTitle = tailleAdaptee(dialogContext, 18);
+        final double sizeButtonText = tailleAdaptee(dialogContext, 15);
 
         // CORRECTION : On se base maintenant sur UserPrefs.isPremium pour masquer le bouton définitivement
         final bool afficherBoutonPremium = theme.isPremium && !UserPrefs.isPremium;
@@ -54,7 +56,7 @@ class _ScreenChoixThemesState extends State<ScreenChoixThemes> {
           backgroundColor: dialogBgColor,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           child: Padding(
-            padding: EdgeInsets.all(20.0 * textScaleFactor.clamp(0.8, 1.2)),
+            padding: EdgeInsets.all(20.0 * textScaleFactor),
             child: SingleChildScrollView( 
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -68,7 +70,7 @@ class _ScreenChoixThemesState extends State<ScreenChoixThemes> {
                       color: textColor,
                     ),
                   ),
-                  SizedBox(height: 16 * textScaleFactor.clamp(0.8, 1.2)),
+                  SizedBox(height: 16 * textScaleFactor),
                   
                   // Image adaptative dans l'aperçu
                   Center(
@@ -79,16 +81,15 @@ class _ScreenChoixThemesState extends State<ScreenChoixThemes> {
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(12),
                         child: AspectRatio(
-                          aspectRatio: 0.78,
-                          child: Image.asset(
-                            theme.vignettePath,
-                            fit: BoxFit.fill,
-                            errorBuilder: (context, error, stackTrace) {
-                              return Container(
-                                color: orange,
-                                child: Icon(Icons.image_not_supported, color: Colors.white, size: 40 * textScaleFactor),
-                              );
-                            },
+                          // Plus large que la home réelle (393 / 852 ≈ 0,46) :
+                          // la miniature est en BoxFit.cover, la différence de
+                          // proportions se traduit donc par un rognage haut et
+                          // bas. C'est voulu — ces marges sont vides, et les
+                          // montrer en grand ne fait que rapetisser le décor.
+                          aspectRatio: 0.72,
+                          child: ApercuThemeHome(
+                            theme: theme,
+                            sombre: widget.isDarkMode,
                           ),
                         ),
                       ),
@@ -96,13 +97,13 @@ class _ScreenChoixThemesState extends State<ScreenChoixThemes> {
                   ),
                   
                   // Bouton d'action
-                  SizedBox(height: 24 * textScaleFactor.clamp(0.8, 1.2)),
+                  SizedBox(height: 24 * textScaleFactor),
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
                         backgroundColor: orange,
-                        padding: EdgeInsets.symmetric(vertical: 14 * textScaleFactor.clamp(0.8, 1.2)),
+                        padding: EdgeInsets.symmetric(vertical: 14 * textScaleFactor),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                         elevation: 0,
                       ),
@@ -128,41 +129,17 @@ class _ScreenChoixThemesState extends State<ScreenChoixThemes> {
                           _appliquerTheme(theme);
                         }
                       },
-                      child: afficherBoutonPremium
-                          ? Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(
-                                  AppLocalizations.of(context)!.btnPasserPremium,
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                    color: white,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: sizeButtonText,
-                                  ),
-                                ),
-                                if (phaseDeTestActive) ...[
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    'Gratuit pour les tests ! 😁',
-                                    textAlign: TextAlign.center,
-                                    style: TextStyle(
-                                      color: white,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: sizeButtonText * 0.85,
-                                    ),
-                                  ),
-                                ],
-                              ],
-                            )
-                          : Text(
-                              AppLocalizations.of(context)!.btnAppliquer,
-                              style: TextStyle(
-                                color: white,
-                                fontWeight: FontWeight.bold,
-                                fontSize: sizeButtonText,
-                              ),
-                            ),
+                      child: Text(
+                        afficherBoutonPremium
+                            ? AppLocalizations.of(context)!.btnPasserPremium
+                            : AppLocalizations.of(context)!.btnAppliquer,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: sizeButtonText,
+                        ),
+                      ),
                     ),
                   ),
                 ],
@@ -176,16 +153,29 @@ class _ScreenChoixThemesState extends State<ScreenChoixThemes> {
 
   @override
   Widget build(BuildContext context) {
-    final Color bgColor = widget.isDarkMode ? darkBg : lightOrange;
+    // Fond neutre sous les miniatures, et non le crème habituel : chaque
+    // vignette EST une petite home crème, elle se fondrait dans un fond de la
+    // même couleur.
+    //
+    // En mode sombre, le noir PUR et non le gris très sombre des surfaces :
+    // c'est justement ce gris que les miniatures portent à l'intérieur. Les
+    // deux côte à côte se confondraient, et les vignettes perdraient leur
+    // contour.
+    final Color bgColor = widget.isDarkMode ? black : white;
     final Color textColor = widget.isDarkMode ? white : black;
-    final Color headerBgColor = widget.isDarkMode ? darkSurface : lightOrange;
+    // Le bandeau se fond dans l'écran : il porte donc la même couleur.
+    final Color headerBgColor = bgColor;
     final Color dialogBgColor = widget.isDarkMode ? darkSurface : white;
 
-    // Calculs de tailles responsives pour la grille principale
-    final double screenWidth = MediaQuery.of(context).size.width;
-    final double titleFontSize = (screenWidth * 18) / 390;
-    final double itemFontSize = (screenWidth * 14) / 390;
-    final double iconScaleFactor = (screenWidth * 14) / 390;
+    // Calculs de tailles responsives pour la grille principale, bornés.
+    final double titleFontSize = tailleAdaptee(context, 18);
+    final double itemFontSize = tailleAdaptee(context, 14);
+    final double iconScaleFactor = tailleAdaptee(context, 14);
+
+    // Deux colonnes de vignettes sur téléphone. Sur tablette, deux vignettes
+    // occuperaient une demi-dalle chacune : on en met quatre, chaque aperçu
+    // garde ainsi à peu près la taille pour laquelle il a été dessiné.
+    final int colonnesThemes = estTablette(context) ? 4 : 2;
 
     List<ThemeApp> themesTries = List.from(ThemeRepository.tousLesThemes);
 
@@ -238,8 +228,8 @@ class _ScreenChoixThemesState extends State<ScreenChoixThemes> {
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
                       itemCount: themesTries.length,
-                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: colonnesThemes,
                         crossAxisSpacing: 16,
                         mainAxisSpacing: 20,
                         childAspectRatio: 0.70, 
@@ -267,20 +257,14 @@ class _ScreenChoixThemesState extends State<ScreenChoixThemes> {
                               Expanded(
                                 child: Stack(
                                   children: [
-                                    // Affichage de l'image PNG (Contrainte par le layout parent étendu)
+                                    // Reconstitution vivante de la home sous ce
+                                    // thème, à la place de l'ancienne vignette
+                                    // PNG : plus d'image à redessiner quand la
+                                    // home évolue, et le mode sombre suit.
                                     Positioned.fill(
-                                      child: ClipRRect(
-                                        borderRadius: BorderRadius.circular(12),
-                                        child: Image.asset(
-                                          theme.vignettePath,
-                                          fit: BoxFit.fill,
-                                          errorBuilder: (context, error, stackTrace) {
-                                            return Container(
-                                              color: orange,
-                                              child: const Icon(Icons.image_not_supported, color: Colors.white),
-                                            );
-                                          },
-                                        ),
+                                      child: ApercuThemeHome(
+                                        theme: theme,
+                                        sombre: widget.isDarkMode,
                                       ),
                                     ),
                                     

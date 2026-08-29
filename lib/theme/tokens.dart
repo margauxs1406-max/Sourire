@@ -5,6 +5,9 @@ import 'dart:math';
 const Color black = Color(0xFF000000);
 const Color white = Color(0xFFFFFFFF);
 const Color grey = Color(0xFF616161);
+/// Encre des titres. Un noir franc sonne dur sur les fonds crème de l'app ;
+/// ce gris très sombre garde le même contraste de lecture en s'y posant mieux.
+const Color darkGrey = Color(0xFF2E2E2E);
 const Color lightGrey = Color(0xFFA6A6A6);
 const Color orange = Color(0xFFFF8000);
 const Color lightOrange = Color(0xFFFFFBF5);
@@ -13,7 +16,7 @@ const Color lightGreen = Color(0xFFFDFFFB);
 const Color blue = Color(0xFF5CCDFE);
 const Color lightBlue = Color(0xFFFBFEFF);
 const Color pink = Color(0xFFFE5CC2);
-const Color lightPink = Color(0xFFFFFDFB);
+const Color lightPink = Color(0xFFFFF9FC);
 const Color darkBg = Color(0xFF1E1E1E);        
 const Color darkSurface = Color(0xFF2A2A2A);   
 const Color darkSeparateur = Color(0xFF2D2D2D); 
@@ -23,7 +26,7 @@ const Color darkSeparateur = Color(0xFF2D2D2D);
 const Color yellow = Color.fromARGB(255, 255, 204, 1);
 const Color lightYellow = Color(0xFFFFFEF5);
 const Color purple = Color(0xFFA503F6);
-const Color lightPurple = Color(0xFFFCFAFF);
+const Color lightPurple = Color(0xFFFDF8FF);
 const Color red = Color.fromARGB(255, 250, 58, 58);
 const Color lightRed = Color(0xFFFFFAFA);
 const Color teal = Color(0xFF03C4A4);
@@ -40,6 +43,24 @@ class SourireTheme {
   final String label;  
 
   SourireTheme({required this.main, required this.light, required this.label});
+
+  /// Papier du souvenir : le pastel en clair, une teinte sombre de la même
+  /// couleur en sombre.
+  ///
+  /// Pas [darkSurface] pour tous : ce serait renoncer à ce qui fait qu'un
+  /// souvenir se reconnaît d'un coup d'œil dans le bocal comme dans
+  /// l'historique — sa couleur. On garde donc la teinte, très diluée dans le
+  /// noir, assez pour se lire mais pas assez pour éclairer l'écran la nuit.
+  Color fond(bool sombre) => sombre
+      ? Color.alphaBlend(main.withValues(alpha: 0.14), darkBg)
+      : light;
+
+  /// Encre du souvenir : le texte, et les icônes de décor du thème.
+  ///
+  /// Éclaircie en mode sombre. Les couleurs de la palette sont pensées pour
+  /// être lues sur un pastel presque blanc ; le violet et le rouge, les plus
+  /// foncés, deviennent illisibles posés tels quels sur du noir.
+  Color encre(bool sombre) => sombre ? Color.lerp(main, white, 0.3)! : main;
 
   // --- La liste de référence de vos thèmes pour les NOTES TEXTE ---
   static final List<SourireTheme> tousLesThemes = [
@@ -188,6 +209,13 @@ Color texteFort(bool sombre) => sombre ? white : black;
 /// Couleur du texte secondaire.
 Color texteDoux(bool sombre) => sombre ? lightGrey : grey;
 
+/// Couleur d'un TITRE.
+///
+/// Distincte de [texteFort] : dans cette application, l'orange est réservé à
+/// ce qui se touche. Un titre ne se touche pas, il se lit — il porte donc
+/// l'encre, et une encre légèrement adoucie plutôt qu'un noir pur.
+Color texteTitre(bool sombre) => sombre ? white : darkGrey;
+
 // Ces deux styles demandaient « Inclusive Sans » alors que la famille
 // n'était pas déclarée : Flutter retombait sans prévenir sur la police
 // système. La famille est désormais posée une seule fois, dans le
@@ -219,14 +247,72 @@ const double radiusDefault = 15.0;
 const double paddingDefault = 20.0;
 const double gapDefault = 16.0;
 
-/// Passe à `false` une fois la phase de test terminée, pour masquer
-/// automatiquement la mention "Gratuit pour les tests" sur les boutons
-/// Premium (home.dart et screen_choix_themes.dart).
-const bool phaseDeTestActive = true;
+// --- MISE À L'ÉCHELLE ET LARGEUR DE LECTURE ----------------------------------
+//
+// Toute l'application a été dessinée sur un écran de 390 pt de large — un
+// iPhone 14. D'où des tailles calculées en proportion de la largeur, du genre
+// `screenWidth * 18 / 390` : juste sur téléphone, catastrophique sur tablette,
+// où la même formule produit un titre de 47 pt sur un iPad de 1024 pt.
+//
+// La règle, sur grand écran : on n'AGRANDIT pas, on ÉTALE. Le texte garde
+// à peu près sa taille de lecture, c'est la mise en page qui respire.
 
-/// Interrupteur de test : force l'affichage de TOUS les badges comme
-/// débloqués dans screen_mes_badges.dart, sans avoir besoin de créer
-/// réellement des milliers de souvenirs. Purement en mémoire (non
-/// persisté) — se réinitialise à chaque redémarrage de l'app. Visible
-/// uniquement quand `phaseDeTestActive` est actif.
-final ValueNotifier<bool> debloquerTousBadgesTestNotifier = ValueNotifier<bool>(false);
+/// Largeur de l'écran de référence sur lequel l'app a été dessinée.
+const double largeurReference = 390.0;
+
+/// Facteur de mise à l'échelle typographique, BORNÉ.
+///
+/// En dessous de la référence on rétrécit un peu, pour les petits téléphones.
+/// Au-dessus, on cesse très vite de grandir : passé une certaine taille, un
+/// titre plus gros n'est pas plus lisible, il est juste plus gros.
+///
+/// Ce facteur ne remplace pas le réglage d'accessibilité du système — Flutter
+/// applique les deux, celui-ci pour la taille de l'écran, `textScaler` pour
+/// la préférence de l'utilisateur.
+double echelleEcran(BuildContext context) =>
+    (MediaQuery.sizeOf(context).width / largeurReference).clamp(0.85, 1.15);
+
+/// Applique [echelleEcran] à une taille pensée pour la référence.
+double tailleAdaptee(BuildContext context, double taille) =>
+    taille * echelleEcran(context);
+
+/// Largeur maximale d'une colonne de texte ou de réglages.
+///
+/// Au-delà d'une soixantaine de caractères par ligne, l'œil perd le début de
+/// la ligne suivante et la lecture se fatigue. Sur tablette on borne donc la
+/// colonne et on la centre, plutôt que d'étirer les textes sur toute la dalle.
+const double largeurContenuMax = 560.0;
+
+/// `true` sur tablette (iPad, tablette Android).
+///
+/// On mesure le PLUS PETIT côté de l'écran : contrairement à la largeur, il ne
+/// change pas quand l'appareil tourne. Un iPad reste un iPad en paysage — ce
+/// qui compte depuis qu'iPadOS 26 ignore le verrouillage en portrait.
+bool estTablette(BuildContext context) =>
+    MediaQuery.sizeOf(context).shortestSide >= 600;
+
+/// Centre son enfant dans une colonne d'au plus [largeurMax] de large.
+///
+/// Sans effet visible sur téléphone, où l'écran est déjà plus étroit que la
+/// borne : c'est exactement ce qu'on veut, une seule et même mise en page qui
+/// se comporte bien partout, sans branche `if (tablette)`.
+class ContenuCentre extends StatelessWidget {
+  final Widget child;
+  final double largeurMax;
+
+  const ContenuCentre({
+    required this.child,
+    this.largeurMax = largeurContenuMax,
+    super.key,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxWidth: largeurMax),
+        child: child,
+      ),
+    );
+  }
+}

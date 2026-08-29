@@ -97,10 +97,20 @@ class ScreenMesBadges extends StatelessWidget {
     final Color textColor = isDarkMode ? white : black;
     final Color headerBgColor = isDarkMode ? darkSurface : lightOrange;
 
-    final double screenWidth = MediaQuery.of(context).size.width;
-    final double titleFontSize = (screenWidth * 18) / 390;
+    final double titleFontSize = tailleAdaptee(context, 18);
 
     final List<int> paliersOrdonnes = badgeAssetParPalier.keys.toList()..sort();
+
+    // On se base sur le plus haut palier JAMAIS atteint (persistant, ne fait
+    // qu'augmenter) plutôt que sur le total ACTUEL de souvenirs — sinon,
+    // supprimer des souvenirs après coup ferait "reverrouiller" à tort un
+    // badge pourtant déjà mérité.
+    final int dernierPalierAtteint = UserPrefs.dernierPalierCelebre;
+
+    // Quatre colonnes sur téléphone. Sur tablette, garder quatre colonnes
+    // donnerait quatre badges gigantesques : on en met davantage pour que
+    // chaque vignette conserve à peu près sa taille de lecture.
+    final int colonnesBadges = estTablette(context) ? 6 : 4;
 
     return Scaffold(
       backgroundColor: bgColor,
@@ -130,125 +140,67 @@ class ScreenMesBadges extends StatelessWidget {
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.only(left: 30, right: 30, top: 20, bottom: 30),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      AppLocalizations.of(context)!.myBadgesTitle,
-                      style: styleSection.copyWith(
-                        fontSize: titleFontSize,
-                        color: textColor,
+                // Un peu plus large que la colonne de lecture courante : une
+                // grille de vignettes supporte mieux l'étalement qu'un texte.
+                child: ContenuCentre(
+                  largeurMax: 720,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        AppLocalizations.of(context)!.myBadgesTitle,
+                        style: styleSection.copyWith(
+                          fontSize: titleFontSize,
+                          color: textColor,
+                        ),
                       ),
-                    ),
 
-                    // --- OUTIL DE TEST : force l'affichage de tous les
-                    // badges comme débloqués, sans créer réellement des
-                    // milliers de souvenirs. Visible uniquement pendant
-                    // la phase de test (voir `phaseDeTestActive` dans
-                    // tokens.dart) — à retirer ou masquer ensuite.
-                    if (phaseDeTestActive) ...[
-                      const SizedBox(height: 14),
-                      ValueListenableBuilder<bool>(
-                        valueListenable: debloquerTousBadgesTestNotifier,
-                        builder: (context, forceTout, _) {
+                      const SizedBox(height: 25),
+                      GridView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: paliersOrdonnes.length,
+                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: colonnesBadges,
+                          crossAxisSpacing: 12,
+                          mainAxisSpacing: 12,
+                          childAspectRatio: 1.0,
+                        ),
+                        itemBuilder: (context, index) {
+                          final int palier = paliersOrdonnes[index];
+                          final bool debloque = palier <= dernierPalierAtteint;
+                          final String assetPath = badgeAssetParPalier[palier]!;
+
                           return GestureDetector(
-                            onTap: () {
-                              debloquerTousBadgesTestNotifier.value = !forceTout;
-                            },
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                              decoration: BoxDecoration(
-                                color: (forceTout ? orange : Colors.grey).withValues(alpha: 0.15),
-                                borderRadius: BorderRadius.circular(8),
-                                border: Border.all(
-                                  color: forceTout ? orange : Colors.grey,
-                                  width: 1,
-                                ),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    Icons.science_outlined,
-                                    size: 16,
-                                    color: forceTout ? orange : (isDarkMode ? lightGrey : grey),
+                            onTap: debloque ? () => _ouvrirBadgeAgrandi(context, palier) : null,
+                            child: LayoutBuilder(
+                              builder: (context, constraints) {
+                                final double taille = constraints.maxWidth;
+                                return Container(
+                                  decoration: BoxDecoration(
+                                    color: debloque ? white : orange,
+                                    borderRadius: BorderRadius.circular(4),
                                   ),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    forceTout
-                                        ? 'Test : tous les badges débloqués'
-                                        : 'Test : débloquer tous les badges',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w600,
-                                      color: forceTout ? orange : (isDarkMode ? lightGrey : grey),
-                                    ),
+                                  child: Center(
+                                    child: debloque
+                                        ? Padding(
+                                            padding: EdgeInsets.all(taille * 0.15),
+                                            child: SvgPicture.asset(assetPath),
+                                          )
+                                        : Icon(
+                                            Icons.star,
+                                            color: Colors.white.withValues(alpha: 0.5),
+                                            size: taille * 0.45,
+                                          ),
                                   ),
-                                ],
-                              ),
+                                );
+                              },
                             ),
                           );
                         },
                       ),
                     ],
-
-                    const SizedBox(height: 25),
-                    ValueListenableBuilder<bool>(
-                      valueListenable: debloquerTousBadgesTestNotifier,
-                      builder: (context, forceTout, _) {
-                        // On se base sur le plus haut palier JAMAIS atteint
-                        // (persistant, ne fait qu'augmenter) plutôt que sur
-                        // le total ACTUEL de souvenirs — sinon, supprimer
-                        // des souvenirs après coup ferait "reverrouiller"
-                        // à tort un badge pourtant déjà mérité.
-                        final int dernierPalierAtteint = UserPrefs.dernierPalierCelebre;
-
-                        return GridView.builder(
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          itemCount: paliersOrdonnes.length,
-                          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 4,
-                            crossAxisSpacing: 12,
-                            mainAxisSpacing: 12,
-                            childAspectRatio: 1.0,
-                          ),
-                          itemBuilder: (context, index) {
-                            final int palier = paliersOrdonnes[index];
-                            final bool debloque = forceTout || palier <= dernierPalierAtteint;
-                            final String assetPath = badgeAssetParPalier[palier]!;
-
-                            return GestureDetector(
-                              onTap: debloque ? () => _ouvrirBadgeAgrandi(context, palier) : null,
-                              child: LayoutBuilder(
-                                builder: (context, constraints) {
-                                  final double taille = constraints.maxWidth;
-                                  return Container(
-                                    decoration: BoxDecoration(
-                                      color: debloque ? white : orange,
-                                      borderRadius: BorderRadius.circular(4),
-                                    ),
-                                    child: Center(
-                                      child: debloque
-                                          ? Padding(
-                                              padding: EdgeInsets.all(taille * 0.15),
-                                              child: SvgPicture.asset(assetPath),
-                                            )
-                                          : Icon(
-                                              Icons.star,
-                                              color: Colors.white.withValues(alpha: 0.5),
-                                              size: taille * 0.45,
-                                            ),
-                                    ),
-                                  );
-                                },
-                              ),
-                            );
-                          },
-                        );
-                      },
-                    ),
-                  ],
+                  ),
                 ),
               ),
             ),
