@@ -1,6 +1,5 @@
 {
   "@@locale": "es",
-  "titleSourire": "Sourire",
   "welcomeMessage": "Hola {prenom},",
   "@welcomeMessage": {
     "placeholders": {
@@ -31,17 +30,6 @@
   "accessibility": "Accesibilidad",
   "langues": "Idiomas",
   "help": "Ayuda",
-  "logout": "Cerrar sesión",
-  "dailyGratitudeReminder": "Recordatorio diario de gratitud",
-  "dailyReminderSubtitle": "Recordarme anotar un recuerdo positivo",
-  "reminderTime": "Hora del recordatorio",
-  "drawnMemoriesFrequency": "Frecuencia de los recuerdos sorteados",
-  "drawnMemoriesSubtitle": "Proponerme un recuerdo antiguo para revivirlo",
-  "frequencySettings": "Ajustes de la frecuencia",
-  "categoriesIncluded": "Categorías incluidas",
-  "everyDay": "Todos los días",
-  "everyTwoDays": "Cada 2 días",
-  "everyWeek": "Todas las semanas",
   "photoGalleryAccess": "Acceso a la galería de fotos",
   "photoGallerySubtitle": "Imprescindible para añadir fotos de tus momentos preciados.",
   "secureLocalStorage": "Almacenamiento local seguro",
@@ -88,10 +76,6 @@
   "catUnclassified": "Sin clasificar",
   "btnNewCategory": "Nueva categoría",
   "hintNewCategory": "Nombre de la categoría...",
-  "btnDeleteCategories": "Eliminar categorías",
-  "noCustomCategoryToDelete": "No hay ninguna categoría personalizada que eliminar.",
-  "btnClose": "Cerrar",
-  "titleDeleteModal": "Gestionar las categorías",
   "btnReset": "Restablecer",
   "btnFilter": "Filtrar",
   "writeHappyThought": "Escribe lo que te hace feliz...",
@@ -109,18 +93,12 @@
   "yesterday": "Ayer",
   "btnDeleteSelection": "Eliminar",
   "btnCategorizeSelection": "Categorizar",
-  "galleryRecent": "Recientes",
-  "galleryPreview": "Vista previa",
-  "btnOk": "OK",
   "alertWarningTitle": "Atención",
   "galleryDisabledMessage": "Has desactivado el acceso a tu galería de fotos. Actívalo en tus permisos.",
   "btnEnableAccess": "Activar el acceso",
   "emptyJarMessage": "El tarro está vacío, ¡añade un recuerdo!",
-  "deleteConfirmMessage": "¿Seguro que quieres eliminar definitivamente estos recuerdos?",
   "btnCancel": "Cancelar",
   "btnDeleteConfirm": "Eliminar",
-  "recategorizeTitle": "Selecciona las categorías que quieres aplicar a los recuerdos seleccionados:",
-  "btnSave": "Guardar",
   "onboardingBtnGetStarted": "Empezar",
   "onboardingWelcomeMessage": "¡Te damos la bienvenida\na tu espacio personal,\ncreado para devolverte\nla sonrisa!",
   "onboardingQuestionName": "¿Cómo te llamas?",
@@ -149,35 +127,6 @@
   "demoBocalDesc": "Toca el tarro cuando quieras para sortear un recuerdo guardado y devolverte la sonrisa.",
   "demoBurgerTitle": "Tu historial",
   "demoBurgerDesc": "Abre este menú cuando quieras para encontrar la lista cronológica de todos tus preciados recuerdos guardados.",
-  "profilTitlePersonalData": "Datos personales",
-  "profilLabelFirstName": "Nombre",
-  "profilLabelEmail": "Correo electrónico",
-  "profilLabelPassword": "Contraseña",
-  "profilLabelBiometrics": "Biometría",
-  "profilTitleAccountSettings": "Ajustes de la cuenta",
-  "profilMenuNotifications": "Notificaciones",
-  "profilMenuLanguage": "Idioma de la aplicación",
-  "profilMenuDarkMode": "Tema oscuro",
-  "profilMenuSoftAnimations": "Animaciones suaves",
-  "profilTitleStorage": "Almacenamiento del dispositivo",
-  "profilLabelImportedPhotos": "Fotos importadas",
-  "profilLabelTextMemories": "Recuerdos escritos",
-  "profilLabelGalleryAccess": "Acceso a la galería",
-  "profilBtnEmpty": "Vaciar",
-  "profilSnackbarEmptied": "{label} vaciado",
-  "@profilSnackbarEmptied": {
-    "placeholders": {
-      "label": {
-        "type": "String"
-      }
-    }
-  },
-  "profilTitleHelp": "¿Necesitas ayuda?",
-  "profilHelpQuestion1": "¿Cómo añado un recuerdo?",
-  "profilHelpAnswer1": "Toca el botón «+» en la pantalla de inicio para empezar a escribir un recuerdo o importar una foto.",
-  "profilHelpQuestion2": "¿Están seguros mis datos?",
-  "profilHelpAnswer2": "Sí. Tus recuerdos se quedan únicamente en el espacio privado de Sourire en tu teléfono, al que ninguna otra aplicación tiene acceso, y nunca se envían a Internet.",
-  "profilAlertTitle": "Atención",
   "profilAlertGalleryMessage": "Atención: si decides quitar el acceso a tu galería de fotos, ya no podrás guardar fotos en tus recuerdos.",
   "profilAlertBtnDisable": "Desactivar el acceso",
   "notifLabelTitleGratitude": "Recordatorio de gratitud",
@@ -212,7 +161,7 @@
   "lockForgotPassword": "¿Has olvidado tu contraseña?",
   "lockBtnBiometric": "Usar la huella",
   "purchaseAlertTitle": "Límite alcanzado",
-  "purchaseAlertMessage": "Has alcanzado el límite de {limite} recuerdos de la versión gratuita. ¡Pásate a Premium para añadir recuerdos sin límite y desbloquear nuevos temas!",
+  "purchaseAlertMessage": "Has alcanzado el límite de {limite} recuerdos de la versión gratuita. ¡Pásate a Premium para añadir recuerdos sin límite!",
   "@purchaseAlertMessage": {
     "placeholders": {
       "limite": {
@@ -222,7 +171,6 @@
   },
   "deleteAlertTitle": "¿Seguro que quieres eliminar estos recuerdos?",
   "deleteAlertMessage": "Esta acción es irreversible y eliminará definitivamente los recuerdos seleccionados.",
-  "btnGoPremium": "Pasar a Premium",
   "emptyHistory": "El historial está vacío",
   "notifGratitudeChannelName": "Recordatorio de gratitud",
   "notifGratitudeChannelDesc": "Para recordarte anotar tus pensamientos positivos",
@@ -238,8 +186,7 @@
   "btnPasserPremium": "Pasar a Premium",
   "btnAppliquer": "Aplicar",
   "themesTitle": "Temas de la pantalla de inicio",
-  "themesDescription": "Personaliza tu interfaz y tus notas cuando quieras eligiendo entre los siguientes temas.",
-  "notesPurchaseSuccessSnackBar": "¡Compra simulada con éxito! Notas y fotos ilimitadas desbloqueadas.",
+  "notesPurchaseSuccessSnackBar": "¡Gracias! El Premium está desbloqueado: recuerdos ilimitados y todos los decorados.",
   "premiumSuccessSnackBar": "¡Premium activado! Todos los candados se han abierto. Tema «{themeLabel}» aplicado.",
   "@premiumSuccessSnackBar": {
     "placeholders": {
@@ -251,7 +198,6 @@
   "themeClassique": "Clásico",
   "themeMontagne": "Montaña",
   "themeMer": "Mar",
-  "themeAbstrait": "Abstracto",
   "themeSport": "Deporte",
   "themeVoyage": "Viajes",
   "themeMusique": "Música",
@@ -261,15 +207,6 @@
   "themeCelebration": "Celebraciones",
   "themeNature": "Naturaleza",
   "themeKawaii": "Kawaii",
-  "popupPalierTitle": "¡Enhorabuena!",
-  "popupPalierMessage": "¡Has añadido {palier} recuerdos a tu tarro!",
-  "@popupPalierMessage": {
-    "placeholders": {
-      "palier": {
-        "type": "int"
-      }
-    }
-  },
   "btnContinuerPalier": "Continuar",
   "badge10Name": "Buscador de Estrellas",
   "badge10Phrase": "Los recuerdos más bonitos suelen empezar siendo muy pequeños.",
@@ -362,6 +299,28 @@
   "filterByCategory": "Por categoría",
   "btnApply": "Aplicar",
   "themePreviewQuestion": "¿Qué te hace feliz hoy?",
-  "notesThemesPurchaseMessage": "Viste tus notas con el decorado que quieras. Pásate a Premium para desbloquear todos los temas.",
-  "themesTitleNotes": "Temas de las notas"
+  "notesThemesPurchaseMessage": "Elige el decorado de tus notas entre la biblioteca de temas.",
+  "eraseAllTitle": "Borrar todos mis recuerdos",
+  "eraseAllSub": "Vacía el tarro por completo: recuerdos, fotos y las categorías que creaste. Tu nombre, tu idioma y tus ajustes se mantienen.",
+  "eraseAllConfirmTitle": "¿Borrar todos tus recuerdos?",
+  "eraseAllConfirmMessage": "Los recuerdos, las fotos y las categorías que creaste se eliminarán de este teléfono. No se podrá recuperar nada. Tu nombre, tu idioma y tus ajustes se mantienen.",
+  "eraseAllContinue": "Continuar",
+  "eraseAllLastCallTitle": "Última comprobación",
+  "eraseAllLastCallMessage": "Si quieres conservar una copia, cierra esta ventana y exporta antes una copia de seguridad.",
+  "eraseAllConfirmButton": "Borrar definitivamente",
+  "eraseAllDone": "Tu tarro está vacío.",
+  "eraseAllError": "El borrado no se ha completado.",
+  "premiumSoon": "Muy pronto",
+  "premiumRestore": "Restaurar mis compras",
+  "premiumRestoreNone": "No hay ninguna compra que restaurar en esta cuenta.",
+  "premiumRestoreDone": "Tu Premium se ha restaurado.",
+  "premiumUnavailable": "No se puede contactar con la tienda ahora mismo. Inténtalo dentro de un momento.",
+  "premiumPending": "Tu compra está pendiente de aprobación. El Premium se desbloqueará solo en cuanto se conceda.",
+  "premiumError": "La compra no se ha completado. No se te ha cobrado nada.",
+  "premiumRestoreTitle": "Restaurar mis compras",
+  "premiumRestoreSub": "¿Ya pagaste el Premium en otro teléfono o tras reinstalar? Recupéralo aquí.",
+  "themesPurchaseMessage": "Elige el decorado de tu pantalla de inicio entre la biblioteca de temas.",
+  "premiumPriceNote": "{prix} al mes, sin compromiso. Puedes cancelar cuando quieras.",
+  "premiumLinkPrivacy": "Privacidad",
+  "premiumLinkTerms": "Condiciones de uso"
 }

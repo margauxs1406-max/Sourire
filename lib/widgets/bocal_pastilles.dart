@@ -438,6 +438,11 @@ class _BocalPastillesState extends State<BocalPastilles> with SingleTickerProvid
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<List<NoteSourire>>(
+      // Ce widget est reconstruit à CHAQUE IMAGE par le Ticker de la physique.
+      // `getNotesStream()` ne doit donc surtout rien déclencher : la première
+      // valeur vient du cache, les suivantes des écritures. Voir
+      // DatabaseService.getNotesStream.
+      initialData: DatabaseService().notesEnCache,
       stream: DatabaseService().getNotesStream(),
       builder: (context, snapshot) {
         final notes = snapshot.data ?? [];

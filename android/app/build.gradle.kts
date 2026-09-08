@@ -40,16 +40,29 @@ android {
 
     signingConfigs {
         create("release") {
-            keyAlias = keystoreProperties["keyAlias"] as String
-            keyPassword = keystoreProperties["keyPassword"] as String
-            storeFile = keystoreProperties["storeFile"]?.let { file(it) }
-            storePassword = keystoreProperties["storePassword"] as String
+            // Lecture TOLÉRANTE des propriétés de signature.
+            //
+            // Avec `as String`, l'absence de key.properties faisait échouer
+            // jusqu'à une simple compilation debug, sur une erreur de
+            // transtypage nul qui ne dit rien du vrai problème. Le projet doit
+            // rester compilable sans le fichier de signature — lequel ne doit,
+            // lui, jamais être versionné.
+            keyAlias = keystoreProperties["keyAlias"] as String?
+            keyPassword = keystoreProperties["keyPassword"] as String?
+            storeFile = (keystoreProperties["storeFile"] as String?)?.let { file(it) }
+            storePassword = keystoreProperties["storePassword"] as String?
         }
     }
 
     buildTypes {
         release {
-            signingConfig = signingConfigs.getByName("release") // ← corrigé
+            // Sans key.properties, on signe en debug plutôt que d'échouer :
+            // l'AAB produit ne sera pas publiable, mais le projet se compile.
+            signingConfig = if (keystorePropertiesFile.exists()) {
+                signingConfigs.getByName("release")
+            } else {
+                signingConfigs.getByName("debug")
+            }
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }

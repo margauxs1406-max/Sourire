@@ -181,6 +181,7 @@ class EcranFiltrer extends StatelessWidget {
               // `DatabaseService` est un singleton et son contrôleur est
               // diffusé : le flux rendu est le même objet à chaque
               // reconstruction, donc `StreamBuilder` ne se réabonne pas.
+              initialData: _bdd.categoriesEnCache,
               stream: _bdd.getCategoriesStream(),
               builder: (context, instantane) {
                 final List<String> cles = List<String>.from(

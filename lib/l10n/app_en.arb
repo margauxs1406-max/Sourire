@@ -1,6 +1,5 @@
 {
   "@@locale": "en",
-  "titleSourire": "Sourire",
   "welcomeMessage": "Hello {prenom},",
   "@welcomeMessage": {
     "placeholders": {
@@ -31,17 +30,6 @@
   "accessibility": "Accessibility",
   "langues": "Languages",
   "help": "Help",
-  "logout": "Log out",
-  "dailyGratitudeReminder": "Daily gratitude reminder",
-  "dailyReminderSubtitle": "Remind me to write down a positive memory",
-  "reminderTime": "Reminder time",
-  "drawnMemoriesFrequency": "Frequency of drawn memories",
-  "drawnMemoriesSubtitle": "Suggest an old memory for me to review",
-  "frequencySettings": "Frequency settings",
-  "categoriesIncluded": "Categories included",
-  "everyDay": "Every day",
-  "everyTwoDays": "Every 2 days",
-  "everyWeek": "Every week",
   "photoGalleryAccess": "Photo gallery access",
   "photoGallerySubtitle": "Essential for adding photos of your previous moments.",
   "secureLocalStorage": "Secure local storage",
@@ -88,10 +76,6 @@
   "catUnclassified": "Unclassified",
   "btnNewCategory": "New category",
   "hintNewCategory": "Category name...",
-  "btnDeleteCategories": "Delete categories",
-  "noCustomCategoryToDelete": "No custom categories to delete.",
-  "btnClose": "Close",
-  "titleDeleteModal": "Manage categories",
   "btnReset": "Reset",
   "btnFilter": "Filter",
   "writeHappyThought": "Write down what makes you happy...",
@@ -109,18 +93,12 @@
   "yesterday": "Yesterday",
   "btnDeleteSelection": "Delete",
   "btnCategorizeSelection": "Categorize",
-  "galleryRecent": "Recent",
-  "galleryPreview": "Preview",
-  "btnOk": "OK",
   "alertWarningTitle": "Warning",
   "galleryDisabledMessage": "You have disabled access to your photo gallery. Please enable it in your permissions.",
   "btnEnableAccess": "Enable access",
   "emptyJarMessage": "The jar is empty, add a memory!",
-  "deleteConfirmMessage": "Are you sure you want to permanently delete these memories?",
   "btnCancel": "Cancel",
   "btnDeleteConfirm": "Delete",
-  "recategorizeTitle": "Select the categories to apply to the selected memories:",
-  "btnSave": "Save",
   "onboardingBtnGetStarted": "Get started",
   "onboardingWelcomeMessage": "Welcome to your\npersonal space designed\nto bring back your\nsmile!",
   "onboardingQuestionName": "What is your name?",
@@ -149,35 +127,6 @@
   "demoBocalDesc": "Tap the jar at any time to randomly draw a saved memory and put a smile back on your face!",
   "demoBurgerTitle": "Your history",
   "demoBurgerDesc": "Open this menu at any time to find the chronological list of all your precious saved memories.",
-  "profilTitlePersonalData": "Personal data",
-  "profilLabelFirstName": "First name",
-  "profilLabelEmail": "Email",
-  "profilLabelPassword": "Password",
-  "profilLabelBiometrics": "Biometrics",
-  "profilTitleAccountSettings": "Account settings",
-  "profilMenuNotifications": "Notifications",
-  "profilMenuLanguage": "Application language",
-  "profilMenuDarkMode": "Dark theme",
-  "profilMenuSoftAnimations": "Smooth animations",
-  "profilTitleStorage": "Device storage",
-  "profilLabelImportedPhotos": "Imported photos",
-  "profilLabelTextMemories": "Textual memories",
-  "profilLabelGalleryAccess": "Gallery access",
-  "profilBtnEmpty": "Clear",
-  "profilSnackbarEmptied": "{label} cleared",
-  "@profilSnackbarEmptied": {
-    "placeholders": {
-      "label": {
-        "type": "String"
-      }
-    }
-  },
-  "profilTitleHelp": "Need help?",
-  "profilHelpQuestion1": "How to add a memory?",
-  "profilHelpAnswer1": "Click the '+' button on the home screen to start writing a memory or importing a photo.",
-  "profilHelpQuestion2": "Is my data secure?",
-  "profilHelpAnswer2": "Yes. Your memories stay only in Sourire's private storage on your phone, which no other app can access, and they are never sent over the internet.",
-  "profilAlertTitle": "Warning",
   "profilAlertGalleryMessage": "Warning, if you decide to remove access to your photo gallery, you will no longer be able to save photos in your memories.",
   "profilAlertBtnDisable": "Disable access",
   "notifLabelTitleGratitude": "Gratitude reminder",
@@ -212,7 +161,7 @@
   "lockForgotPassword": "Forgot password?",
   "lockBtnBiometric": "Use fingerprint",
   "purchaseAlertTitle": "Limit reached",
-  "purchaseAlertMessage": "You have reached the limit of {limite} memories for the free version. Upgrade to Premium to add unlimited memories and unlock new themes!",
+  "purchaseAlertMessage": "You have reached the limit of {limite} memories for the free version. Upgrade to Premium to add unlimited memories!",
   "@purchaseAlertMessage": {
     "placeholders": {
       "limite": {
@@ -222,7 +171,6 @@
   },
   "deleteAlertTitle": "Do you really want to delete these memories?",
   "deleteAlertMessage": "This action cannot be undone and will permanently delete the selected memories.",
-  "btnGoPremium": "Go Premium",
   "emptyHistory": "History is empty",
   "notifGratitudeChannelName": "Gratitude Reminder",
   "notifGratitudeChannelDesc": "To remind you to write down your positive thoughts",
@@ -238,8 +186,7 @@
   "btnPasserPremium": "Go Premium",
   "btnAppliquer": "Apply",
   "themesTitle": "Home screen themes",
-  "themesDescription": "Customize your interface and notes at any time by choosing from the following themes.",
-  "notesPurchaseSuccessSnackBar": "Purchase successfully simulated! Unlimited notes and photos unlocked.",
+  "notesPurchaseSuccessSnackBar": "Thank you! Premium is unlocked: unlimited memories and every backdrop.",
   "premiumSuccessSnackBar": "Premium Activated! All locks have been removed. Theme “{themeLabel}” applied.",
   "@premiumSuccessSnackBar": {
     "placeholders": {
@@ -251,7 +198,6 @@
   "themeClassique": "Classic",
   "themeMontagne": "Mountain",
   "themeMer": "Ocean",
-  "themeAbstrait": "Abstract",
   "themeSport": "Sports",
   "themeVoyage": "Travel",
   "themeMusique": "Music",
@@ -261,15 +207,6 @@
   "themeCelebration": "Celebrations",
   "themeNature": "Nature",
   "themeKawaii": "Kawaii",
-  "popupPalierTitle": "Congratulations!",
-  "popupPalierMessage": "You've added {palier} memories to your jar!",
-  "@popupPalierMessage": {
-    "placeholders": {
-      "palier": {
-        "type": "int"
-      }
-    }
-  },
   "btnContinuerPalier": "Continue",
   "badge10Name": "Star Seeker",
   "badge10Phrase": "The most beautiful memories often start small.",
@@ -362,6 +299,28 @@
   "filterByCategory": "By category",
   "btnApply": "Apply",
   "themePreviewQuestion": "What made you happy today?",
-  "notesThemesPurchaseMessage": "Dress your notes in the decor of your choice. Go Premium to unlock every theme.",
-  "themesTitleNotes": "Note themes"
+  "notesThemesPurchaseMessage": "Choose the backdrop for your notes from the library of themes.",
+  "eraseAllTitle": "Erase all my memories",
+  "eraseAllSub": "Empties the jar completely: memories, photos and the categories you created. Your first name, language and settings stay as they are.",
+  "eraseAllConfirmTitle": "Erase all your memories?",
+  "eraseAllConfirmMessage": "The memories, photos and categories you created will be deleted from this phone. Nothing can be recovered. Your first name, language and settings stay as they are.",
+  "eraseAllContinue": "Continue",
+  "eraseAllLastCallTitle": "One last check",
+  "eraseAllLastCallMessage": "If you want to keep a trace, close this window and export a backup first.",
+  "eraseAllConfirmButton": "Erase permanently",
+  "eraseAllDone": "Your jar is empty.",
+  "eraseAllError": "The erase didn't go through.",
+  "premiumSoon": "Coming soon",
+  "premiumRestore": "Restore my purchases",
+  "premiumRestoreNone": "No purchase to restore on this account.",
+  "premiumRestoreDone": "Your Premium has been restored.",
+  "premiumUnavailable": "The store can't be reached right now. Try again in a moment.",
+  "premiumPending": "Your purchase is awaiting approval. Premium will unlock on its own once it's granted.",
+  "premiumError": "The purchase didn't go through. You have not been charged.",
+  "premiumRestoreTitle": "Restore my purchases",
+  "premiumRestoreSub": "Already paid for Premium on another phone, or after reinstalling? Get it back here.",
+  "themesPurchaseMessage": "Choose the backdrop for your home screen from the library of themes.",
+  "premiumPriceNote": "{prix} per month, no commitment. Cancel any time.",
+  "premiumLinkPrivacy": "Privacy",
+  "premiumLinkTerms": "Terms of use"
 }

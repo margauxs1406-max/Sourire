@@ -298,6 +298,7 @@ class _ScreenCategorisationNoteState extends State<ScreenCategorisationNote> {
                           right: 0,
                           bottom: keyboardHeight > 0 ? keyboardHeight : bottomBarHeight,
                           child: StreamBuilder<List<String>>(
+                            initialData: _databaseService.categoriesEnCache,
                             stream: _databaseService.getCategoriesStream(),
                             builder: (context, snapshot) {
                               final categoriesList = snapshot.data ?? _databaseService.getAllCategories();
@@ -305,7 +306,12 @@ class _ScreenCategorisationNoteState extends State<ScreenCategorisationNote> {
                               double screenWidth = MediaQuery.of(context).size.width;
                               double adaptiveFontSize = (screenWidth * 0.045).clamp(14.0, 22.0);
                               
-                              return ListView.builder(
+                              // Sur tablette, une liste de catégories large
+                              // de mille points laisse la case à cocher à un
+                              // bout de la dalle et le libellé à l'autre. On
+                              // borne la colonne, et on la centre.
+                              return ContenuCentre(
+                                child: ListView.builder(
                                 padding: const EdgeInsets.only(top: 5, bottom: 10),
                                 // Les catégories, puis « Nouvelle catégorie ».
                                 itemCount: categoriesList.length + 1,
@@ -389,6 +395,7 @@ class _ScreenCategorisationNoteState extends State<ScreenCategorisationNote> {
                                     },
                                   );
                                 },
+                              ),
                               );
                             },
                           ),

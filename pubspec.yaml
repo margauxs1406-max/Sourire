@@ -1,8 +1,8 @@
 name: sourire
-description: "A new Flutter project."
+description: "Sourire : une collection de souvenirs heureux, gardée sur le téléphone et nulle part ailleurs."
 publish_to: 'none'
 
-version: 1.0.0+13
+version: 1.0.0+14
 
 environment:
   sdk: ^3.11.5
@@ -12,7 +12,6 @@ dependencies:
     sdk: flutter
   wechat_assets_picker: ^9.1.0
   cupertino_icons: ^1.0.8
-  drop_shadow: ^0.1.0
   path_provider: ^2.1.5
   intl: ^0.20.2
   local_auth: ^3.0.1 
@@ -29,6 +28,13 @@ dependencies:
   image: ^4.8.0
   shared_preferences: ^2.3.5 # <-- AJOUT : Stockage persistant des réglages
   sqflite: ^2.4.0   # Gère la base de données SQLite
+  # Empreinte du mot de passe. Il était jusqu'ici enregistré EN CLAIR dans les
+  # préférences, donc lisible sur un appareil rooté et présent tel quel dans
+  # les sauvegardes iCloud. Voir UserPrefs.definirMotDePasse.
+  crypto: ^3.0.7
+  # Achat du Premium : StoreKit sur iOS, Play Billing sur Android.
+  # Voir AchatService, qui documente les produits à créer dans les consoles.
+  in_app_purchase: ^3.3.0
   path: ^1.9.1      # Gère la création sécurisée des chemins de fichiers sur le téléphone
   sensors_plus: ^6.0.0
   url_launcher: ^6.3.0
@@ -46,7 +52,6 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
-  simple_shadow: ^0.3.1  # <-- Ajoutez cette ligne ici
   flutter_launcher_icons: ^0.14.1
 
 flutter_launcher_icons:

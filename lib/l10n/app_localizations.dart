@@ -100,12 +100,6 @@ abstract class AppLocalizations {
     Locale('fr'),
   ];
 
-  /// No description provided for @titleSourire.
-  ///
-  /// In fr, this message translates to:
-  /// **'Sourire'**
-  String get titleSourire;
-
   /// No description provided for @welcomeMessage.
   ///
   /// In fr, this message translates to:
@@ -201,72 +195,6 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Aide'**
   String get help;
-
-  /// No description provided for @logout.
-  ///
-  /// In fr, this message translates to:
-  /// **'Se déconnecter'**
-  String get logout;
-
-  /// No description provided for @dailyGratitudeReminder.
-  ///
-  /// In fr, this message translates to:
-  /// **'Rappel quotidien de gratitude'**
-  String get dailyGratitudeReminder;
-
-  /// No description provided for @dailyReminderSubtitle.
-  ///
-  /// In fr, this message translates to:
-  /// **'Me rappeler de noter un souvenir positif'**
-  String get dailyReminderSubtitle;
-
-  /// No description provided for @reminderTime.
-  ///
-  /// In fr, this message translates to:
-  /// **'Heure du rappel'**
-  String get reminderTime;
-
-  /// No description provided for @drawnMemoriesFrequency.
-  ///
-  /// In fr, this message translates to:
-  /// **'Fréquence des souvenirs tirés'**
-  String get drawnMemoriesFrequency;
-
-  /// No description provided for @drawnMemoriesSubtitle.
-  ///
-  /// In fr, this message translates to:
-  /// **'Me proposer un vieux souvenir à revoir'**
-  String get drawnMemoriesSubtitle;
-
-  /// No description provided for @frequencySettings.
-  ///
-  /// In fr, this message translates to:
-  /// **'Réglages de la fréquence'**
-  String get frequencySettings;
-
-  /// No description provided for @categoriesIncluded.
-  ///
-  /// In fr, this message translates to:
-  /// **'Catégories incluses'**
-  String get categoriesIncluded;
-
-  /// No description provided for @everyDay.
-  ///
-  /// In fr, this message translates to:
-  /// **'Tous les jours'**
-  String get everyDay;
-
-  /// No description provided for @everyTwoDays.
-  ///
-  /// In fr, this message translates to:
-  /// **'Tous les 2 jours'**
-  String get everyTwoDays;
-
-  /// No description provided for @everyWeek.
-  ///
-  /// In fr, this message translates to:
-  /// **'Toutes les semaines'**
-  String get everyWeek;
 
   /// No description provided for @photoGalleryAccess.
   ///
@@ -484,30 +412,6 @@ abstract class AppLocalizations {
   /// **'Nom de la catégorie...'**
   String get hintNewCategory;
 
-  /// No description provided for @btnDeleteCategories.
-  ///
-  /// In fr, this message translates to:
-  /// **'Supprimer des catégories'**
-  String get btnDeleteCategories;
-
-  /// No description provided for @noCustomCategoryToDelete.
-  ///
-  /// In fr, this message translates to:
-  /// **'Aucune catégorie personnalisée à supprimer.'**
-  String get noCustomCategoryToDelete;
-
-  /// No description provided for @btnClose.
-  ///
-  /// In fr, this message translates to:
-  /// **'Fermer'**
-  String get btnClose;
-
-  /// No description provided for @titleDeleteModal.
-  ///
-  /// In fr, this message translates to:
-  /// **'Gérer les catégories'**
-  String get titleDeleteModal;
-
   /// No description provided for @btnReset.
   ///
   /// In fr, this message translates to:
@@ -568,24 +472,6 @@ abstract class AppLocalizations {
   /// **'Catégoriser'**
   String get btnCategorizeSelection;
 
-  /// No description provided for @galleryRecent.
-  ///
-  /// In fr, this message translates to:
-  /// **'Recent'**
-  String get galleryRecent;
-
-  /// No description provided for @galleryPreview.
-  ///
-  /// In fr, this message translates to:
-  /// **'Aperçu'**
-  String get galleryPreview;
-
-  /// No description provided for @btnOk.
-  ///
-  /// In fr, this message translates to:
-  /// **'OK'**
-  String get btnOk;
-
   /// No description provided for @alertWarningTitle.
   ///
   /// In fr, this message translates to:
@@ -610,12 +496,6 @@ abstract class AppLocalizations {
   /// **'Le bocal est vide, ajoute un souvenir !'**
   String get emptyJarMessage;
 
-  /// No description provided for @deleteConfirmMessage.
-  ///
-  /// In fr, this message translates to:
-  /// **'Voulez-vous vraiment supprimer définitivement ces souvenirs ?'**
-  String get deleteConfirmMessage;
-
   /// No description provided for @btnCancel.
   ///
   /// In fr, this message translates to:
@@ -627,18 +507,6 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Supprimer'**
   String get btnDeleteConfirm;
-
-  /// No description provided for @recategorizeTitle.
-  ///
-  /// In fr, this message translates to:
-  /// **'Sélectionnez les catégories à appliquer aux souvenirs sélectionnés :'**
-  String get recategorizeTitle;
-
-  /// No description provided for @btnSave.
-  ///
-  /// In fr, this message translates to:
-  /// **'Enregistrer'**
-  String get btnSave;
 
   /// No description provided for @onboardingBtnGetStarted.
   ///
@@ -807,138 +675,6 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Ouvre ce menu à tout moment pour retrouver la liste chronologique de tous tes précieux souvenirs enregistrés.'**
   String get demoBurgerDesc;
-
-  /// No description provided for @profilTitlePersonalData.
-  ///
-  /// In fr, this message translates to:
-  /// **'Données personnelles'**
-  String get profilTitlePersonalData;
-
-  /// No description provided for @profilLabelFirstName.
-  ///
-  /// In fr, this message translates to:
-  /// **'Prénom'**
-  String get profilLabelFirstName;
-
-  /// No description provided for @profilLabelEmail.
-  ///
-  /// In fr, this message translates to:
-  /// **'Email'**
-  String get profilLabelEmail;
-
-  /// No description provided for @profilLabelPassword.
-  ///
-  /// In fr, this message translates to:
-  /// **'Mot de passe'**
-  String get profilLabelPassword;
-
-  /// No description provided for @profilLabelBiometrics.
-  ///
-  /// In fr, this message translates to:
-  /// **'Biométrie'**
-  String get profilLabelBiometrics;
-
-  /// No description provided for @profilTitleAccountSettings.
-  ///
-  /// In fr, this message translates to:
-  /// **'Paramètres du compte'**
-  String get profilTitleAccountSettings;
-
-  /// No description provided for @profilMenuNotifications.
-  ///
-  /// In fr, this message translates to:
-  /// **'Notifications'**
-  String get profilMenuNotifications;
-
-  /// No description provided for @profilMenuLanguage.
-  ///
-  /// In fr, this message translates to:
-  /// **'Langue de l\'application'**
-  String get profilMenuLanguage;
-
-  /// No description provided for @profilMenuDarkMode.
-  ///
-  /// In fr, this message translates to:
-  /// **'Thème sombre'**
-  String get profilMenuDarkMode;
-
-  /// No description provided for @profilMenuSoftAnimations.
-  ///
-  /// In fr, this message translates to:
-  /// **'Animations douces'**
-  String get profilMenuSoftAnimations;
-
-  /// No description provided for @profilTitleStorage.
-  ///
-  /// In fr, this message translates to:
-  /// **'Stockage de l\'appareil'**
-  String get profilTitleStorage;
-
-  /// No description provided for @profilLabelImportedPhotos.
-  ///
-  /// In fr, this message translates to:
-  /// **'Photos importées'**
-  String get profilLabelImportedPhotos;
-
-  /// No description provided for @profilLabelTextMemories.
-  ///
-  /// In fr, this message translates to:
-  /// **'Souvenirs textuels'**
-  String get profilLabelTextMemories;
-
-  /// No description provided for @profilLabelGalleryAccess.
-  ///
-  /// In fr, this message translates to:
-  /// **'Accès à la galerie'**
-  String get profilLabelGalleryAccess;
-
-  /// No description provided for @profilBtnEmpty.
-  ///
-  /// In fr, this message translates to:
-  /// **'Vider'**
-  String get profilBtnEmpty;
-
-  /// No description provided for @profilSnackbarEmptied.
-  ///
-  /// In fr, this message translates to:
-  /// **'{label} vidé'**
-  String profilSnackbarEmptied(String label);
-
-  /// No description provided for @profilTitleHelp.
-  ///
-  /// In fr, this message translates to:
-  /// **'Besoin d\'aide ?'**
-  String get profilTitleHelp;
-
-  /// No description provided for @profilHelpQuestion1.
-  ///
-  /// In fr, this message translates to:
-  /// **'Comment ajouter un souvenir ?'**
-  String get profilHelpQuestion1;
-
-  /// No description provided for @profilHelpAnswer1.
-  ///
-  /// In fr, this message translates to:
-  /// **'Clique sur le bouton \'+\' sur l\'écran d\'accueil pour commencer à rédiger un souvenir ou importer une photo.'**
-  String get profilHelpAnswer1;
-
-  /// No description provided for @profilHelpQuestion2.
-  ///
-  /// In fr, this message translates to:
-  /// **'Mes données sont-elles sécurisées ?'**
-  String get profilHelpQuestion2;
-
-  /// No description provided for @profilHelpAnswer2.
-  ///
-  /// In fr, this message translates to:
-  /// **'Oui. Tes souvenirs restent uniquement dans l\'espace privé de Sourire sur ton téléphone, auquel aucune autre application n\'a accès, et ne sont jamais envoyés sur Internet.'**
-  String get profilHelpAnswer2;
-
-  /// No description provided for @profilAlertTitle.
-  ///
-  /// In fr, this message translates to:
-  /// **'Attention'**
-  String get profilAlertTitle;
 
   /// No description provided for @profilAlertGalleryMessage.
   ///
@@ -1147,7 +883,7 @@ abstract class AppLocalizations {
   /// No description provided for @purchaseAlertMessage.
   ///
   /// In fr, this message translates to:
-  /// **'Tu as atteint la limite de {limite} souvenirs pour la version gratuite. Passe à la version Premium pour ajouter des souvenirs en illimité et débloquer de nouveaux thèmes !'**
+  /// **'Tu as atteint la limite de {limite} souvenirs pour la version gratuite. Passe à la version Premium pour ajouter des souvenirs en illimité !'**
   String purchaseAlertMessage(int limite);
 
   /// No description provided for @deleteAlertTitle.
@@ -1161,12 +897,6 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Cette action est irréversible et entraînera la suppression définitive des souvenirs sélectionnés.'**
   String get deleteAlertMessage;
-
-  /// No description provided for @btnGoPremium.
-  ///
-  /// In fr, this message translates to:
-  /// **'Passer Premium'**
-  String get btnGoPremium;
 
   /// No description provided for @emptyHistory.
   ///
@@ -1258,16 +988,10 @@ abstract class AppLocalizations {
   /// **'Thèmes de l\'écran d\'accueil'**
   String get themesTitle;
 
-  /// No description provided for @themesDescription.
-  ///
-  /// In fr, this message translates to:
-  /// **'Personnalise ton interface et tes notes à tout moment en choisissant parmi les thèmes suivants.'**
-  String get themesDescription;
-
   /// No description provided for @notesPurchaseSuccessSnackBar.
   ///
   /// In fr, this message translates to:
-  /// **'Achat simulé avec succès ! Notes et photos illimitées débloquées.'**
+  /// **'Merci ! Le Premium est débloqué : souvenirs illimités et tous les décors.'**
   String get notesPurchaseSuccessSnackBar;
 
   /// No description provided for @premiumSuccessSnackBar.
@@ -1293,12 +1017,6 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Mer'**
   String get themeMer;
-
-  /// No description provided for @themeAbstrait.
-  ///
-  /// In fr, this message translates to:
-  /// **'Abstrait'**
-  String get themeAbstrait;
 
   /// No description provided for @themeSport.
   ///
@@ -1353,18 +1071,6 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Kawaii'**
   String get themeKawaii;
-
-  /// No description provided for @popupPalierTitle.
-  ///
-  /// In fr, this message translates to:
-  /// **'Félicitations !'**
-  String get popupPalierTitle;
-
-  /// No description provided for @popupPalierMessage.
-  ///
-  /// In fr, this message translates to:
-  /// **'Tu as ajouté {palier} souvenirs à ton bocal !'**
-  String popupPalierMessage(int palier);
 
   /// No description provided for @btnContinuerPalier.
   ///
@@ -1735,14 +1441,146 @@ abstract class AppLocalizations {
   /// No description provided for @notesThemesPurchaseMessage.
   ///
   /// In fr, this message translates to:
-  /// **'Habille tes notes du décor de ton choix. Passe à la version Premium pour débloquer tous les thèmes.'**
+  /// **'Choisis le décor de tes notes parmi la bibliothèque de thèmes proposés.'**
   String get notesThemesPurchaseMessage;
 
-  /// No description provided for @themesTitleNotes.
+  /// Titre de l'action « effacer tous mes souvenirs » dans le profil
   ///
   /// In fr, this message translates to:
-  /// **'Thèmes des notes'**
-  String get themesTitleNotes;
+  /// **'Effacer tous mes souvenirs'**
+  String get eraseAllTitle;
+
+  /// Explication sous le titre de l'action d'effacement
+  ///
+  /// In fr, this message translates to:
+  /// **'Vide entièrement le bocal : souvenirs, photos et catégories créées. Ton prénom, ta langue et tes réglages restent en place.'**
+  String get eraseAllSub;
+
+  /// Titre de la première confirmation d'effacement
+  ///
+  /// In fr, this message translates to:
+  /// **'Effacer tous tes souvenirs ?'**
+  String get eraseAllConfirmTitle;
+
+  /// Message de la première confirmation d'effacement
+  ///
+  /// In fr, this message translates to:
+  /// **'Les souvenirs, les photos et les catégories que tu as créées seront supprimés de ce téléphone. Rien ne pourra être récupéré. Ton prénom, ta langue et tes réglages restent en place.'**
+  String get eraseAllConfirmMessage;
+
+  /// Bouton de la première confirmation
+  ///
+  /// In fr, this message translates to:
+  /// **'Continuer'**
+  String get eraseAllContinue;
+
+  /// Titre de la seconde confirmation
+  ///
+  /// In fr, this message translates to:
+  /// **'Dernière vérification'**
+  String get eraseAllLastCallTitle;
+
+  /// Message de la seconde confirmation
+  ///
+  /// In fr, this message translates to:
+  /// **'Si tu veux garder une trace, ferme cette fenêtre et exporte d\'abord une sauvegarde.'**
+  String get eraseAllLastCallMessage;
+
+  /// Bouton de la seconde confirmation
+  ///
+  /// In fr, this message translates to:
+  /// **'Effacer définitivement'**
+  String get eraseAllConfirmButton;
+
+  /// Confirmation après effacement
+  ///
+  /// In fr, this message translates to:
+  /// **'Ton bocal est vide.'**
+  String get eraseAllDone;
+
+  /// Message d'erreur si l'effacement échoue
+  ///
+  /// In fr, this message translates to:
+  /// **'L\'effacement n\'a pas abouti.'**
+  String get eraseAllError;
+
+  /// Bouton quand le produit n'existe pas encore dans la boutique
+  ///
+  /// In fr, this message translates to:
+  /// **'Bientôt disponible'**
+  String get premiumSoon;
+
+  /// Lien de restauration des achats, dans la modale Premium
+  ///
+  /// In fr, this message translates to:
+  /// **'Restaurer mes achats'**
+  String get premiumRestore;
+
+  /// Aucun achat trouvé à restaurer
+  ///
+  /// In fr, this message translates to:
+  /// **'Aucun achat à restaurer sur ce compte.'**
+  String get premiumRestoreNone;
+
+  /// Confirmation après une restauration réussie
+  ///
+  /// In fr, this message translates to:
+  /// **'Ton Premium a bien été restauré.'**
+  String get premiumRestoreDone;
+
+  /// La boutique ne répond pas
+  ///
+  /// In fr, this message translates to:
+  /// **'La boutique n\'est pas joignable pour le moment. Réessaie dans un instant.'**
+  String get premiumUnavailable;
+
+  /// Achat en attente de validation extérieure
+  ///
+  /// In fr, this message translates to:
+  /// **'Ton achat attend une validation. Le Premium se débloquera tout seul dès qu\'elle sera accordée.'**
+  String get premiumPending;
+
+  /// Échec de l'achat
+  ///
+  /// In fr, this message translates to:
+  /// **'L\'achat n\'a pas abouti. Rien ne t\'a été facturé.'**
+  String get premiumError;
+
+  /// Titre de l'action de restauration dans le profil
+  ///
+  /// In fr, this message translates to:
+  /// **'Restaurer mes achats'**
+  String get premiumRestoreTitle;
+
+  /// Explication sous le titre de la restauration dans le profil
+  ///
+  /// In fr, this message translates to:
+  /// **'Tu as déjà payé le Premium sur un autre téléphone, ou après une réinstallation ? Récupère-le ici.'**
+  String get premiumRestoreSub;
+
+  /// Message de la modale Premium ouverte depuis le choix du décor de la home
+  ///
+  /// In fr, this message translates to:
+  /// **'Choisis le décor de ton écran d\'accueil parmi la bibliothèque de thèmes proposés.'**
+  String get themesPurchaseMessage;
+
+  /// Mention sous le bouton d'abonnement : durée et prix par période. Exigée par Apple à côté du bouton d'achat (directive 3.1.2). Le prix vient de la boutique.
+  ///
+  /// In fr, this message translates to:
+  /// **'{prix} par mois, sans engagement. Résiliable à tout moment.'**
+  String premiumPriceNote(String prix);
+
+  /// Lien vers la politique de confidentialité, dans la modale d'abonnement
+  ///
+  /// In fr, this message translates to:
+  /// **'Confidentialité'**
+  String get premiumLinkPrivacy;
+
+  /// Lien vers les conditions d'utilisation, dans la modale d'abonnement (iOS)
+  ///
+  /// In fr, this message translates to:
+  /// **'Conditions d\'utilisation'**
+  String get premiumLinkTerms;
 }
 
 class _AppLocalizationsDelegate

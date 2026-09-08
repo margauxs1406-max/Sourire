@@ -37,6 +37,56 @@ class PhotoService {
   /// Recompresser un JPEG ne fait que dégrader l'image sans rien gagner.
   static const int seuilRecompression = 400 * 1024;
 
+  // --- OÙ VIT UNE PHOTO -------------------------------------------------------
+
+  /// Le fichier correspondant à un `photoPath` de la base.
+  ///
+  /// Sur iOS, le dossier de l'application change d'identifiant à chaque
+  /// réinstallation et à chaque restauration : un chemin absolu enregistré
+  /// hier peut ne plus exister demain. Seul le NOM du fichier est donc
+  /// fiable, et le dossier se redemande au système à chaque fois.
+  ///
+  /// Cette résolution était recopiée dans trois fichiers, et OUBLIÉE dans
+  /// [reduireLesAnciennes], qui ouvrait `File(chemin)` tel quel : sur iPhone,
+  /// le fichier n'était jamais trouvé et la passe de réduction ne réduisait
+  /// rien. Une seule fonction, utilisée partout, ferme la question.
+  static Future<File?> fichierPhoto(String? chemin) async {
+    final String propre = (chemin ?? '').replaceAll('file://', '').trim();
+    if (propre.isEmpty) return null;
+
+    final Directory dossier = await getApplicationDocumentsDirectory();
+    final File candidat = File(p.join(dossier.path, p.basename(propre)));
+    if (await candidat.exists()) return candidat;
+
+    // Repli : chemin absolu d'origine, encore valable sur Android.
+    final File direct = File(propre);
+    if (await direct.exists()) return direct;
+
+    return null;
+  }
+
+  /// Efface toutes les photos du dossier de l'application.
+  /// Utilisé par « effacer tous mes souvenirs ». Retourne le nombre de
+  /// fichiers supprimés.
+  static Future<int> supprimerToutesLesPhotos() async {
+    int supprimees = 0;
+    try {
+      final Directory dossier = await getApplicationDocumentsDirectory();
+      await for (final FileSystemEntity entite in dossier.list()) {
+        if (entite is! File) continue;
+        final String nom = p.basename(entite.path);
+        // On ne touche qu'aux fichiers écrits par Sourire : le dossier de
+        // l'app contient aussi ce que posent les greffons.
+        if (!nom.startsWith('sourire_')) continue;
+        await entite.delete();
+        supprimees++;
+      }
+    } catch (e) {
+      debugPrint("Suppression des photos interrompue : $e");
+    }
+    return supprimees;
+  }
+
   // --- IMPORT -----------------------------------------------------------------
 
   /// Enregistre une photo choisie dans la galerie, par le chemin le plus court.
@@ -161,11 +211,11 @@ class PhotoService {
           await DatabaseService().getAllNotesAsync();
 
       for (final NoteSourire souvenir in souvenirs) {
-        final String? chemin = souvenir.photoPath?.trim();
-        if (chemin == null || chemin.isEmpty) continue;
-
-        final File fichier = File(chemin);
-        if (!await fichier.exists()) continue;
+        // Résolution centralisée : sur iOS la base ne stocke que le nom du
+        // fichier, pas son chemin. Ouvrir `File(souvenir.photoPath)` ne
+        // trouvait donc jamais rien sur iPhone.
+        final File? fichier = await fichierPhoto(souvenir.photoPath);
+        if (fichier == null) continue;
         if (await fichier.length() <= seuilRecompression) continue;
 
         final Uint8List? reduite = await _reduire(await fichier.readAsBytes());
@@ -173,9 +223,9 @@ class PhotoService {
 
         // Écriture dans un fichier temporaire puis renommage : une coupure
         // au mauvais moment ne peut pas laisser un souvenir à moitié écrit.
-        final File tampon = File('$chemin.tmp');
+        final File tampon = File('${fichier.path}.tmp');
         await tampon.writeAsBytes(reduite, flush: true);
-        await tampon.rename(chemin);
+        await tampon.rename(fichier.path);
         reduites++;
       }
 

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart'; // Pour contrôler impérativement les styles système
 import 'package:sourire/l10n/app_localizations.dart';
@@ -22,6 +24,7 @@ import 'dart:ui';
 import 'package:sourire/models/note_model.dart';
 import 'package:sourire/widgets/bocal_pastilles.dart';
 import 'package:sourire/services/milestones_service.dart';
+import 'package:sourire/widgets/modale_premium.dart';
 import 'package:sourire/widgets/popup_palier.dart';
 // --- LE VERRE DU BOCAL --------------------------------------------------------
 //
@@ -71,6 +74,13 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
   dynamic _dernierIdTire; // AJOUT : Stocke l'ID du dernier souvenir affiché
   SourireTheme? _derniereCouleurNote; // AJOUT : Stocke la dernière couleur de note générée
 
+  /// Accès unique à la base. `DatabaseService` est un singleton : cette
+  /// référence sert simplement à ne pas le réécrire partout.
+  final DatabaseService databaseService = DatabaseService();
+
+  /// Abonnement dédié à la vérification des paliers. Voir initState.
+  StreamSubscription<List<NoteSourire>>? _abonnementPaliers;
+
   static const int _capaciteBocal = 45;
   bool _bocalPleinEnAttente = false;
   bool _prochainBocalDoitAnimerDemarrage = false;
@@ -85,8 +95,26 @@ void initState() {
   // Écoute du verrou global pour déclencher le souvenir dès le déverrouillage
   isAppLockedNotifier.addListener(_verifierEtDeclencherSouvenir);
 
+  // Les paliers se vérifient sur le FLUX, pas dans le `build`.
+  //
+  // Ce contrôle écrit dans les préférences (`dernierPalierCelebre`) : le
+  // faire pendant la construction d'un widget est fragile, et le faisait
+  // tourner à chaque image. Ici il ne s'exécute qu'aux vrais changements.
+  _abonnementPaliers = databaseService.getNotesStream().listen((notes) {
+    if (!mounted) return;
+    // Les souvenirs d'amorçage ne sont pas de l'utilisateur : ils ne doivent
+    // pas lui faire franchir de palier.
+    _verifierPalier(notes.where((n) => !n.estAmorce).length, context);
+  });
+
   WidgetsBinding.instance.addPostFrameCallback((_) {
     if (mounted) {
+      // Premier contrôle sur le cache : le flux, lui, n'émettra qu'au
+      // prochain changement, et il faut bien initialiser la gamification.
+      _verifierPalier(
+        databaseService.notesEnCache.where((n) => !n.estAmorce).length,
+        context,
+      );
       _verifierEtDeclencherSouvenir();
     }
     if (!UserPrefs.modeDemoAffiche) {
@@ -138,6 +166,7 @@ void _tenterAfficherPalierEnAttente(BuildContext context) {
 void dispose() {
   // On retire l'écouteur proprement
   isAppLockedNotifier.removeListener(_verifierEtDeclencherSouvenir);
+  _abonnementPaliers?.cancel();
   super.dispose();
 }
 
@@ -584,92 +613,34 @@ void _verifierEtDeclencherSouvenir() async {
     );
   }
 
-  /// Modale « Limite atteinte ». Le message est désormais unique : la limite
-  /// gratuite porte sur le total de souvenirs, pas sur leur type.
-  void _ouvrirAlerteAchat(BuildContext context) {
+  /// Modale « Limite atteinte ». Le message est unique : la limite gratuite
+  /// porte sur le total de souvenirs, pas sur leur type.
+  ///
+  /// Elle passe par [afficherModalePremium], donc par un VRAI achat. Cette
+  /// boîte avait sa propre mise en page et son propre bouton, lequel se
+  /// contentait d'écrire `UserPrefs.isPremium = true` : le Premium se
+  /// débloquait sans que rien ne soit facturé. Il y a désormais un seul
+  /// chemin d'achat dans l'application, et il passe par la boutique.
+  Future<void> _ouvrirAlerteAchat(BuildContext context) async {
     final l10n = AppLocalizations.of(context)!;
 
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        final ThemeMode currentMode = MyApp.themeNotifier.value;
-        
-        final bool isDark = currentMode == ThemeMode.dark || 
-            (currentMode == ThemeMode.system && MediaQuery.of(context).platformBrightness == Brightness.dark);
-
-        final Color couleurFond = isDark ? const Color(0xFF1E1E1E) : white;
-        final Color couleurTitre = isDark ? white : black;
-        final Color couleurDescription = isDark ? Colors.white70 : grey; 
-
-        final String texteMessage =
-            l10n.purchaseAlertMessage(UserPrefs.limiteSouvenirsGratuits);
-
-        return Dialog(
-          backgroundColor: couleurFond,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      l10n.purchaseAlertTitle,
-                      style: styleTitreAction.copyWith(color: couleurTitre),
-                    ),
-                    GestureDetector(
-                      onTap: () => Navigator.of(context).pop(),
-                      child: const Icon(Icons.close, color: grey), 
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  texteMessage,
-                  style: styleSecondaire.copyWith(color: couleurDescription),
-                ),
-                const SizedBox(height: 24),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: orange,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                      elevation: 0,
-                    ),
-                    onPressed: () {
-                      Navigator.of(context).pop(); // Ferme la boîte de dialogue d'alerte
-                      
-                      // 1. CORRECTION : Sauvegarde locale persistante pour valider l'achat sur le disque
-                      UserPrefs.isPremium = true; 
-
-                      // 2. Active l'ensemble des droits premium de l'application en mémoire vive
-                      ThemeService.deverrouillerPremium();
-                      
-                      // Feedback visuel sur la Home
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(AppLocalizations.of(context)!.notesPurchaseSuccessSnackBar),
-                          backgroundColor: Colors.green,
-                        ),
-                      );
-                    },
-                    child: Text(
-                      l10n.btnGoPremium,
-                      style: styleCorps.copyWith(color: white, fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
+    final bool debloque = await afficherModalePremium(
+      context,
+      titre: l10n.purchaseAlertTitle,
+      message: l10n.purchaseAlertMessage(UserPrefs.limiteSouvenirsGratuits),
     );
+
+    // `context.mounted` et non `mounted` : le contexte est ici un paramètre de
+    // la méthode, et c'est bien LUI qu'on s'apprête à réutiliser après l'await.
+    if (!debloque || !context.mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(l10n.notesPurchaseSuccessSnackBar),
+        backgroundColor: Colors.green,
+      ),
+    );
+    setState(() {});
   }
 
   /// Affiche la pop-up "Ton bocal est plein !" UNIQUEMENT si Home est
@@ -794,7 +765,6 @@ Widget build(BuildContext context) {
   final String prenomAffiche = prenomBrut[0].toUpperCase() + prenomBrut.substring(1).toLowerCase();
 
   final String accordAffiche = UserPrefs.accordHeureux;
-  final DatabaseService databaseService = DatabaseService();
 
   // Tailles proportionnelles à la largeur, mais BORNÉES. Sans borne, la
   // question d'accueil passait à 72 pt sur un iPad tenu en portrait, et à
@@ -884,7 +854,18 @@ Positioned.fill(
                   
                   double spaceBottomToButtons = heightScreen * 0.08; 
                   double spaceBottomToBocal = heightScreen * 0.24;   
-                  double bocalHeight = heightScreen * 0.35;
+
+                  // Le bocal suit la hauteur de l'écran, MAIS il est borné.
+                  //
+                  // Sur un iPad 13 pouces, 35 % de la hauteur donnaient un
+                  // bocal de près de cinq cents points de haut. Or le rayon
+                  // d'une bille est plafonné à 26 points (voir
+                  // BocalPastilles) : les quarante-cinq billes devenaient des
+                  // grains de sable perdus au fond d'un aquarium. Borner le
+                  // bocal rétablit le rapport entre le contenant et son
+                  // contenu, et laisse simplement plus d'air autour sur les
+                  // grands écrans.
+                  double bocalHeight = (heightScreen * 0.35).clamp(180.0, 420.0);
                   double bocalWidth = bocalHeight * 0.85; 
 
                   return SizedBox(
@@ -1174,18 +1155,12 @@ BtnNewNote(
           // 3. L'HISTORIQUE GLOBAL EN STREAMBUILDER
           // Répare l'erreur 4 et 5 en écoutant les changements de la baseSQLite automatiquement
           StreamBuilder<List<NoteSourire>>(
+            // La valeur de départ vient du cache du service : le flux, lui, ne
+            // rejoue rien et ne déclenche plus de lecture. Voir DatabaseService.
+            initialData: databaseService.notesEnCache,
             stream: databaseService.getNotesStream(),
             builder: (context, snapshot) {
               final notesFluides = snapshot.data ?? [];
-
-              if (snapshot.hasData) {
-                // Les souvenirs d'amorçage ne sont pas de l'utilisateur :
-                // ils ne doivent pas lui faire franchir de palier.
-                _verifierPalier(
-                  notesFluides.where((n) => !n.estAmorce).length,
-                  context,
-                );
-              }
 
               return Positioned.fill(
                 child: WidgetHistorique(

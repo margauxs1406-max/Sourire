@@ -36,7 +36,7 @@ class _ScreenLockState extends State<ScreenLock> {
         if (mounted) {
           _authentifierBiometrie();
         }
-      } else if (UserPrefs.password.isNotEmpty) {
+      } else if (UserPrefs.aUnMotDePasse) {
         setState(() {
           _showPasswordInput = true;
         });
@@ -71,7 +71,7 @@ class _ScreenLockState extends State<ScreenLock> {
       } else {
         // 🌟 SÉCURITÉ : Si la biométrie échoue, on vérifie d'abord que le verrouillage global
         // est TOUJOURS actif avant de forcer l'affichage du mot de passe.
-        if (isAppLockedNotifier.value && UserPrefs.password.isNotEmpty) {
+        if (isAppLockedNotifier.value && UserPrefs.aUnMotDePasse) {
           setState(() {
             _showPasswordInput = true;
           });
@@ -79,7 +79,7 @@ class _ScreenLockState extends State<ScreenLock> {
       }
     } catch (e) {
       debugPrint("Erreur biométrie interceptée : $e");
-      if (mounted && UserPrefs.password.isNotEmpty) {
+      if (mounted && UserPrefs.aUnMotDePasse) {
         setState(() {
           _showPasswordInput = true;
         });
@@ -88,7 +88,7 @@ class _ScreenLockState extends State<ScreenLock> {
   }
 
   void _validerMotDePasse() {
-    if (_passwordController.text == UserPrefs.password) {
+    if (UserPrefs.verifierMotDePasse(_passwordController.text)) {
       _traiterSuccesAuthentification();
     } else {
       setState(() {
@@ -123,7 +123,11 @@ class _ScreenLockState extends State<ScreenLock> {
         body: SafeArea(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 24.0),
-            child: Column(
+            // Un champ de mot de passe large de mille points sur iPad n'est
+            // pas un champ, c'est une barre. Bornée et centrée.
+            child: ContenuCentre(
+              largeurMax: 480,
+              child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const Center(
@@ -235,6 +239,7 @@ class _ScreenLockState extends State<ScreenLock> {
                 ],
               ],
             ),
+                    ),
           ),
         ),
       ),

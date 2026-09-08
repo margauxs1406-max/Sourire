@@ -1,6 +1,5 @@
 {
   "@@locale": "fr",
-  "titleSourire": "Sourire",
   "welcomeMessage": "Bonjour {prenom},",
   "@welcomeMessage": {
     "placeholders": {
@@ -31,17 +30,6 @@
   "accessibility": "Accessibilité",
   "langues": "Langues",
   "help": "Aide",
-  "logout": "Se déconnecter",
-  "dailyGratitudeReminder": "Rappel quotidien de gratitude",
-  "dailyReminderSubtitle": "Me rappeler de noter un souvenir positif",
-  "reminderTime": "Heure du rappel",
-  "drawnMemoriesFrequency": "Fréquence des souvenirs tirés",
-  "drawnMemoriesSubtitle": "Me proposer un vieux souvenir à revoir",
-  "frequencySettings": "Réglages de la fréquence",
-  "categoriesIncluded": "Catégories incluses",
-  "everyDay": "Tous les jours",
-  "everyTwoDays": "Tous les 2 jours",
-  "everyWeek": "Toutes les semaines",
   "photoGalleryAccess": "Accès à la galerie photo",
   "photoGallerySubtitle": "Indispensable pour ajouter des photos de tes moments précieux.",
   "secureLocalStorage": "Stockage local sécurisé",
@@ -88,10 +76,6 @@
   "catUnclassified": "Non classées",
   "btnNewCategory": "Nouvelle catégorie",
   "hintNewCategory": "Nom de la catégorie...",
-  "btnDeleteCategories": "Supprimer des catégories",
-  "noCustomCategoryToDelete": "Aucune catégorie personnalisée à supprimer.",
-  "btnClose": "Fermer",
-  "titleDeleteModal": "Gérer les catégories",
   "btnReset": "Rétablir",
   "btnFilter": "Filtrer",
   "writeHappyThought": "Écris ce qui te rend {accord}...",
@@ -109,18 +93,12 @@
   "yesterday": "Hier",
   "btnDeleteSelection": "Supprimer",
   "btnCategorizeSelection": "Catégoriser",
-  "galleryRecent": "Recent",
-  "galleryPreview": "Aperçu",
-  "btnOk": "OK",
   "alertWarningTitle": "Attention",
   "galleryDisabledMessage": "Tu as désactivé l'accès à ta galerie photo. Active-la dans tes autorisations.",
   "btnEnableAccess": "Activer l'accès",
   "emptyJarMessage": "Le bocal est vide, ajoute un souvenir !",
-  "deleteConfirmMessage": "Voulez-vous vraiment supprimer définitivement ces souvenirs ?",
   "btnCancel": "Annuler",
   "btnDeleteConfirm": "Supprimer",
-  "recategorizeTitle": "Sélectionnez les catégories à appliquer aux souvenirs sélectionnés :",
-  "btnSave": "Enregistrer",
   "onboardingBtnGetStarted": "Commencer",
   "onboardingWelcomeMessage": "Bienvenue dans ton\nespace personnel conçu\npour te redonner le\nsourire !",
   "onboardingQuestionName": "Comment t'appelles-tu ?",
@@ -149,35 +127,6 @@
   "demoBocalDesc": "Appuie sur le bocal à tout moment pour tirer au sort un souvenir enregistré et te redonner le sourire !",
   "demoBurgerTitle": "Ton historique",
   "demoBurgerDesc": "Ouvre ce menu à tout moment pour retrouver la liste chronologique de tous tes précieux souvenirs enregistrés.",
-  "profilTitlePersonalData": "Données personnelles",
-  "profilLabelFirstName": "Prénom",
-  "profilLabelEmail": "Email",
-  "profilLabelPassword": "Mot de passe",
-  "profilLabelBiometrics": "Biométrie",
-  "profilTitleAccountSettings": "Paramètres du compte",
-  "profilMenuNotifications": "Notifications",
-  "profilMenuLanguage": "Langue de l'application",
-  "profilMenuDarkMode": "Thème sombre",
-  "profilMenuSoftAnimations": "Animations douces",
-  "profilTitleStorage": "Stockage de l'appareil",
-  "profilLabelImportedPhotos": "Photos importées",
-  "profilLabelTextMemories": "Souvenirs textuels",
-  "profilLabelGalleryAccess": "Accès à la galerie",
-  "profilBtnEmpty": "Vider",
-  "profilSnackbarEmptied": "{label} vidé",
-  "@profilSnackbarEmptied": {
-    "placeholders": {
-      "label": {
-        "type": "String"
-      }
-    }
-  },
-  "profilTitleHelp": "Besoin d'aide ?",
-  "profilHelpQuestion1": "Comment ajouter un souvenir ?",
-  "profilHelpAnswer1": "Clique sur le bouton '+' sur l'écran d'accueil pour commencer à rédiger un souvenir ou importer une photo.",
-  "profilHelpQuestion2": "Mes données sont-elles sécurisées ?",
-  "profilHelpAnswer2": "Oui. Tes souvenirs restent uniquement dans l'espace privé de Sourire sur ton téléphone, auquel aucune autre application n'a accès, et ne sont jamais envoyés sur Internet.",
-  "profilAlertTitle": "Attention",
   "profilAlertGalleryMessage": "Attention, si tu décides de supprimer l'accès à ta galerie photo, tu ne pourras plus enregistrer de photos dans tes souvenirs.",
   "profilAlertBtnDisable": "Désactiver l'accès",
   "notifLabelTitleGratitude": "Rappel de gratitude",
@@ -212,7 +161,7 @@
   "lockForgotPassword": "Mot de passe oublié ?",
   "lockBtnBiometric": "Utiliser l'empreinte",
   "purchaseAlertTitle": "Limite atteinte",
-  "purchaseAlertMessage": "Tu as atteint la limite de {limite} souvenirs pour la version gratuite. Passe à la version Premium pour ajouter des souvenirs en illimité et débloquer de nouveaux thèmes !",
+  "purchaseAlertMessage": "Tu as atteint la limite de {limite} souvenirs pour la version gratuite. Passe à la version Premium pour ajouter des souvenirs en illimité !",
   "@purchaseAlertMessage": {
     "placeholders": {
       "limite": {
@@ -222,7 +171,6 @@
   },
   "deleteAlertTitle": "Veux-tu vraiment supprimer ces souvenirs ?",
   "deleteAlertMessage": "Cette action est irréversible et entraînera la suppression définitive des souvenirs sélectionnés.",
-  "btnGoPremium": "Passer Premium",
   "emptyHistory": "L'historique est vide",
   "notifGratitudeChannelName": "Rappel de Gratitude",
   "notifGratitudeChannelDesc": "Pour te rappeler de noter tes pensées positives",
@@ -238,8 +186,7 @@
   "btnPasserPremium": "Passer Premium",
   "btnAppliquer": "Appliquer",
   "themesTitle": "Thèmes de l'écran d'accueil",
-  "themesDescription": "Personnalise ton interface et tes notes à tout moment en choisissant parmi les thèmes suivants.",
-  "notesPurchaseSuccessSnackBar": "Achat simulé avec succès ! Notes et photos illimitées débloquées.",
+  "notesPurchaseSuccessSnackBar": "Merci ! Le Premium est débloqué : souvenirs illimités et tous les décors.",
   "premiumSuccessSnackBar": "Premium Activé ! Tous les verrous ont sauté. Thème « {themeLabel} » appliqué.",
   "@premiumSuccessSnackBar": {
     "placeholders": {
@@ -251,7 +198,6 @@
   "themeClassique": "Classique",
   "themeMontagne": "Montagne",
   "themeMer": "Mer",
-  "themeAbstrait": "Abstrait",
   "themeSport": "Sport",
   "themeVoyage": "Voyage",
   "themeMusique": "Musique",
@@ -261,15 +207,6 @@
   "themeCelebration": "Célébrations",
   "themeNature": "Nature",
   "themeKawaii": "Kawaii",
-  "popupPalierTitle": "Félicitations !",
-  "popupPalierMessage": "Tu as ajouté {palier} souvenirs à ton bocal !",
-  "@popupPalierMessage": {
-    "placeholders": {
-      "palier": {
-        "type": "int"
-      }
-    }
-  },
   "btnContinuerPalier": "Continuer",
   "badge10Name": "Chercheur d’Étoiles",
   "badge10Phrase": "Les plus beaux souvenirs commencent souvent tout petits.",
@@ -362,6 +299,102 @@
   "filterByCategory": "Par catégorie",
   "btnApply": "Appliquer",
   "themePreviewQuestion": "Qu'est-ce qui te rend heureux·se aujourd'hui ?",
-  "notesThemesPurchaseMessage": "Habille tes notes du décor de ton choix. Passe à la version Premium pour débloquer tous les thèmes.",
-  "themesTitleNotes": "Thèmes des notes"
+  "notesThemesPurchaseMessage": "Choisis le décor de tes notes parmi la bibliothèque de thèmes proposés.",
+  "eraseAllTitle": "Effacer tous mes souvenirs",
+  "@eraseAllTitle": {
+    "description": "Titre de l'action « effacer tous mes souvenirs » dans le profil"
+  },
+  "eraseAllSub": "Vide entièrement le bocal : souvenirs, photos et catégories créées. Ton prénom, ta langue et tes réglages restent en place.",
+  "@eraseAllSub": {
+    "description": "Explication sous le titre de l'action d'effacement"
+  },
+  "eraseAllConfirmTitle": "Effacer tous tes souvenirs ?",
+  "@eraseAllConfirmTitle": {
+    "description": "Titre de la première confirmation d'effacement"
+  },
+  "eraseAllConfirmMessage": "Les souvenirs, les photos et les catégories que tu as créées seront supprimés de ce téléphone. Rien ne pourra être récupéré. Ton prénom, ta langue et tes réglages restent en place.",
+  "@eraseAllConfirmMessage": {
+    "description": "Message de la première confirmation d'effacement"
+  },
+  "eraseAllContinue": "Continuer",
+  "@eraseAllContinue": {
+    "description": "Bouton de la première confirmation"
+  },
+  "eraseAllLastCallTitle": "Dernière vérification",
+  "@eraseAllLastCallTitle": {
+    "description": "Titre de la seconde confirmation"
+  },
+  "eraseAllLastCallMessage": "Si tu veux garder une trace, ferme cette fenêtre et exporte d'abord une sauvegarde.",
+  "@eraseAllLastCallMessage": {
+    "description": "Message de la seconde confirmation"
+  },
+  "eraseAllConfirmButton": "Effacer définitivement",
+  "@eraseAllConfirmButton": {
+    "description": "Bouton de la seconde confirmation"
+  },
+  "eraseAllDone": "Ton bocal est vide.",
+  "@eraseAllDone": {
+    "description": "Confirmation après effacement"
+  },
+  "eraseAllError": "L'effacement n'a pas abouti.",
+  "@eraseAllError": {
+    "description": "Message d'erreur si l'effacement échoue"
+  },
+  "premiumSoon": "Bientôt disponible",
+  "@premiumSoon": {
+    "description": "Bouton quand le produit n'existe pas encore dans la boutique"
+  },
+  "premiumRestore": "Restaurer mes achats",
+  "@premiumRestore": {
+    "description": "Lien de restauration des achats, dans la modale Premium"
+  },
+  "premiumRestoreNone": "Aucun achat à restaurer sur ce compte.",
+  "@premiumRestoreNone": {
+    "description": "Aucun achat trouvé à restaurer"
+  },
+  "premiumRestoreDone": "Ton Premium a bien été restauré.",
+  "@premiumRestoreDone": {
+    "description": "Confirmation après une restauration réussie"
+  },
+  "premiumUnavailable": "La boutique n'est pas joignable pour le moment. Réessaie dans un instant.",
+  "@premiumUnavailable": {
+    "description": "La boutique ne répond pas"
+  },
+  "premiumPending": "Ton achat attend une validation. Le Premium se débloquera tout seul dès qu'elle sera accordée.",
+  "@premiumPending": {
+    "description": "Achat en attente de validation extérieure"
+  },
+  "premiumError": "L'achat n'a pas abouti. Rien ne t'a été facturé.",
+  "@premiumError": {
+    "description": "Échec de l'achat"
+  },
+  "premiumRestoreTitle": "Restaurer mes achats",
+  "@premiumRestoreTitle": {
+    "description": "Titre de l'action de restauration dans le profil"
+  },
+  "premiumRestoreSub": "Tu as déjà payé le Premium sur un autre téléphone, ou après une réinstallation ? Récupère-le ici.",
+  "@premiumRestoreSub": {
+    "description": "Explication sous le titre de la restauration dans le profil"
+  },
+  "themesPurchaseMessage": "Choisis le décor de ton écran d'accueil parmi la bibliothèque de thèmes proposés.",
+  "@themesPurchaseMessage": {
+    "description": "Message de la modale Premium ouverte depuis le choix du décor de la home"
+  },
+  "premiumPriceNote": "{prix} par mois, sans engagement. Résiliable à tout moment.",
+  "@premiumPriceNote": {
+    "description": "Mention sous le bouton d'abonnement : durée et prix par période. Exigée par Apple à côté du bouton d'achat (directive 3.1.2). Le prix vient de la boutique.",
+    "placeholders": {
+      "prix": {
+        "type": "String"
+      }
+    }
+  },
+  "premiumLinkPrivacy": "Confidentialité",
+  "@premiumLinkPrivacy": {
+    "description": "Lien vers la politique de confidentialité, dans la modale d'abonnement"
+  },
+  "premiumLinkTerms": "Conditions d'utilisation",
+  "@premiumLinkTerms": {
+    "description": "Lien vers les conditions d'utilisation, dans la modale d'abonnement (iOS)"
+  }
 }

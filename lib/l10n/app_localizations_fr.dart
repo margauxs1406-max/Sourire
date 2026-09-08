@@ -9,9 +9,6 @@ class AppLocalizationsFr extends AppLocalizations {
   AppLocalizationsFr([String locale = 'fr']) : super(locale);
 
   @override
-  String get titleSourire => 'Sourire';
-
-  @override
   String welcomeMessage(String prenom) {
     return 'Bonjour $prenom,';
   }
@@ -62,40 +59,6 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get help => 'Aide';
-
-  @override
-  String get logout => 'Se déconnecter';
-
-  @override
-  String get dailyGratitudeReminder => 'Rappel quotidien de gratitude';
-
-  @override
-  String get dailyReminderSubtitle =>
-      'Me rappeler de noter un souvenir positif';
-
-  @override
-  String get reminderTime => 'Heure du rappel';
-
-  @override
-  String get drawnMemoriesFrequency => 'Fréquence des souvenirs tirés';
-
-  @override
-  String get drawnMemoriesSubtitle => 'Me proposer un vieux souvenir à revoir';
-
-  @override
-  String get frequencySettings => 'Réglages de la fréquence';
-
-  @override
-  String get categoriesIncluded => 'Catégories incluses';
-
-  @override
-  String get everyDay => 'Tous les jours';
-
-  @override
-  String get everyTwoDays => 'Tous les 2 jours';
-
-  @override
-  String get everyWeek => 'Toutes les semaines';
 
   @override
   String get photoGalleryAccess => 'Accès à la galerie photo';
@@ -218,19 +181,6 @@ class AppLocalizationsFr extends AppLocalizations {
   String get hintNewCategory => 'Nom de la catégorie...';
 
   @override
-  String get btnDeleteCategories => 'Supprimer des catégories';
-
-  @override
-  String get noCustomCategoryToDelete =>
-      'Aucune catégorie personnalisée à supprimer.';
-
-  @override
-  String get btnClose => 'Fermer';
-
-  @override
-  String get titleDeleteModal => 'Gérer les catégories';
-
-  @override
   String get btnReset => 'Rétablir';
 
   @override
@@ -264,15 +214,6 @@ class AppLocalizationsFr extends AppLocalizations {
   String get btnCategorizeSelection => 'Catégoriser';
 
   @override
-  String get galleryRecent => 'Recent';
-
-  @override
-  String get galleryPreview => 'Aperçu';
-
-  @override
-  String get btnOk => 'OK';
-
-  @override
   String get alertWarningTitle => 'Attention';
 
   @override
@@ -286,21 +227,10 @@ class AppLocalizationsFr extends AppLocalizations {
   String get emptyJarMessage => 'Le bocal est vide, ajoute un souvenir !';
 
   @override
-  String get deleteConfirmMessage =>
-      'Voulez-vous vraiment supprimer définitivement ces souvenirs ?';
-
-  @override
   String get btnCancel => 'Annuler';
 
   @override
   String get btnDeleteConfirm => 'Supprimer';
-
-  @override
-  String get recategorizeTitle =>
-      'Sélectionnez les catégories à appliquer aux souvenirs sélectionnés :';
-
-  @override
-  String get btnSave => 'Enregistrer';
 
   @override
   String get onboardingBtnGetStarted => 'Commencer';
@@ -390,76 +320,6 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get demoBurgerDesc =>
       'Ouvre ce menu à tout moment pour retrouver la liste chronologique de tous tes précieux souvenirs enregistrés.';
-
-  @override
-  String get profilTitlePersonalData => 'Données personnelles';
-
-  @override
-  String get profilLabelFirstName => 'Prénom';
-
-  @override
-  String get profilLabelEmail => 'Email';
-
-  @override
-  String get profilLabelPassword => 'Mot de passe';
-
-  @override
-  String get profilLabelBiometrics => 'Biométrie';
-
-  @override
-  String get profilTitleAccountSettings => 'Paramètres du compte';
-
-  @override
-  String get profilMenuNotifications => 'Notifications';
-
-  @override
-  String get profilMenuLanguage => 'Langue de l\'application';
-
-  @override
-  String get profilMenuDarkMode => 'Thème sombre';
-
-  @override
-  String get profilMenuSoftAnimations => 'Animations douces';
-
-  @override
-  String get profilTitleStorage => 'Stockage de l\'appareil';
-
-  @override
-  String get profilLabelImportedPhotos => 'Photos importées';
-
-  @override
-  String get profilLabelTextMemories => 'Souvenirs textuels';
-
-  @override
-  String get profilLabelGalleryAccess => 'Accès à la galerie';
-
-  @override
-  String get profilBtnEmpty => 'Vider';
-
-  @override
-  String profilSnackbarEmptied(String label) {
-    return '$label vidé';
-  }
-
-  @override
-  String get profilTitleHelp => 'Besoin d\'aide ?';
-
-  @override
-  String get profilHelpQuestion1 => 'Comment ajouter un souvenir ?';
-
-  @override
-  String get profilHelpAnswer1 =>
-      'Clique sur le bouton \'+\' sur l\'écran d\'accueil pour commencer à rédiger un souvenir ou importer une photo.';
-
-  @override
-  String get profilHelpQuestion2 => 'Mes données sont-elles sécurisées ?';
-
-  @override
-  String get profilHelpAnswer2 =>
-      'Oui. Tes souvenirs restent uniquement dans l\'espace privé de Sourire sur ton téléphone, auquel aucune autre application n\'a accès, et ne sont jamais envoyés sur Internet.';
-
-  @override
-  String get profilAlertTitle => 'Attention';
 
   @override
   String get profilAlertGalleryMessage =>
@@ -569,7 +429,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String purchaseAlertMessage(int limite) {
-    return 'Tu as atteint la limite de $limite souvenirs pour la version gratuite. Passe à la version Premium pour ajouter des souvenirs en illimité et débloquer de nouveaux thèmes !';
+    return 'Tu as atteint la limite de $limite souvenirs pour la version gratuite. Passe à la version Premium pour ajouter des souvenirs en illimité !';
   }
 
   @override
@@ -578,9 +438,6 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get deleteAlertMessage =>
       'Cette action est irréversible et entraînera la suppression définitive des souvenirs sélectionnés.';
-
-  @override
-  String get btnGoPremium => 'Passer Premium';
 
   @override
   String get emptyHistory => 'L\'historique est vide';
@@ -634,12 +491,8 @@ class AppLocalizationsFr extends AppLocalizations {
   String get themesTitle => 'Thèmes de l\'écran d\'accueil';
 
   @override
-  String get themesDescription =>
-      'Personnalise ton interface et tes notes à tout moment en choisissant parmi les thèmes suivants.';
-
-  @override
   String get notesPurchaseSuccessSnackBar =>
-      'Achat simulé avec succès ! Notes et photos illimitées débloquées.';
+      'Merci ! Le Premium est débloqué : souvenirs illimités et tous les décors.';
 
   @override
   String premiumSuccessSnackBar(String themeLabel) {
@@ -654,9 +507,6 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get themeMer => 'Mer';
-
-  @override
-  String get themeAbstrait => 'Abstrait';
 
   @override
   String get themeSport => 'Sport';
@@ -684,14 +534,6 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get themeKawaii => 'Kawaii';
-
-  @override
-  String get popupPalierTitle => 'Félicitations !';
-
-  @override
-  String popupPalierMessage(int palier) {
-    return 'Tu as ajouté $palier souvenirs à ton bocal !';
-  }
 
   @override
   String get btnContinuerPalier => 'Continuer';
@@ -912,8 +754,84 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get notesThemesPurchaseMessage =>
-      'Habille tes notes du décor de ton choix. Passe à la version Premium pour débloquer tous les thèmes.';
+      'Choisis le décor de tes notes parmi la bibliothèque de thèmes proposés.';
 
   @override
-  String get themesTitleNotes => 'Thèmes des notes';
+  String get eraseAllTitle => 'Effacer tous mes souvenirs';
+
+  @override
+  String get eraseAllSub =>
+      'Vide entièrement le bocal : souvenirs, photos et catégories créées. Ton prénom, ta langue et tes réglages restent en place.';
+
+  @override
+  String get eraseAllConfirmTitle => 'Effacer tous tes souvenirs ?';
+
+  @override
+  String get eraseAllConfirmMessage =>
+      'Les souvenirs, les photos et les catégories que tu as créées seront supprimés de ce téléphone. Rien ne pourra être récupéré. Ton prénom, ta langue et tes réglages restent en place.';
+
+  @override
+  String get eraseAllContinue => 'Continuer';
+
+  @override
+  String get eraseAllLastCallTitle => 'Dernière vérification';
+
+  @override
+  String get eraseAllLastCallMessage =>
+      'Si tu veux garder une trace, ferme cette fenêtre et exporte d\'abord une sauvegarde.';
+
+  @override
+  String get eraseAllConfirmButton => 'Effacer définitivement';
+
+  @override
+  String get eraseAllDone => 'Ton bocal est vide.';
+
+  @override
+  String get eraseAllError => 'L\'effacement n\'a pas abouti.';
+
+  @override
+  String get premiumSoon => 'Bientôt disponible';
+
+  @override
+  String get premiumRestore => 'Restaurer mes achats';
+
+  @override
+  String get premiumRestoreNone => 'Aucun achat à restaurer sur ce compte.';
+
+  @override
+  String get premiumRestoreDone => 'Ton Premium a bien été restauré.';
+
+  @override
+  String get premiumUnavailable =>
+      'La boutique n\'est pas joignable pour le moment. Réessaie dans un instant.';
+
+  @override
+  String get premiumPending =>
+      'Ton achat attend une validation. Le Premium se débloquera tout seul dès qu\'elle sera accordée.';
+
+  @override
+  String get premiumError =>
+      'L\'achat n\'a pas abouti. Rien ne t\'a été facturé.';
+
+  @override
+  String get premiumRestoreTitle => 'Restaurer mes achats';
+
+  @override
+  String get premiumRestoreSub =>
+      'Tu as déjà payé le Premium sur un autre téléphone, ou après une réinstallation ? Récupère-le ici.';
+
+  @override
+  String get themesPurchaseMessage =>
+      'Choisis le décor de ton écran d\'accueil parmi la bibliothèque de thèmes proposés.';
+
+  @override
+  String premiumPriceNote(String prix) {
+    return '$prix par mois, sans engagement. Résiliable à tout moment.';
+  }
+
+  @override
+  String get premiumLinkPrivacy => 'Confidentialité';
+
+  @override
+  String get premiumLinkTerms => 'Conditions d\'utilisation';
 }

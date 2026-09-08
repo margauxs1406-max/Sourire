@@ -19,6 +19,7 @@ import 'package:sourire/models/note_model.dart';
 import 'package:sourire/services/timezone_service.dart';
 import 'package:sourire/theme/theme_service.dart';
 import 'package:sourire/services/database_service.dart';
+import 'package:sourire/services/achat_service.dart';
 import 'package:sourire/services/photo_service.dart';
 import 'package:sourire/widgets/bocal_preloader.dart';
 
@@ -48,6 +49,16 @@ void main() async {
   ]);
 
   await UserPrefs.init();
+
+  // Le mot de passe était enregistré en clair par les versions précédentes.
+  // Bascule unique vers l'empreinte salée, sans que l'utilisateur ait rien à
+  // refaire. Voir UserPrefs.
+  await UserPrefs.migrerMotDePasseEnClair();
+
+  // Efface le Premium donné par le FAUX ACHAT des versions de test. Les vrais
+  // abonnés le récupèrent quelques secondes plus tard, quand la boutique
+  // répond à AchatService.verifierAbonnement.
+  await UserPrefs.migrerPremiumFactice();
 
   // Le rappel de gratitude devient réglable (fréquence, jour, heure). Bascule
   // unique de tout le monde sur le nouveau défaut : hebdomadaire, dimanche 20h.
@@ -84,6 +95,12 @@ void main() async {
     UserPrefs.amorcageEffectue = true;
   }
 
+  // Première et unique lecture de la base au démarrage. Les flux du
+  // DatabaseService ne déclenchent plus de lecture par eux-mêmes — ils
+  // étaient appelés dans le `build` du bocal, donc soixante fois par seconde
+  // — et les écrans partent désormais du cache rempli ici.
+  await DatabaseService().chargerDonneesInitiales();
+
   // Fuseau horaire de l'APPAREIL, lu via la couche native (identifiant IANA).
   // Doit être fait avant NotificationService.init(), qui planifie des rappels
   // en tz.TZDateTime : sans ça, tous les utilisateurs hors du fuseau codé en
@@ -92,7 +109,7 @@ void main() async {
 
   ThemeService.chargerThemeSauvegarde();
 
-  if (!UserPrefs.biomatrieActive && UserPrefs.password.isEmpty) {
+  if (!UserPrefs.biomatrieActive && !UserPrefs.aUnMotDePasse) {
     isAppLockedNotifier.value = false;
   }
   
@@ -109,6 +126,15 @@ void main() async {
   // pour ne jamais empêcher runApp() de s'exécuter si l'utilisateur
   // refuse, tarde à répondre, ou revient en arrière sans répondre.
   await NotificationService.init();
+
+  // Boutique : l'abonnement au flux d'achats doit être posé AVANT runApp et
+  // vivre aussi longtemps que l'application. Un achat validé plus tard —
+  // contrôle parental, paiement différé — n'arrive que par ce flux, et c'est
+  // lui qui débloquera le Premium ce jour-là.
+  //
+  // Volontairement SANS await : interroger la boutique demande le réseau, et
+  // rien n'oblige l'écran d'accueil à l'attendre.
+  unawaited(AchatService.initialiser());
 
   // Passe unique de réduction des photos importées avant que le
   // redimensionnement n'existe. Volontairement SANS await : elle peut durer
@@ -210,7 +236,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
       }
     }
     
-    final bool secuActivee = UserPrefs.biomatrieActive || UserPrefs.password.isNotEmpty;
+    final bool secuActivee = UserPrefs.biomatrieActive || UserPrefs.aUnMotDePasse;
 
     // 4. Aiguillage et routage natif Android historique
     if (secuActivee && (isAppLockedNotifier.value || doitVerrouiller)) {
@@ -243,7 +269,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
       // rappels calés sur son fuseau de départ.
       _resynchroniserFuseauHoraire();
 
-      if (!UserPrefs.biomatrieActive && UserPrefs.password.isEmpty) return;
+      if (!UserPrefs.biomatrieActive && !UserPrefs.aUnMotDePasse) return;
 
       // Si le callback de notification est déjà en train de s'exécuter, on n'applique pas le verrou standard
       if (_navigationNotificationEnCours) {
@@ -327,7 +353,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
                   if (isLocked) {
                     return ScreenLock(onAuthenticated: _surAuthentificationReussie);
                   }
-                  if (UserPrefs.password.isNotEmpty || UserPrefs.biomatrieActive) {
+                  if (UserPrefs.aUnMotDePasse || UserPrefs.biomatrieActive) {
                     return const BocalPreloader(child: Home()); // ← modifié
                   }
                   return const ScreenBoot(); 

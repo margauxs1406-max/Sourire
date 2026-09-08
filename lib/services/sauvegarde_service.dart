@@ -1,7 +1,10 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:archive/archive.dart';
+// archive_io.dart et non archive.dart : `ZipFileEncoder` n'est exporté que
+// par la partie du paquet qui s'appuie sur dart:io, et celle-ci réexporte
+// tout le reste — `ZipDecoder` et `ArchiveFile` compris.
+import 'package:archive/archive_io.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:path/path.dart' as p;
@@ -9,6 +12,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:sourire/models/note_model.dart';
 import 'package:sourire/services/database_service.dart';
+import 'package:sourire/services/photo_service.dart';
 
 /// Résultat d'un import, pour pouvoir dire à l'utilisateur ce qui s'est passé.
 class ResultatImport {
@@ -51,27 +55,51 @@ class SauvegardeService {
   /// Retourne `false` uniquement si la fabrication a échoué : un partage
   /// abandonné par l'utilisateur reste un succès.
   static Future<bool> exporter({Rect? origineIpad}) async {
+    File? archiveFichier;
+    File? manifesteFichier;
+
     try {
       final List<NoteSourire> souvenirs = await _bdd.getAllNotesAsync();
       final List<String> categories = await _bdd.getCategoriesPersonnalisees();
 
-      final Archive archive = Archive();
+      final Directory dossier = await getTemporaryDirectory();
+      await _nettoyerAnciennesArchives(dossier);
+
+      final String horodatage =
+          DateTime.now().toIso8601String().substring(0, 10);
+      archiveFichier = File(p.join(dossier.path, 'sourire-$horodatage.zip'));
+      if (await archiveFichier.exists()) await archiveFichier.delete();
+
+      // ÉCRITURE EN FLUX, et non plus en mémoire.
+      //
+      // L'export construisait auparavant un objet `Archive` contenant les
+      // octets de TOUTES les photos, puis en produisait le ZIP complet, lui
+      // aussi entièrement en mémoire. Sur trois cents photos cela demandait
+      // près de deux cents mégaoctets d'un coup, et le système tuait
+      // l'application avant la fin. `ZipFileEncoder` lit et compresse un
+      // fichier à la fois, directement vers le disque : le pic mémoire ne
+      // dépend plus du nombre de souvenirs.
+      final ZipFileEncoder encodeur = ZipFileEncoder();
+      encodeur.create(archiveFichier.path);
+
       final List<Map<String, dynamic>> manifesteSouvenirs = [];
+      final Set<String> nomsDejaAjoutes = <String>{};
 
       for (final NoteSourire souvenir in souvenirs) {
         String? nomPhoto;
 
-        final String? chemin = souvenir.photoPath?.trim();
-        if (chemin != null && chemin.isNotEmpty) {
-          final File photo = File(chemin);
-          if (await photo.exists()) {
-            // On ne garde que le nom du fichier : le chemin absolu de l'app
-            // change à chaque réinstallation, il ne veut rien dire ailleurs.
-            nomPhoto = p.basename(chemin);
-            final List<int> octets = await photo.readAsBytes();
-            archive.addFile(
-              ArchiveFile('$_dossierPhotos/$nomPhoto', octets.length, octets),
-            );
+        final File? photo = await PhotoService.fichierPhoto(souvenir.photoPath);
+        if (photo != null) {
+          // On ne garde que le nom du fichier : le chemin absolu de l'app
+          // change à chaque réinstallation, il ne veut rien dire ailleurs.
+          nomPhoto = p.basename(photo.path);
+          // Deux souvenirs peuvent pointer le même fichier : on ne l'écrit
+          // qu'une fois dans l'archive.
+          if (nomsDejaAjoutes.add(nomPhoto)) {
+            // Niveau 0, sans compression : un JPEG est déjà compressé, le
+            // deflater s'épuiserait pour un gain nul. Sur trois cents photos,
+            // c'est plusieurs dizaines de secondes gagnées.
+            await encodeur.addFile(photo, '$_dossierPhotos/$nomPhoto', 0);
           }
         }
 
@@ -94,22 +122,22 @@ class SauvegardeService {
         'souvenirs': manifesteSouvenirs,
       };
 
-      final List<int> json = utf8.encode(
+      // Le manifeste passe par un fichier temporaire : `ZipFileEncoder`
+      // travaille à partir de fichiers, pas d'octets en mémoire.
+      manifesteFichier = File(p.join(dossier.path, _nomManifeste));
+      await manifesteFichier.writeAsString(
         const JsonEncoder.withIndent('  ').convert(manifeste),
+        flush: true,
       );
-      archive.addFile(ArchiveFile(_nomManifeste, json.length, json));
+      await encodeur.addFile(manifesteFichier, _nomManifeste);
 
-      final List<int> zip = ZipEncoder().encode(archive);
-
-      final Directory dossier = await getTemporaryDirectory();
-      final String horodatage =
-          DateTime.now().toIso8601String().substring(0, 10);
-      final File fichier = File('${dossier.path}/sourire-$horodatage.zip');
-      await fichier.writeAsBytes(zip, flush: true);
+      await encodeur.close();
+      await manifesteFichier.delete();
+      manifesteFichier = null;
 
       await SharePlus.instance.share(
         ShareParams(
-          files: [XFile(fichier.path, mimeType: 'application/zip')],
+          files: [XFile(archiveFichier.path, mimeType: 'application/zip')],
           sharePositionOrigin: origineIpad,
         ),
       );
@@ -117,6 +145,36 @@ class SauvegardeService {
     } catch (e) {
       debugPrint("Export impossible : $e");
       return false;
+    } finally {
+      // Le manifeste ne doit jamais rester derrière, même en cas d'échec.
+      // L'archive, elle, est laissée en place : la feuille de partage peut
+      // encore être en train de la lire. Elle sera balayée au prochain export
+      // par [_nettoyerAnciennesArchives].
+      try {
+        if (manifesteFichier != null && await manifesteFichier.exists()) {
+          await manifesteFichier.delete();
+        }
+      } catch (_) {
+        // Un fichier temporaire non effacé n'est pas une raison de faire
+        // échouer un export réussi.
+      }
+    }
+  }
+
+  /// Efface les archives des exports précédents.
+  ///
+  /// Elles s'accumulaient dans le dossier temporaire, un fichier de plusieurs
+  /// dizaines de mégaoctets à chaque sauvegarde.
+  static Future<void> _nettoyerAnciennesArchives(Directory dossier) async {
+    try {
+      await for (final FileSystemEntity entite in dossier.list()) {
+        if (entite is! File) continue;
+        final String nom = p.basename(entite.path);
+        if (!nom.startsWith('sourire-') || !nom.endsWith('.zip')) continue;
+        await entite.delete();
+      }
+    } catch (e) {
+      debugPrint("Nettoyage des anciennes archives interrompu : $e");
     }
   }
 

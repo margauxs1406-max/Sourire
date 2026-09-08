@@ -98,10 +98,16 @@ class _WidgetHistoriqueState extends State<WidgetHistorique>
           insetPadding: const EdgeInsets.all(40),
           child: GestureDetector(
             onTap: () => Navigator.pop(context),
-            child: AspectRatio(
-              aspectRatio: 1.0,
-              child: WidgetSouvenirTirage(
-                souvenir: souvenir,
+            // Bornée : sans cette limite, le souvenir agrandi occupait un
+            // carré de neuf cents points sur un iPad 13 pouces. Une note
+            // qu'on relit n'a pas besoin d'être une affiche.
+            child: ContenuCentre(
+              largeurMax: 520,
+              child: AspectRatio(
+                aspectRatio: 1.0,
+                child: WidgetSouvenirTirage(
+                  souvenir: souvenir,
+                ),
               ),
             ),
           ),
@@ -319,11 +325,171 @@ class _WidgetHistoriqueState extends State<WidgetHistorique>
     return groupes;
   }
 
-  SourireTheme _getThemeFromLabel(String label) {
-    if (label == 'blanc') {
-      return SourireTheme(main: black, light: white, label: 'blanc');
+  /// Met les groupes à plat : un en-tête de date, puis des rangées de quatre
+  /// souvenirs, puis l'en-tête suivant.
+  ///
+  /// C'est ce qui permet au `SliverList` de ne construire que les rangées
+  /// visibles. Voir le commentaire à l'endroit du `SliverList`.
+  /// Quatre vignettes par ligne sur téléphone, davantage sur tablette.
+  ///
+  /// À quatre colonnes sur un iPad 13 pouces, chaque vignette faisait deux
+  /// cent quarante points de côté : des timbres devenus des affiches, et
+  /// trois fois moins de souvenirs à l'écran que sur un téléphone. On garde
+  /// donc une vignette de taille comparable en ajoutant des colonnes.
+  int _vignettesParLigne(BuildContext context) {
+    final double largeur = MediaQuery.sizeOf(context).width;
+    if (largeur >= 900) return 8;
+    if (largeur >= 700) return 6;
+    if (largeur >= 550) return 5;
+    return 4;
+  }
+
+  List<_LigneHistorique> _aplatir(
+    Map<String, List<NoteSourire>> groupes,
+    int parLigne,
+  ) {
+    final List<_LigneHistorique> lignes = <_LigneHistorique>[];
+
+    groupes.forEach((String date, List<NoteSourire> souvenirs) {
+      lignes.add(_LigneHistorique.entete(date));
+      for (int i = 0; i < souvenirs.length; i += parLigne) {
+        final int fin = (i + parLigne) > souvenirs.length
+            ? souvenirs.length
+            : i + parLigne;
+        lignes.add(_LigneHistorique.rangee(
+          souvenirs.sublist(i, fin),
+          derniereDuGroupe: fin >= souvenirs.length,
+        ));
+      }
+    });
+
+    return lignes;
+  }
+
+  Widget _construireLigne(_LigneHistorique ligne, bool isDarkMode, int parLigne) {
+    if (ligne.estUnEntete) {
+      return Padding(
+        padding: const EdgeInsets.only(top: 15, bottom: 12),
+        child: Text(
+          ligne.titre!,
+          style: TextStyle(
+            color: isDarkMode ? lightGrey : grey,
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      );
     }
-    return SourireTheme.fromLabel(label);
+
+    // Une rangée de quatre carrés. `AspectRatio` dans un `Expanded` donne à
+    // chaque vignette une hauteur égale à sa largeur, quelle que soit la
+    // largeur de l'écran : c'est ce qui rend la grille juste aussi bien sur
+    // un petit téléphone que sur un iPad.
+    final List<Widget> cellules = <Widget>[];
+    for (int i = 0; i < parLigne; i++) {
+      if (i > 0) cellules.add(const SizedBox(width: 12));
+      if (i < ligne.souvenirs.length) {
+        cellules.add(Expanded(
+          child: AspectRatio(
+            aspectRatio: 1,
+            child: _vignette(ligne.souvenirs[i]),
+          ),
+        ));
+      } else {
+        // Case vide de fin de rangée : elle réserve la place pour que les
+        // vignettes restent alignées sur la colonne.
+        cellules.add(const Expanded(child: SizedBox.shrink()));
+      }
+    }
+
+    return Column(
+      children: [
+        Row(crossAxisAlignment: CrossAxisAlignment.start, children: cellules),
+        SizedBox(height: ligne.derniereDuGroupe ? 25 : 12),
+        if (ligne.derniereDuGroupe)
+          Divider(
+            height: 1,
+            color: isDarkMode ? const Color(0xFF2D2D2D) : const Color(0xFFEEEEEE),
+          ),
+      ],
+    );
+  }
+
+  Widget _vignette(NoteSourire souvenir) {
+    final bool estSelectionne =
+        _souvenirsSelectionnes.any((s) => s.id == souvenir.id);
+
+    return GestureDetector(
+      onLongPress: () {
+        setState(() {
+          _modeSelection = true;
+          if (!estSelectionne) {
+            _souvenirsSelectionnes.add(souvenir);
+          }
+        });
+      },
+      onTap: () {
+        if (_modeSelection) {
+          setState(() {
+            if (estSelectionne) {
+              _souvenirsSelectionnes.removeWhere((s) => s.id == souvenir.id);
+              if (_souvenirsSelectionnes.isEmpty) {
+                _modeSelection = false;
+              }
+            } else {
+              _souvenirsSelectionnes.add(souvenir);
+            }
+          });
+        } else {
+          _ouvrirSouvenirGrandEcran(context, souvenir);
+        }
+      },
+      child: Stack(
+        children: [
+          Positioned.fill(
+            child: WidgetSouvenirHistorique(
+              key: ValueKey(souvenir.photoPath ?? souvenir.id.toString()),
+              souvenir: souvenir,
+            ),
+          ),
+          if (_modeSelection && estSelectionne)
+            Positioned.fill(
+              child: Container(
+                decoration: BoxDecoration(
+                  color: orange.withValues(alpha: 0.4),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+              ),
+            ),
+          if (_modeSelection)
+            Positioned(
+              top: 8,
+              right: 8,
+              child: Container(
+                width: 22,
+                height: 22,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: estSelectionne ? orange : Colors.transparent,
+                  border: Border.all(
+                    color: estSelectionne ? orange : Colors.white,
+                    width: 1.5,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.2),
+                      blurRadius: 2,
+                    )
+                  ],
+                ),
+                child: estSelectionne
+                    ? const Icon(Icons.check, color: Colors.white, size: 14)
+                    : null,
+              ),
+            ),
+        ],
+      ),
+    );
   }
 
   /// Bascule entre "tout sélectionner" et "tout désélectionner", sur la
@@ -383,6 +549,7 @@ class _WidgetHistoriqueState extends State<WidgetHistorique>
                       ),
                     ),
                     child: StreamBuilder<List<NoteSourire>>(
+                        initialData: databaseService.notesEnCache,
                         stream: databaseService.getNotesStream(),
                         builder: (context, snapshot) {
                           final toutesLesNotes = snapshot.data ?? widget.notes;
@@ -398,6 +565,13 @@ class _WidgetHistoriqueState extends State<WidgetHistorique>
                           final souvenirsGroupes = _voletEstOuvert
                               ? _grouperParDate(toutesLesNotes, context)
                               : <String, List<NoteSourire>>{};
+                          // Mise à plat en en-têtes et rangées de quatre, faite ici
+                          // une seule fois plutôt que dans le constructeur de chaque
+                          // élément.
+                          final int vignettesParLigne =
+                              _vignettesParLigne(context);
+                          final List<_LigneHistorique> lignes =
+                              _aplatir(souvenirsGroupes, vignettesParLigne);
                           final listeVisibleActuelle = _voletEstOuvert
                               ? _filtrerListe(toutesLesNotes)
                               : <NoteSourire>[];
@@ -438,129 +612,33 @@ class _WidgetHistoriqueState extends State<WidgetHistorique>
                                   else
                                     SliverPadding(
                                       padding: EdgeInsets.only(
-                                        left: 20, 
-                                        right: 20, 
-                                        top: 10, 
+                                        left: 20,
+                                        right: 20,
+                                        top: 10,
                                         bottom: 20 + bottomPadding + (_modeSelection ? 100 : 0),
                                       ),
+                                      // Une liste PLATE : un en-tête de date, puis des
+                                      // rangées de quatre vignettes, puis l'en-tête
+                                      // suivant.
+                                      //
+                                      // Il y avait auparavant une `GridView` en
+                                      // `shrinkWrap` par journée. Une grille en
+                                      // shrinkWrap doit mesurer tous ses enfants pour
+                                      // connaître sa hauteur : elle les construisait donc
+                                      // TOUS d'un coup, et chaque vignette lance une
+                                      // lecture disque. Le jour où quelqu'un importait
+                                      // deux cents photos, ouvrir l'historique
+                                      // construisait deux cents vignettes et lançait deux
+                                      // cents lectures simultanées. À plat, le
+                                      // `SliverList` ne construit que ce qui est visible.
                                       sliver: SliverList(
                                         delegate: SliverChildBuilderDelegate(
-                                          (context, index) {
-                                            String dateCle = souvenirsGroupes.keys.elementAt(index);
-                                            List<NoteSourire> items = souvenirsGroupes[dateCle]!;
-                                            
-                                            return Column(
-                                              crossAxisAlignment: CrossAxisAlignment.start,
-                                              children: [
-                                                Padding(
-                                                  padding: const EdgeInsets.only(top: 15, bottom: 12),
-                                                  child: Text(
-                                                    dateCle,
-                                                    style: TextStyle(
-                                                      color: isDarkMode ? lightGrey : grey, 
-                                                      fontSize: 16,
-                                                      fontWeight: FontWeight.bold,
-                                                    ),
-                                                  ),
-                                                ),
-                                                GridView.builder(
-                                                  padding: EdgeInsets.zero, 
-                                                  shrinkWrap: true, 
-                                                  physics: const NeverScrollableScrollPhysics(), 
-                                                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                                                    crossAxisCount: 4,
-                                                    mainAxisSpacing: 12,
-                                                    crossAxisSpacing: 12,
-                                                    childAspectRatio: 1.0,
-                                                  ),
-                                                  itemCount: items.length,
-                                                  itemBuilder: (context, itemIndex) {
-                                                    final souvenir = items[itemIndex];
-                                                    _getThemeFromLabel(souvenir.themeLabel);
-                                                    final bool estSelectionne = _souvenirsSelectionnes.any((s) => s.id == souvenir.id);
-
-                                                    return GestureDetector(
-                                                      onLongPress: () {
-                                                        setState(() {
-                                                          _modeSelection = true;
-                                                          if (!estSelectionne) {
-                                                            _souvenirsSelectionnes.add(souvenir);
-                                                          }
-                                                        });
-                                                      },
-                                                      onTap: () {
-                                                        if (_modeSelection) {
-                                                          setState(() {
-                                                            if (estSelectionne) {
-                                                              _souvenirsSelectionnes.removeWhere((s) => s.id == souvenir.id);
-                                                              if (_souvenirsSelectionnes.isEmpty) {
-                                                                _modeSelection = false;
-                                                              }
-                                                            } else {
-                                                              _souvenirsSelectionnes.add(souvenir);
-                                                            }
-                                                          });
-                                                        } else {
-                                                          _ouvrirSouvenirGrandEcran(context, souvenir);
-                                                        }
-                                                      },
-                                                      child: Stack(
-                                                        children: [
-                                                          Positioned.fill(
-                                                            child: WidgetSouvenirHistorique(
-                                                              key: ValueKey(souvenir.photoPath ?? souvenir.id.toString()),
-                                                              souvenir: souvenir,
-                                                            ),
-                                                          ),
-                                                          if (_modeSelection && estSelectionne)
-                                                            Positioned.fill(
-                                                              child: Container(
-                                                                decoration: BoxDecoration(
-                                                                  color: orange.withValues(alpha: 0.4),
-                                                                  borderRadius: BorderRadius.circular(6),
-                                                                ),
-                                                              ),
-                                                            ),
-                                                          if (_modeSelection)
-                                                            Positioned(
-                                                              top: 8,
-                                                              right: 8,
-                                                              child: Container(
-                                                                width: 22,
-                                                                height: 22,
-                                                                decoration: BoxDecoration(
-                                                                  shape: BoxShape.circle,
-                                                                  color: estSelectionne ? orange : Colors.transparent,
-                                                                  border: Border.all(
-                                                                    color: estSelectionne ? orange : Colors.white,
-                                                                    width: 1.5,
-                                                                  ),
-                                                                  boxShadow: [
-                                                                    BoxShadow(
-                                                                      color: Colors.black.withValues(alpha: 0.2),
-                                                                      blurRadius: 2,
-                                                                    )
-                                                                  ],
-                                                                ),
-                                                                child: estSelectionne
-                                                                    ? const Icon(Icons.check, color: Colors.white, size: 14)
-                                                                    : null,
-                                                              ),
-                                                            ),
-                                                        ],
-                                                      ),
-                                                    );
-                                                  },
-                                                ),
-                                                const SizedBox(height: 25),
-                                                Divider(
-                                                  height: 1, 
-                                                  color: isDarkMode ? const Color(0xFF2D2D2D) : const Color(0xFFEEEEEE)
-                                                ),
-                                              ],
-                                            );
-                                          },
-                                          childCount: souvenirsGroupes.keys.length,
+                                          (context, index) => _construireLigne(
+                                            lignes[index],
+                                            isDarkMode,
+                                            vignettesParLigne,
+                                          ),
+                                          childCount: lignes.length,
                                         ),
                                       ),
                                     ),
@@ -787,4 +865,24 @@ class _WidgetHistoriqueState extends State<WidgetHistorique>
       },
     );
   }
+}
+
+/// Un élément de la liste d'historique : soit un en-tête de date, soit une
+/// rangée de quatre vignettes au plus.
+class _LigneHistorique {
+  final String? titre;
+  final List<NoteSourire> souvenirs;
+
+  /// Vrai pour la dernière rangée d'une journée : c'est elle qui porte le
+  /// trait de séparation.
+  final bool derniereDuGroupe;
+
+  const _LigneHistorique.entete(String this.titre)
+      : souvenirs = const <NoteSourire>[],
+        derniereDuGroupe = false;
+
+  const _LigneHistorique.rangee(this.souvenirs, {required this.derniereDuGroupe})
+      : titre = null;
+
+  bool get estUnEntete => titre != null;
 }

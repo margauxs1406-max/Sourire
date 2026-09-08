@@ -1,3 +1,7 @@
+import 'dart:convert';
+import 'dart:math';
+
+import 'package:crypto/crypto.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class UserPrefs {
@@ -42,8 +46,70 @@ class UserPrefs {
   static String get email => _prefs?.getString('email') ?? "";
   static set email(String value) => _prefs?.setString('email', value);
 
-  static String get password => _prefs?.getString('password') ?? "";
-  static set password(String value) => _prefs?.setString('password', value);
+  // --- MOT DE PASSE ---------------------------------------------------------
+  //
+  // Le mot de passe n'est PAS conservé. On garde son empreinte SHA-256, salée
+  // avec seize octets tirés au hasard à la création. Vérifier une saisie
+  // consiste à la resaler et à comparer les empreintes.
+  //
+  // Il était auparavant écrit en clair dans les préférences : lisible sur un
+  // appareil rooté, et présent tel quel dans les sauvegardes iCloud et iTunes.
+  // Pour une app qui promet que rien ne sort du téléphone, c'était le maillon
+  // faible.
+
+  static const String _cleEmpreinte = 'motDePasseEmpreinte';
+  static const String _cleSel = 'motDePasseSel';
+
+  /// Ancienne clé, en clair. Conservée uniquement pour la migration.
+  static const String _cleMotDePasseEnClair = 'password';
+
+  /// Un mot de passe a-t-il été défini ?
+  static bool get aUnMotDePasse =>
+      (_prefs?.getString(_cleEmpreinte) ?? "").isNotEmpty;
+
+  static String _empreinte(String motDePasse, String sel) =>
+      sha256.convert(utf8.encode('$sel|$motDePasse')).toString();
+
+  /// Enregistre [motDePasse]. Un mot de passe vide revient à en supprimer un.
+  static Future<void> definirMotDePasse(String motDePasse) async {
+    final String propre = motDePasse.trim();
+    if (propre.isEmpty) {
+      await supprimerMotDePasse();
+      return;
+    }
+
+    // `Random.secure` et non `Random` : le sel doit être imprévisible.
+    final Random alea = Random.secure();
+    final String sel = List<int>.generate(16, (_) => alea.nextInt(256))
+        .map((int octet) => octet.toRadixString(16).padLeft(2, '0'))
+        .join();
+
+    await _prefs?.setString(_cleSel, sel);
+    await _prefs?.setString(_cleEmpreinte, _empreinte(propre, sel));
+    await _prefs?.remove(_cleMotDePasseEnClair);
+  }
+
+  static Future<void> supprimerMotDePasse() async {
+    await _prefs?.remove(_cleEmpreinte);
+    await _prefs?.remove(_cleSel);
+    await _prefs?.remove(_cleMotDePasseEnClair);
+  }
+
+  /// `true` si [saisie] correspond au mot de passe enregistré.
+  static bool verifierMotDePasse(String saisie) {
+    final String empreinte = _prefs?.getString(_cleEmpreinte) ?? "";
+    final String sel = _prefs?.getString(_cleSel) ?? "";
+    if (empreinte.isEmpty || sel.isEmpty) return false;
+    return _empreinte(saisie.trim(), sel) == empreinte;
+  }
+
+  /// Convertit un mot de passe enregistré en clair par une version
+  /// précédente. Jouée une fois au démarrage, sans effet ensuite.
+  static Future<void> migrerMotDePasseEnClair() async {
+    final String ancien = _prefs?.getString(_cleMotDePasseEnClair) ?? "";
+    if (ancien.isEmpty) return;
+    await definirMotDePasse(ancien);
+  }
 
   static bool get biomatrieActive => _prefs?.getBool('biomatrieActive') ?? false;
   static set biomatrieActive(bool value) => _prefs?.setBool('biomatrieActive', value);
@@ -232,9 +298,71 @@ class UserPrefs {
   static set themeNoteId(String value) =>
       _prefs?.setString('themeNoteId', value);
 
-  // --- PERSISTANCE DU STATUT PREMIUM ---
-  static bool get isPremium => _prefs?.getBool('isPremium') ?? false;
-  static set isPremium(bool value) => _prefs?.setBool('isPremium', value);
+  // --- PREMIUM : UN ABONNEMENT, DONC UNE ÉCHÉANCE ---------------------------
+  //
+  // Ce n'est plus un booléen « acheté, donc acquis ». Un abonnement mensuel se
+  // résilie : le garder en booléen reviendrait à offrir le Premium à vie à qui
+  // s'abonne un mois.
+  //
+  // On enregistre donc une DATE LIMITE, repoussée chaque fois que la boutique
+  // confirme que l'abonnement court toujours — c'est-à-dire à chaque lancement
+  // de l'application avec du réseau. Entre deux confirmations,
+  // [dureeGracePremium] laisse vivre quelqu'un qui voyage ou qui n'a pas de
+  // réseau : personne ne perd ses décors parce qu'il a pris l'avion.
+  //
+  // Conséquence, et elle est voulue : une résiliation met jusqu'à deux
+  // semaines à se voir. C'est le prix de l'absence de serveur, et il est
+  // largement du bon côté — mieux vaut deux semaines offertes à un ancien
+  // abonné qu'un abonné en règle privé de ce qu'il paie.
+
+  static const Duration dureeGracePremium = Duration(days: 14);
+
+  static const String _clePremiumJusquA = 'premiumJusquA';
+
+  /// Ancien drapeau, posé par le faux achat des versions de test.
+  static const String _clePremiumFactice = 'isPremium';
+
+  /// Jusqu'à quand le Premium est acquis. `null` si jamais confirmé.
+  static DateTime? get premiumJusquA {
+    final int? ms = _prefs?.getInt(_clePremiumJusquA);
+    return ms == null ? null : DateTime.fromMillisecondsSinceEpoch(ms);
+  }
+
+  /// Le Premium est-il actif à cet instant ?
+  ///
+  /// Lu partout dans l'application. Reste un simple booléen pour les
+  /// appelants : c'est ici, et ici seulement, que vit la notion d'échéance.
+  static bool get isPremium {
+    final DateTime? echeance = premiumJusquA;
+    return echeance != null && echeance.isAfter(DateTime.now());
+  }
+
+  /// La boutique vient de confirmer un abonnement actif : on repousse
+  /// l'échéance d'autant.
+  static Future<void> confirmerPremium() async {
+    await _prefs?.setInt(
+      _clePremiumJusquA,
+      DateTime.now().add(dureeGracePremium).millisecondsSinceEpoch,
+    );
+  }
+
+  /// Retire le Premium sur-le-champ. Réservé aux tests : en usage normal,
+  /// l'échéance s'éteint d'elle-même faute de confirmation.
+  static Future<void> retirerPremium() async {
+    await _prefs?.remove(_clePremiumJusquA);
+  }
+
+  /// Bascule unique : efface le Premium donné par l'ANCIEN FAUX ACHAT.
+  ///
+  /// Pendant la phase de test, le bouton « Passer Premium » écrivait
+  /// `isPremium = true` sans rien facturer. Ce drapeau serait resté pour
+  /// toujours sur les téléphones concernés, y compris le tien. On l'efface une
+  /// bonne fois : les vrais abonnés, eux, sont reconnus au lancement suivant
+  /// par la boutique elle-même (voir AchatService.verifierAbonnement).
+  static Future<void> migrerPremiumFactice() async {
+    if (_prefs?.getBool(_clePremiumFactice) == null) return;
+    await _prefs?.remove(_clePremiumFactice);
+  }
 
   // --- GAMIFICATION : PALIERS DE SOUVENIRS ---
 static int get dernierPalierCelebre => _prefs?.getInt('dernierPalierCelebre') ?? 0;
@@ -255,4 +383,19 @@ static set bocalResetOffset(int value) => _prefs?.setInt('bocalResetOffset', val
 /// recalculer.
 static String get positionsBocal => _prefs?.getString('positionsBocal') ?? '{}';
 static set positionsBocal(String value) => _prefs?.setString('positionsBocal', value);
+
+  /// Remet à zéro tout ce qui décrit le contenu du bocal, après un
+  /// effacement complet des souvenirs.
+  ///
+  /// Sans cela, l'app garderait le décompte des paliers déjà célébrés, les
+  /// positions de billes disparues et le décalage des bocaux précédents :
+  /// l'utilisateur repartirait d'un bocal vide, mais avec la mémoire de
+  /// l'ancien.
+  static Future<void> reinitialiserApresEffacement() async {
+    await _prefs?.setInt('bocalResetOffset', 0);
+    await _prefs?.setString('positionsBocal', '{}');
+    await _prefs?.setInt('dernierPalierCelebre', 0);
+    await _prefs?.setBool('gamificationInitialisee', false);
+    await _prefs?.setInt('souvenir_notif_id', -1);
+  }
 }

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Android 12 et au-delà. Rien de Sourire ne part vers le nuage : ni les
+  préférences, ni la base SQLite des souvenirs, ni les photos du dossier de
+  l'application. C'est la contrepartie technique de la promesse affichée sur
+  la fiche du store.
+
+  Le transfert direct d'un téléphone à l'autre, lui, reste possible : il ne
+  passe par aucun serveur, c'est un câble ou un lien local entre deux
+  appareils du même utilisateur.
+-->
+<data-extraction-rules>
+    <cloud-backup>
+        <exclude domain="root" />
+        <exclude domain="file" />
+        <exclude domain="database" />
+        <exclude domain="sharedpref" />
+        <exclude domain="external" />
+    </cloud-backup>
+</data-extraction-rules>

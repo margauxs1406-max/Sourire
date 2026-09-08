@@ -90,20 +90,21 @@ class NotificationService {
     }
   }
 
-  /// Demande les permissions nécessaires (notification + alarme exacte),
-  /// PUIS planifie les rappels. À appeler UNIQUEMENT après le premier
-  /// affichage de l'app (jamais avant runApp()) — la permission d'alarme
-  /// exacte peut ouvrir un véritable écran de réglages système sur
-  /// certaines versions d'Android, ce qui bloquerait indéfiniment le
-  /// démarrage si c'était fait avant que l'app ne soit affichée.
+  /// Demande la permission de notification, PUIS planifie les rappels.
+  /// À appeler UNIQUEMENT après le premier affichage de l'app, jamais avant
+  /// runApp().
+  ///
+  /// L'alarme EXACTE n'est plus demandée. Google Play réserve
+  /// `SCHEDULE_EXACT_ALARM` aux réveils, agendas et alarmes, et exige une
+  /// justification pour tout le reste : un rappel de gratitude hebdomadaire
+  /// n'en fait pas partie et exposait à un refus de publication. Les rappels
+  /// passent donc en mode inexact, qui les déclenche à quelques minutes près.
+  /// Personne ne verra la différence sur un rappel « dimanche à 20h », et la
+  /// batterie s'en portera mieux.
   static Future<void> demanderPermissionsEtPlanifier() async {
     try {
       if (await Permission.notification.isDenied) {
         await Permission.notification.request();
-      }
-      final statusExact = await Permission.scheduleExactAlarm.status;
-      if (statusExact.isDenied || statusExact.isPermanentlyDenied) {
-        await Permission.scheduleExactAlarm.request();
       }
     } catch (e) {
       debugPrint("Erreur lors de la demande de permissions notifications : $e");
@@ -267,7 +268,7 @@ class NotificationService {
           corps,
           _prochaineOccurrenceHebdomadaire(joursRetenus[i], heure, minute),
           details,
-          androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+          androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
           uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
           matchDateTimeComponents: DateTimeComponents.dayOfWeekAndTime,
           payload: payload,
@@ -282,7 +283,7 @@ class NotificationService {
       corps,
       _prochaineOccurrence(heure, minute, const Duration(days: 1)),
       details,
-      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
       uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
       matchDateTimeComponents: DateTimeComponents.time,
       payload: payload,

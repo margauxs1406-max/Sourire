@@ -44,7 +44,9 @@ class _ScreenOnboardingState extends State<ScreenOnboarding> {
     super.dispose();
   }
 
-  void _passerALEtapeSuivante() {
+  /// `async` depuis que le mot de passe est haché : son enregistrement passe
+  /// par les préférences, donc par un Future.
+  Future<void> _passerALEtapeSuivante() async {
     FocusScope.of(context).unfocus();
     
     if (_validerEtapeActuelle()) {
@@ -58,11 +60,15 @@ class _ScreenOnboardingState extends State<ScreenOnboarding> {
         
         try {
           UserPrefs.email = _emailController.text.trim();
-          UserPrefs.password = _passwordController.text;
+          await UserPrefs.definirMotDePasse(_passwordController.text);
           UserPrefs.biomatrieActive = _biometrieValue; 
           UserPrefs.modeDemoAffiche = false; 
           
           debugPrint("ONBOARDING LOG : Données UserPrefs sauvegardées avec succès (Biométrie active : $_biometrieValue). Transition vers Home...");
+
+          // L'enregistrement du mot de passe est un `await` : l'écran a pu
+          // être démonté entre-temps.
+          if (!mounted) return;
 
           debugPrint("ONBOARDING LOG : Exécution directe du pushReplacement de la Home.");
           Navigator.pushReplacement(
@@ -214,6 +220,10 @@ class _ScreenOnboardingState extends State<ScreenOnboarding> {
                     }
                     return false;
                   },
+                  // Bornée, la colonne d'onboarding garde sur tablette la
+                  // même mise en page que sur téléphone : les champs restent
+                  // des champs, et le regard n'a pas à traverser la dalle.
+                  child: ContenuCentre(
                   child: PageView(
                     controller: _pageController,
                     physics: pagePhysics,
@@ -231,6 +241,7 @@ class _ScreenOnboardingState extends State<ScreenOnboarding> {
                       _buildEtapeBiometrie(localizations), 
                     ],
                   ),
+                    ),
                 ),
               ),
             ),

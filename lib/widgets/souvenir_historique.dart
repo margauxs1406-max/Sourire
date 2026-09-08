@@ -3,8 +3,7 @@ import 'dart:math' as math;
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:path/path.dart' as p;
+import 'package:sourire/services/photo_service.dart';
 import 'package:sourire/theme/tokens.dart';
 import 'package:sourire/models/note_model.dart';
 import 'package:sourire/models/theme_app.dart';
@@ -69,18 +68,12 @@ Future<void> preloadHistoriqueImage(String? photoPath) async {
   }
 
   try {
-    final cleanPath = pathKey.replaceAll('file://', '');
-    File file;
+    // Résolution centralisée dans PhotoService : sur iOS le dossier de l'app
+    // change d'identifiant à chaque réinstallation, seul le nom du fichier
+    // est fiable.
+    final File? file = await PhotoService.fichierPhoto(pathKey);
 
-    if (Platform.isIOS) {
-      final String fileName = p.basename(cleanPath);
-      final Directory appDocDir = await getApplicationDocumentsDirectory();
-      file = File(p.join(appDocDir.path, fileName));
-    } else {
-      file = File(cleanPath);
-    }
-
-    if (file.existsSync()) {
+    if (file != null) {
       final bytes = await file.readAsBytes();
       _mettreEnCache(pathKey, bytes);
       debugPrint("--- PRELOAD : terminé et mis en cache (${bytes.length} bytes) pour $pathKey ---");
@@ -147,18 +140,9 @@ class _WidgetSouvenirHistoriqueState extends State<WidgetSouvenirHistorique> {
     setState(() { _isLoading = true; });
 
     try {
-      final cleanPath = pathKey.replaceAll('file://', '');
-      File file;
+      final File? file = await PhotoService.fichierPhoto(pathKey);
 
-      if (Platform.isIOS) {
-        final String fileName = p.basename(cleanPath);
-        final Directory appDocDir = await getApplicationDocumentsDirectory();
-        file = File(p.join(appDocDir.path, fileName));
-      } else {
-        file = File(cleanPath);
-      }
-
-      if (file.existsSync()) {
+      if (file != null) {
         final bytes = await file.readAsBytes();
         _mettreEnCache(pathKey, bytes);
         if (mounted) {

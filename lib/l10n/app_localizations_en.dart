@@ -9,9 +9,6 @@ class AppLocalizationsEn extends AppLocalizations {
   AppLocalizationsEn([String locale = 'en']) : super(locale);
 
   @override
-  String get titleSourire => 'Sourire';
-
-  @override
   String welcomeMessage(String prenom) {
     return 'Hello $prenom,';
   }
@@ -62,40 +59,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get help => 'Help';
-
-  @override
-  String get logout => 'Log out';
-
-  @override
-  String get dailyGratitudeReminder => 'Daily gratitude reminder';
-
-  @override
-  String get dailyReminderSubtitle =>
-      'Remind me to write down a positive memory';
-
-  @override
-  String get reminderTime => 'Reminder time';
-
-  @override
-  String get drawnMemoriesFrequency => 'Frequency of drawn memories';
-
-  @override
-  String get drawnMemoriesSubtitle => 'Suggest an old memory for me to review';
-
-  @override
-  String get frequencySettings => 'Frequency settings';
-
-  @override
-  String get categoriesIncluded => 'Categories included';
-
-  @override
-  String get everyDay => 'Every day';
-
-  @override
-  String get everyTwoDays => 'Every 2 days';
-
-  @override
-  String get everyWeek => 'Every week';
 
   @override
   String get photoGalleryAccess => 'Photo gallery access';
@@ -217,18 +180,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get hintNewCategory => 'Category name...';
 
   @override
-  String get btnDeleteCategories => 'Delete categories';
-
-  @override
-  String get noCustomCategoryToDelete => 'No custom categories to delete.';
-
-  @override
-  String get btnClose => 'Close';
-
-  @override
-  String get titleDeleteModal => 'Manage categories';
-
-  @override
   String get btnReset => 'Reset';
 
   @override
@@ -262,15 +213,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get btnCategorizeSelection => 'Categorize';
 
   @override
-  String get galleryRecent => 'Recent';
-
-  @override
-  String get galleryPreview => 'Preview';
-
-  @override
-  String get btnOk => 'OK';
-
-  @override
   String get alertWarningTitle => 'Warning';
 
   @override
@@ -284,21 +226,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get emptyJarMessage => 'The jar is empty, add a memory!';
 
   @override
-  String get deleteConfirmMessage =>
-      'Are you sure you want to permanently delete these memories?';
-
-  @override
   String get btnCancel => 'Cancel';
 
   @override
   String get btnDeleteConfirm => 'Delete';
-
-  @override
-  String get recategorizeTitle =>
-      'Select the categories to apply to the selected memories:';
-
-  @override
-  String get btnSave => 'Save';
 
   @override
   String get onboardingBtnGetStarted => 'Get started';
@@ -388,76 +319,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get demoBurgerDesc =>
       'Open this menu at any time to find the chronological list of all your precious saved memories.';
-
-  @override
-  String get profilTitlePersonalData => 'Personal data';
-
-  @override
-  String get profilLabelFirstName => 'First name';
-
-  @override
-  String get profilLabelEmail => 'Email';
-
-  @override
-  String get profilLabelPassword => 'Password';
-
-  @override
-  String get profilLabelBiometrics => 'Biometrics';
-
-  @override
-  String get profilTitleAccountSettings => 'Account settings';
-
-  @override
-  String get profilMenuNotifications => 'Notifications';
-
-  @override
-  String get profilMenuLanguage => 'Application language';
-
-  @override
-  String get profilMenuDarkMode => 'Dark theme';
-
-  @override
-  String get profilMenuSoftAnimations => 'Smooth animations';
-
-  @override
-  String get profilTitleStorage => 'Device storage';
-
-  @override
-  String get profilLabelImportedPhotos => 'Imported photos';
-
-  @override
-  String get profilLabelTextMemories => 'Textual memories';
-
-  @override
-  String get profilLabelGalleryAccess => 'Gallery access';
-
-  @override
-  String get profilBtnEmpty => 'Clear';
-
-  @override
-  String profilSnackbarEmptied(String label) {
-    return '$label cleared';
-  }
-
-  @override
-  String get profilTitleHelp => 'Need help?';
-
-  @override
-  String get profilHelpQuestion1 => 'How to add a memory?';
-
-  @override
-  String get profilHelpAnswer1 =>
-      'Click the \'+\' button on the home screen to start writing a memory or importing a photo.';
-
-  @override
-  String get profilHelpQuestion2 => 'Is my data secure?';
-
-  @override
-  String get profilHelpAnswer2 =>
-      'Yes. Your memories stay only in Sourire\'s private storage on your phone, which no other app can access, and they are never sent over the internet.';
-
-  @override
-  String get profilAlertTitle => 'Warning';
 
   @override
   String get profilAlertGalleryMessage =>
@@ -566,7 +427,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String purchaseAlertMessage(int limite) {
-    return 'You have reached the limit of $limite memories for the free version. Upgrade to Premium to add unlimited memories and unlock new themes!';
+    return 'You have reached the limit of $limite memories for the free version. Upgrade to Premium to add unlimited memories!';
   }
 
   @override
@@ -575,9 +436,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get deleteAlertMessage =>
       'This action cannot be undone and will permanently delete the selected memories.';
-
-  @override
-  String get btnGoPremium => 'Go Premium';
 
   @override
   String get emptyHistory => 'History is empty';
@@ -629,12 +487,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get themesTitle => 'Home screen themes';
 
   @override
-  String get themesDescription =>
-      'Customize your interface and notes at any time by choosing from the following themes.';
-
-  @override
   String get notesPurchaseSuccessSnackBar =>
-      'Purchase successfully simulated! Unlimited notes and photos unlocked.';
+      'Thank you! Premium is unlocked: unlimited memories and every backdrop.';
 
   @override
   String premiumSuccessSnackBar(String themeLabel) {
@@ -649,9 +503,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get themeMer => 'Ocean';
-
-  @override
-  String get themeAbstrait => 'Abstract';
 
   @override
   String get themeSport => 'Sports';
@@ -679,14 +530,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get themeKawaii => 'Kawaii';
-
-  @override
-  String get popupPalierTitle => 'Congratulations!';
-
-  @override
-  String popupPalierMessage(int palier) {
-    return 'You\'ve added $palier memories to your jar!';
-  }
 
   @override
   String get btnContinuerPalier => 'Continue';
@@ -904,8 +747,84 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get notesThemesPurchaseMessage =>
-      'Dress your notes in the decor of your choice. Go Premium to unlock every theme.';
+      'Choose the backdrop for your notes from the library of themes.';
 
   @override
-  String get themesTitleNotes => 'Note themes';
+  String get eraseAllTitle => 'Erase all my memories';
+
+  @override
+  String get eraseAllSub =>
+      'Empties the jar completely: memories, photos and the categories you created. Your first name, language and settings stay as they are.';
+
+  @override
+  String get eraseAllConfirmTitle => 'Erase all your memories?';
+
+  @override
+  String get eraseAllConfirmMessage =>
+      'The memories, photos and categories you created will be deleted from this phone. Nothing can be recovered. Your first name, language and settings stay as they are.';
+
+  @override
+  String get eraseAllContinue => 'Continue';
+
+  @override
+  String get eraseAllLastCallTitle => 'One last check';
+
+  @override
+  String get eraseAllLastCallMessage =>
+      'If you want to keep a trace, close this window and export a backup first.';
+
+  @override
+  String get eraseAllConfirmButton => 'Erase permanently';
+
+  @override
+  String get eraseAllDone => 'Your jar is empty.';
+
+  @override
+  String get eraseAllError => 'The erase didn\'t go through.';
+
+  @override
+  String get premiumSoon => 'Coming soon';
+
+  @override
+  String get premiumRestore => 'Restore my purchases';
+
+  @override
+  String get premiumRestoreNone => 'No purchase to restore on this account.';
+
+  @override
+  String get premiumRestoreDone => 'Your Premium has been restored.';
+
+  @override
+  String get premiumUnavailable =>
+      'The store can\'t be reached right now. Try again in a moment.';
+
+  @override
+  String get premiumPending =>
+      'Your purchase is awaiting approval. Premium will unlock on its own once it\'s granted.';
+
+  @override
+  String get premiumError =>
+      'The purchase didn\'t go through. You have not been charged.';
+
+  @override
+  String get premiumRestoreTitle => 'Restore my purchases';
+
+  @override
+  String get premiumRestoreSub =>
+      'Already paid for Premium on another phone, or after reinstalling? Get it back here.';
+
+  @override
+  String get themesPurchaseMessage =>
+      'Choose the backdrop for your home screen from the library of themes.';
+
+  @override
+  String premiumPriceNote(String prix) {
+    return '$prix per month, no commitment. Cancel any time.';
+  }
+
+  @override
+  String get premiumLinkPrivacy => 'Privacy';
+
+  @override
+  String get premiumLinkTerms => 'Terms of use';
 }

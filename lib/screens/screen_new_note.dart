@@ -142,7 +142,7 @@ class _ScreenNewNoteState extends State<ScreenNewNote> {
     if (estAppelPremium(resultat)) {
       final bool achete = await afficherModalePremium(
         context,
-        titre: AppLocalizations.of(context)!.themesTitleNotes,
+        titre: AppLocalizations.of(context)!.personalization,
         message: AppLocalizations.of(context)!.notesThemesPurchaseMessage,
       );
       if (!achete || !mounted) return;
@@ -198,7 +198,11 @@ class _ScreenNewNoteState extends State<ScreenNewNote> {
           body: SafeArea(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 30),
-              child: Column(
+              // Le post-it est carré et prend toute la largeur : sur iPad il
+              // devenait un panneau d'affichage. On borne la colonne, il
+              // retrouve la taille d'une note qu'on écrit.
+              child: ContenuCentre(
+                child: Column(
                 children: [
                   const SizedBox(height: 10),
 
@@ -382,6 +386,7 @@ class _ScreenNewNoteState extends State<ScreenNewNote> {
                   ),
                 ],
               ),
+                    ),
             ),
           ),
         );

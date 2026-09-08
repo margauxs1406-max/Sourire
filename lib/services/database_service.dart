@@ -1,6 +1,4 @@
 import 'dart:async';
-import 'dart:io';
-import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
@@ -15,13 +13,35 @@ class DatabaseService {
     "self_love",
     "friendship",
     "couple",
-    "family", 
-    "leisure", 
+    "family",
+    "leisure",
     "work",
   ];
+
   // Les contrôleurs de flux (Streams) d'origine pour ne pas casser tes StreamBuilders
   final StreamController<List<NoteSourire>> _notesStreamController = StreamController<List<NoteSourire>>.broadcast();
   final StreamController<List<String>> _categoriesStreamController = StreamController<List<String>>.broadcast();
+
+  // --- MÉMOIRE DE LA DERNIÈRE LECTURE ---------------------------------------
+  //
+  // Un `StreamController.broadcast` ne rejoue rien : un widget qui s'abonne
+  // n'obtient sa première valeur qu'à la prochaine émission. C'est ce qui
+  // obligeait `getNotesStream()` à relancer une lecture à chaque appel, donc
+  // à chaque reconstruction de widget, donc soixante fois par seconde sur la
+  // home à cause du Ticker du bocal.
+  //
+  // On garde donc ici la dernière liste connue, et les écrans la passent en
+  // `initialData` à leur StreamBuilder. Le flux, lui, ne sert plus qu'à
+  // annoncer les CHANGEMENTS.
+  List<NoteSourire> _dernieresNotes = const <NoteSourire>[];
+  List<String> _dernieresCategories = const <String>[];
+
+  /// Dernière liste de souvenirs lue en base, disponible immédiatement.
+  /// À passer en `initialData` des `StreamBuilder`.
+  List<NoteSourire> get notesEnCache => _dernieresNotes;
+
+  /// Dernière liste de catégories lue en base, disponible immédiatement.
+  List<String> get categoriesEnCache => _dernieresCategories;
 
   // Instance unique (Singleton) inchangée
   static final DatabaseService _instance = DatabaseService._internal();
@@ -42,7 +62,7 @@ class DatabaseService {
 
     return await openDatabase(
       path,
-      version: 4,
+      version: 5,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -71,6 +91,25 @@ class DatabaseService {
         )
       ''');
     }
+    if (ancienne < 5) {
+      // Index. Toutes les lectures trient par date décroissante : sans index,
+      // SQLite retrie la table entière à chaque appel.
+      await _creerIndex(db);
+    }
+  }
+
+  /// Index de lecture. Voir [_onUpgrade] pour la raison.
+  ///
+  /// `date` est stockée en ISO 8601, dont l'ordre alphabétique est aussi
+  /// l'ordre chronologique : un index B-tree ordinaire suffit donc à servir
+  /// le `ORDER BY date DESC` sans tri.
+  Future<void> _creerIndex(Database db) async {
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_notes_date ON notes(date DESC)',
+    );
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_notes_amorce ON notes(estAmorce)',
+    );
   }
 
   // Création des deux tables nécessaires : notes et catégories personnalisées
@@ -101,33 +140,71 @@ class DatabaseService {
         name TEXT PRIMARY KEY
       )
     ''');
+
+    await _creerIndex(db);
   }
 
-  // --- NOTIFICATEURS INCHANGÉS (Mais ils lisent maintenant la base SQL) ---
+  // --- FLUX -----------------------------------------------------------------
 
-  void _notifierChangement() async {
-    // On s'assure que la BDD est bien initialisée avant de faire la requête
-    await database; 
-    final notes = await _fetchNotesFromDb();
-    _notesStreamController.add(notes);
+  /// Le flux des souvenirs, ET RIEN D'AUTRE.
+  ///
+  /// ⚠️ Cette méthode ne doit JAMAIS déclencher de lecture. Elle est appelée
+  /// dans le `build` de plusieurs widgets, dont le bocal, que son Ticker de
+  /// physique reconstruit à chaque image. Une lecture ici, c'est un
+  /// `SELECT * FROM notes` soixante fois par seconde, dont le coût grandit
+  /// avec le nombre de souvenirs. C'était la cause des ralentissements sur
+  /// les gros bocaux.
+  ///
+  /// Les abonnés obtiennent leur première valeur par [notesEnCache], passé en
+  /// `initialData`. Ensuite, seules les écritures émettent.
+  Stream<List<NoteSourire>> getNotesStream() => _notesStreamController.stream;
+
+  /// Le flux des catégories. Même règle que [getNotesStream] : aucun effet de
+  /// bord, la valeur de départ vient de [categoriesEnCache].
+  Stream<List<String>> getCategoriesStream() => _categoriesStreamController.stream;
+
+  /// Première lecture, à appeler une seule fois au démarrage, avant `runApp`.
+  ///
+  /// Sans elle, les écrans afficheraient un bocal vide jusqu'à la première
+  /// écriture.
+  Future<void> chargerDonneesInitiales() async {
+    await _rechargerNotes();
+    await _rechargerCategories();
   }
 
-  void _notifierChangementCategories() async {
-    // On s'assure que la BDD est bien initialisée avant de faire la requête
-    await database; 
-    final categories = await _fetchCategoriesFromDb();
-    _categoriesStreamController.add(categories);
+  // --- RECHARGEMENTS --------------------------------------------------------
+
+  /// Empêche vingt écritures rapprochées de provoquer vingt relectures.
+  bool _rechargementNotesPlanifie = false;
+
+  /// Relit les souvenirs et prévient les abonnés.
+  ///
+  /// Les appels rapprochés sont fondus en un seul : valider un lot de vingt
+  /// photos écrit vingt lignes, mais ne doit relire la base qu'une fois.
+  Future<void> _notifierChangement() async {
+    if (_rechargementNotesPlanifie) return;
+    _rechargementNotesPlanifie = true;
+    // Deux images d'écran : assez pour absorber une rafale d'écritures,
+    // trop peu pour se voir.
+    await Future<void>.delayed(const Duration(milliseconds: 32));
+    _rechargementNotesPlanifie = false;
+    await _rechargerNotes();
   }
 
-  Stream<List<NoteSourire>> getNotesStream() {
-    // On déclenche la lecture en tâche de fond de manière sécurisée
-    _notifierChangement();
-    return _notesStreamController.stream;
+  Future<void> _rechargerNotes() async {
+    _dernieresNotes = await _fetchNotesFromDb();
+    if (!_notesStreamController.isClosed) {
+      _notesStreamController.add(_dernieresNotes);
+    }
   }
 
-  Stream<List<String>> getCategoriesStream() {
-    _notifierChangementCategories();
-    return _categoriesStreamController.stream;
+  Future<void> _notifierChangementCategories() => _rechargerCategories();
+
+  Future<void> _rechargerCategories() async {
+    _dernieresCategories = await _fetchCategoriesFromDb();
+    if (!_categoriesStreamController.isClosed) {
+      _categoriesStreamController.add(_dernieresCategories);
+    }
   }
 
   // --- LOGIQUE INTERNE DE LECTURE SQL ---
@@ -165,13 +242,19 @@ class DatabaseService {
 
     final Map<String, int> usages = await _compterUsagesCategories();
 
+    // Position d'origine mémorisée une fois : `indexOf` dans le comparateur
+    // rendait le tri quadratique.
+    final Map<String, int> rangDorigine = <String, int>{
+      for (int i = 0; i < disponibles.length; i++) disponibles[i]: i,
+    };
+
     // Tri STABLE : `List.sort` ne l'est pas en Dart, on départage donc
     // explicitement par la position d'origine.
     final List<String> tri = List<String>.from(disponibles);
     tri.sort((a, b) {
       final int ecart = (usages[b] ?? 0).compareTo(usages[a] ?? 0);
       if (ecart != 0) return ecart;
-      return disponibles.indexOf(a).compareTo(disponibles.indexOf(b));
+      return (rangDorigine[a] ?? 0).compareTo(rangDorigine[b] ?? 0);
     });
     return tri;
   }
@@ -180,8 +263,7 @@ class DatabaseService {
   ///
   /// Les catégories sont stockées en une seule colonne texte, "Cat1,Cat2" :
   /// pas de table de liaison, donc pas de `GROUP BY` possible. On compte donc
-  /// en mémoire — sur quelques milliers de souvenirs c'est instantané, et
-  /// cette lecture est déjà faite à chaque rafraîchissement du flux.
+  /// en mémoire, sur la seule colonne utile.
   Future<Map<String, int>> _compterUsagesCategories() async {
     final db = await database;
     final List<Map<String, dynamic>> lignes =
@@ -218,7 +300,7 @@ class DatabaseService {
     final db = await database;
     await db.delete('categories_masquees');
     debugPrint("--- BDD SQL : catégories par défaut restaurées ---");
-    _notifierChangementCategories();
+    await _notifierChangementCategories();
   }
 
   /// `true` si au moins une catégorie par défaut a été supprimée — sert à
@@ -231,10 +313,13 @@ class DatabaseService {
 
   // --- EN EXCLUSIVITÉ : SANS CHANGEMENT DE SIGNATURE POUR TES ÉCRANS ---
 
-  // Pour conserver la compatibilité synchrone sur certains de tes écrans existants
+  /// Repli synchrone pour les écrans qui doivent afficher quelque chose avant
+  /// la première émission du flux. Rend les catégories déjà connues si on en
+  /// a, sinon les six par défaut.
   List<String> getAllCategories() {
-    // Note : Cette méthode risque de renvoyer uniquement le système au premier millième de seconde,
-    // l'idéal est de migrer vers le stream. Mais on la laisse pour éviter le crash au boot.
+    if (_dernieresCategories.isNotEmpty) {
+      return List<String>.from(_dernieresCategories);
+    }
     return [..._systemCategories];
   }
 
@@ -310,7 +395,7 @@ class DatabaseService {
 
     await batch.commit(noResult: true);
     debugPrint("--- BDD SQL : ${textes.length} souvenirs d'amorçage déposés ---");
-    _notifierChangement();
+    await _notifierChangement();
   }
 
   /// Catégories créées par l'utilisateur, sans les catégories système.
@@ -339,13 +424,44 @@ class DatabaseService {
     await batch.commit(noResult: true);
 
     debugPrint("--- BDD SQL : ${souvenirs.length} souvenir(s) réimporté(s) ---");
-    _notifierChangement();
+    await _notifierChangement();
+  }
+
+  /// Vide entièrement le bocal : souvenirs, catégories personnalisées et
+  /// masquages. Les fichiers photo sont effacés à part, par l'appelant, qui
+  /// seul connaît le dossier de l'app.
+  ///
+  /// Retourne les chemins des photos qui étaient référencées, pour que
+  /// l'appelant puisse les supprimer du disque.
+  Future<List<String>> viderLeBocal() async {
+    final db = await database;
+
+    final List<String> photos = _dernieresNotes
+        .map((NoteSourire n) => n.photoPath?.trim() ?? '')
+        .where((String c) => c.isNotEmpty)
+        .toList();
+
+    final Batch batch = db.batch();
+    batch.delete('notes');
+    batch.delete('custom_categories');
+    batch.delete('categories_masquees');
+    await batch.commit(noResult: true);
+
+    debugPrint("--- BDD SQL : bocal entièrement vidé ---");
+    await _rechargerNotes();
+    await _rechargerCategories();
+    return photos;
   }
 
   // --- LES MÉTHODES CRUD MODIFIÉES POUR ACCÉDER À LA BDD ---
+  //
+  // Toutes rendent un Future, et non plus `void`. Sans cela, l'appelant ne
+  // pouvait ni attendre la fin de l'écriture, ni intercepter une erreur : une
+  // exception dans un `void async` remonte au gestionnaire global et fait
+  // planter l'app sans message exploitable.
 
   // 1. Ajouter une catégorie
-  void insertCategory(String name) async {
+  Future<void> insertCategory(String name) async {
     final cleanedName = name.trim();
     if (cleanedName.isEmpty) return;
 
@@ -360,12 +476,12 @@ class DatabaseService {
         conflictAlgorithm: ConflictAlgorithm.ignore,
       );
       debugPrint("--- BDD SQL : Nouvelle catégorie ajoutée : $formattedName ---");
-      _notifierChangementCategories();
+      await _notifierChangementCategories();
     }
   }
 
   // 2. Supprimer une catégorie et mettre à jour les notes
-  void deleteCategory(String categoryKey) async {
+  Future<void> deleteCategory(String categoryKey) async {
     final db = await database;
 
     if (_systemCategories.contains(categoryKey)) {
@@ -381,37 +497,45 @@ class DatabaseService {
       await db.delete('custom_categories', where: 'name = ?', whereArgs: [categoryKey]);
     }
 
-    // Parcourir et mettre à jour les notes qui contenailettent cette catégorie
+    // Retrait de la catégorie sur les souvenirs qui la portent.
+    //
+    // EN UNE SEULE TRANSACTION. Chaque `update` isolé est une transaction
+    // implicite, donc une écriture physique sur le disque : supprimer une
+    // catégorie portée par cinq cents souvenirs figeait l'interface le temps
+    // de cinq cents écritures.
     final notes = await _fetchNotesFromDb();
-    for (var souvenir in notes) {
-      if (souvenir.categories.contains(categoryKey)) {
-        final List<String> updatedCategories = List<String>.from(souvenir.categories);
-        updatedCategories.remove(categoryKey);
-        
-        if (updatedCategories.isEmpty) {
-          updatedCategories.add("sans_categorie");
-        }
+    final Batch batch = db.batch();
+    int touchees = 0;
 
-        final updatedNote = souvenir.copyWith(categories: updatedCategories);
-        await db.update(
-          'notes',
-          updatedNote.toMap(),
-          where: 'id = ?',
-          whereArgs: [souvenir.id],
-        );
+    for (final souvenir in notes) {
+      if (!souvenir.categories.contains(categoryKey)) continue;
+
+      final List<String> updatedCategories = List<String>.from(souvenir.categories)
+        ..remove(categoryKey);
+      if (updatedCategories.isEmpty) {
+        updatedCategories.add("sans_categorie");
       }
+
+      batch.update(
+        'notes',
+        souvenir.copyWith(categories: updatedCategories).toMap(),
+        where: 'id = ?',
+        whereArgs: [souvenir.id],
+      );
+      touchees++;
     }
-    debugPrint("--- BDD SQL : Catégorie supprimée : $categoryKey et souvenirs mis à jour ---");
-    _notifierChangementCategories();
-    _notifierChangement();
+
+    if (touchees > 0) await batch.commit(noResult: true);
+
+    debugPrint("--- BDD SQL : Catégorie supprimée : $categoryKey, $touchees souvenir(s) mis à jour ---");
+    await _notifierChangementCategories();
+    await _notifierChangement();
   }
 
   // 3. Insérer un souvenir
-  void insertNote(NoteSourire note) async {
+  Future<void> insertNote(NoteSourire note) async {
     final List<String> categoriesFinales = note.categories.isEmpty ? ["sans_categorie"] : note.categories;
     final db = await database;
-
-    debugPrint("--- DEBUG insertNote : photoPath=${note.photoPath} | colorLabel='${note.colorLabel}' ---");
 
     final rawNote = {
       'text': note.text,
@@ -426,80 +550,68 @@ class DatabaseService {
 
     await db.insert('notes', rawNote);
     debugPrint("--- BDD SQL : Note sauvegardée ---");
-    _notifierChangement();
+    await _notifierChangement();
   }
 
-  // 4. Tirer une note au sort (Asynchrone par nature avec la BDD, mais renvoie un Future maintenant)
+  // 4. Tirer un souvenir au sort
+  //
+  // Sans filtre de catégorie, c'est SQLite qui tire, et il ne rend qu'une
+  // ligne : inutile de charger tout le bocal en mémoire pour n'en garder
+  // qu'un. Avec filtre, on présélectionne en SQL sur la colonne texte avant
+  // de vérifier finement en mémoire — `categories` stocke "cat1,cat2", donc
+  // le `LIKE` peut rendre des faux positifs, jamais des faux négatifs.
   Future<NoteSourire?> getRandomNote({List<String>? categoriesCibles}) async {
-    List<NoteSourire> notesFiltrees = await _fetchNotesFromDb();
-
-    if (notesFiltrees.isEmpty) return null;
-
-    if (categoriesCibles != null && 
-        categoriesCibles.isNotEmpty && 
-        !categoriesCibles.contains("all_categories")) {
-      
-      notesFiltrees = notesFiltrees.where((note) {
-        return note.categories.any((cat) => categoriesCibles.contains(cat));
-      }).toList();
-    }
-
-    if (notesFiltrees.isEmpty) return null;
-
-    final random = Random();
-    int randomIndex = random.nextInt(notesFiltrees.length);
-    return notesFiltrees[randomIndex];
-  }
-
-  // 5. Insérer plusieurs photos (Sécurisé pour le changement d'UUID iOS)
-  void insertMultiplePhotos({
-    required List<String> photoPaths,
-    required List<String> categories,
-    required String themeLabel,
-  }) async {
-    final List<String> categoriesFinales = categories.isEmpty ? ["sans_categorie"] : categories;
     final db = await database;
 
+    final bool filtre = categoriesCibles != null &&
+        categoriesCibles.isNotEmpty &&
+        !categoriesCibles.contains("all_categories");
+
+    if (!filtre) {
+      final List<Map<String, dynamic>> tirage =
+          await db.rawQuery('SELECT * FROM notes ORDER BY RANDOM() LIMIT 1');
+      if (tirage.isEmpty) return null;
+      return NoteSourire.fromMap(tirage.first);
+    }
+
+    final String conditions =
+        List<String>.filled(categoriesCibles.length, 'categories LIKE ?').join(' OR ');
+    final List<String> motifs =
+        categoriesCibles.map((String c) => '%$c%').toList();
+
+    final List<Map<String, dynamic>> candidats = await db.rawQuery(
+      'SELECT * FROM notes WHERE $conditions ORDER BY RANDOM() LIMIT 50',
+      motifs,
+    );
+
+    // Vérification exacte : « couple » ne doit pas être tiré parce qu'une
+    // catégorie personnalisée s'appelle « Couple de chats ».
+    for (final Map<String, dynamic> ligne in candidats) {
+      final NoteSourire souvenir = NoteSourire.fromMap(ligne);
+      if (souvenir.categories.any((String c) => categoriesCibles.contains(c))) {
+        return souvenir;
+      }
+    }
+    return null;
+  }
+
+  // 5. Supprimer plusieurs notes
+  Future<void> deleteMultipleNotes(List<NoteSourire> notesASupprimer) async {
+    if (notesASupprimer.isEmpty) return;
+    final db = await database;
     final batch = db.batch();
 
-    for (String path in photoPaths) {
-      final String cleanPath = path.replaceAll('file://', '').trim();
-      final String pathEnregistrer = Platform.isIOS ? basename(cleanPath) : cleanPath;
-
-      final randomLabel = SourireTheme.getRandomPhoto().label;
-debugPrint("--- DEBUG couleur photo choisie : $randomLabel ---");
-
-batch.insert('notes', {
-  'text': null,
-  'photoPath': pathEnregistrer,
-  'themeLabel': themeLabel,
-  'colorLabel': randomLabel,
-  'categories': categoriesFinales.join(','),
-  'date': DateTime.now().toIso8601String(),
-});
+    for (var note in notesASupprimer) {
+      batch.delete('notes', where: 'id = ?', whereArgs: [note.id]);
     }
 
     await batch.commit(noResult: true);
-    debugPrint("--- BDD SQL : ${photoPaths.length} photo(s) sauvegardée(s) de manière résiliente ---");
-    _notifierChangement();
+    debugPrint("--- BDD SQL : ${notesASupprimer.length} élément(s) supprimé(s) ---");
+    await _notifierChangement();
   }
 
-  // 6. Supprimer plusieurs notes
-  Future<void> deleteMultipleNotes(List<NoteSourire> notesASupprimer) async {
-  final db = await database;
-  final batch = db.batch();
-
-  for (var note in notesASupprimer) {
-    batch.delete('notes', where: 'id = ?', whereArgs: [note.id]);
-  }
-
-  await batch.commit(noResult: true);
-  debugPrint("--- BDD SQL : ${notesASupprimer.length} élément(s) supprimé(s) ---");
-  _notifierChangement();
-}
-
-  // 7. Mettre à jour une note
-  void updateNote(NoteSourire noteModifiee) async {
+  // 6. Mettre à jour une note
+  Future<void> updateNote(NoteSourire noteModifiee) async {
     final db = await database;
     final rowsAffected = await db.update(
       'notes',
@@ -510,7 +622,7 @@ batch.insert('notes', {
 
     if (rowsAffected != 0) {
       debugPrint("--- BDD SQL : Souvenir ${noteModifiee.id} mis à jour ---");
-      _notifierChangement();
+      await _notifierChangement();
     } else {
       debugPrint("--- BDD ERREUR : Souvenir introuvable pour la mise à jour ---");
     }

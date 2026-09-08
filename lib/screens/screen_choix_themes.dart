@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sourire/widgets/modale_premium.dart';
 import 'package:sourire/l10n/app_localizations.dart';
 import 'package:sourire/models/theme_app.dart';
 import 'package:sourire/theme/theme_service.dart';
@@ -107,27 +108,41 @@ class _ScreenChoixThemesState extends State<ScreenChoixThemes> {
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                         elevation: 0,
                       ),
-                      onPressed: () {
+                      onPressed: () async {
+                        final AppLocalizations mots = AppLocalizations.of(context)!;
+                        final String nomDuTheme = theme.label(context);
                         Navigator.of(dialogContext).pop();
-                        
-                        if (afficherBoutonPremium) {
-                          ThemeService.deverrouillerPremium();
-                          
-                          // CORRECTION : Sauvegarde locale persistante pour que ça survive au redémarrage
-                          UserPrefs.isPremium = true; 
-                          
+
+                        if (!afficherBoutonPremium) {
                           _appliquerTheme(theme);
-                          setState(() {});
-                          
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(AppLocalizations.of(context)!.premiumSuccessSnackBar(theme.label(context))),
-                              backgroundColor: Colors.green,
-                            ),
-                          );
-                        } else {
-                          _appliquerTheme(theme);
+                          return;
                         }
+
+                        // VRAI achat, par la boutique. Ce bouton se contentait
+                        // d'écrire `UserPrefs.isPremium = true` : il
+                        // déverrouillait tous les décors sans rien facturer.
+                        final bool debloque = await afficherModalePremium(
+                          context,
+                          // « Personnalisation » et non « Limite atteinte » :
+                          // on ne vient pas de buter sur un mur, on est en
+                          // train de choisir un décor.
+                          titre: mots.personalization,
+                          message: mots.themesPurchaseMessage,
+                        );
+                        // `context.mounted` et non `mounted` : le contexte
+                        // est un paramètre de _ouvrirApercuTheme, et c'est lui
+                        // qu'on réutilise après l'await.
+                        if (!debloque || !context.mounted) return;
+
+                        _appliquerTheme(theme);
+                        setState(() {});
+
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(mots.premiumSuccessSnackBar(nomDuTheme)),
+                            backgroundColor: Colors.green,
+                          ),
+                        );
                       },
                       child: Text(
                         afficherBoutonPremium

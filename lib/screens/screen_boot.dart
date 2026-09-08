@@ -28,7 +28,7 @@ class _ScreenBootState extends State<ScreenBoot> {
     if (!mounted) return;
 
     // 1. Cas Onboarding
-    if (UserPrefs.prenom.isEmpty && UserPrefs.password.isEmpty) {
+    if (UserPrefs.prenom.isEmpty && !UserPrefs.aUnMotDePasse) {
       Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(builder: (context) => const ScreenOnboarding()),
         (route) => false,

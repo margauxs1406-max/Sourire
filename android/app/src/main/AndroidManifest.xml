@@ -1,15 +1,26 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
     <uses-permission android:name="android.permission.USE_BIOMETRIC"/>
+
+    <!-- Photos. READ_MEDIA_VISUAL_USER_SELECTED couvre l'accès PARTIEL
+         introduit par Android 14 : sans elle, l'utilisateur qui ne partage
+         que quelques photos obtient un comportement incohérent selon les
+         appareils. La vidéo est explicitement retirée : Sourire n'en lit
+         aucune, et une permission demandée pour rien se paie en confiance. -->
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <uses-permission android:name="android.permission.READ_MEDIA_VISUAL_USER_SELECTED" />
     <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" tools:node="remove" />
-    
-    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
-    
-    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
-    
-    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
+
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
+
+    <!-- SCHEDULE_EXACT_ALARM a été RETIRÉE volontairement.
+         Google Play la réserve aux réveils, agendas et alarmes, et demande
+         une justification pour tout autre usage. Les rappels de Sourire
+         passent en mode inexact (voir NotificationService) : ils tombent à
+         quelques minutes près, ce qui est largement suffisant pour un rappel
+         hebdomadaire, et ne coûtent plus de permission sensible. -->
 
     <queries>
         <intent>
@@ -17,12 +28,26 @@
             <category android:name="android.intent.category.BROWSABLE" />
             <data android:scheme="https" />
         </intent>
+        <intent>
+            <action android:name="android.intent.action.PROCESS_TEXT"/>
+            <data android:mimeType="text/plain"/>
+        </intent>
     </queries>
 
+    <!-- AUCUNE SAUVEGARDE AUTOMATIQUE (android:allowBackup ci-dessous).
+         Par défaut, Android copie les préférences, la base SQLite et les
+         photos du dossier de l'app vers le Google Drive de l'utilisateur.
+         C'est exactement ce que la fiche de Sourire promet de ne pas faire :
+         « tout est enregistré sur votre téléphone et nulle part ailleurs ».
+         Conséquence assumée : un changement de téléphone ne rapatrie pas le
+         bocal. C'est à cela que sert l'export d'archive du profil. -->
     <application
         android:label="Sourire"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/ic_launcher"
+        android:enableOnBackInvokedCallback="true"
+        android:allowBackup="false"
+        android:dataExtractionRules="@xml/data_extraction_rules">
         
         <activity
             android:name=".MainActivity"
@@ -58,10 +83,4 @@
             android:value="2" />
     </application>
 
-    <queries>
-        <intent>
-            <action android:name="android.intent.action.PROCESS_TEXT"/>
-            <data android:mimeType="text/plain"/>
-        </intent>
-    </queries>
 </manifest>

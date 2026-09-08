@@ -9,13 +9,14 @@ import 'package:sourire/screens/screen_choix_themes.dart';
 import 'package:sourire/screens/screen_template_reglages.dart';
 import 'package:sourire/services/biometric_service.dart';
 import 'package:sourire/services/notifications_service.dart';
+import 'package:sourire/services/achat_service.dart';
+import 'package:sourire/services/effacement_service.dart';
 import 'package:sourire/services/sauvegarde_service.dart';
 import 'package:sourire/theme/tokens.dart';
 import 'package:sourire/widgets/logo_sourire.dart';
 import 'package:sourire/widgets/btn_chevron_gauche.dart';
 import 'package:sourire/widgets/btn_chevron_droite.dart';   
 import 'package:sourire/widgets/switch_biometrie.dart';    
-import 'package:sourire/widgets/switch_password.dart';
 import 'package:sourire/widgets/widget_radio_langue.dart';  
 import 'package:sourire/theme/user_prefs.dart';
 import 'package:sourire/widgets/widget_switch.dart';
@@ -50,7 +51,6 @@ class _ScreenProfilState extends State<ScreenProfil> {
   final TextEditingController _prenomController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  bool _obscurePassword = true;
   late bool _biometrieActive; // Initialisé dans le initState
   // --- ÉTATS DES NOTIFICATIONS ---
   String _taillePhotos = "Calcul...";
@@ -393,7 +393,14 @@ Widget build(BuildContext context) {
                 Expanded(
                   child: SingleChildScrollView(
                     padding: const EdgeInsets.only(left: 30, right: 30, top: 20, bottom: 30),
-                    child: Column(
+                    // Sur iPad, cette colonne de réglages traversait les mille
+                    // points de large de la dalle : des libellés à gauche, des
+                    // valeurs à l'autre bout de l'écran, et rien entre les
+                    // deux. Bornée et centrée, elle garde la mise en page du
+                    // téléphone. Sans effet sur téléphone, où l'écran est déjà
+                    // plus étroit que la borne.
+                    child: ContenuCentre(
+                      child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         // --- SECTION 1 : DONNÉES PERSONNELLES ---
@@ -453,7 +460,7 @@ Widget build(BuildContext context) {
                                       child: TextField(
                                         controller: _passwordController,
                                         readOnly: true,
-                                        obscureText: _obscurePassword,
+                                        obscureText: true,
                                         style: const TextStyle(color: grey, fontSize: 15),
                                         decoration: const InputDecoration(
                                           border: InputBorder.none,
@@ -462,16 +469,14 @@ Widget build(BuildContext context) {
                                         ),
                                       ),
                                     ),
-                                    SwitchPassword(
-                                      isPasswordVisible: !_obscurePassword,
-                                      onToggle: (bool isVisible) {
-                                        setState(() {
-                                          _obscurePassword = !isVisible;
-                                          final String mdpReel = UserPrefs.password.isEmpty ? "••••••••" : UserPrefs.password;
-                                          _passwordController.text = _obscurePassword ? "••••••••••••" : mdpReel;
-                                        });
-                                      },
-                                    ),
+                                    // L'œil qui révélait le mot de passe a été
+                                    // retiré : le mot de passe n'est plus
+                                    // conservé, seule son empreinte l'est, et
+                                    // une empreinte ne se relit pas. Voir
+                                    // UserPrefs. Le montrer en clair dans le
+                                    // profil était de toute façon une porte
+                                    // ouverte pour qui tient le téléphone
+                                    // déverrouillé.
                                     // Le mot de passe ne se modifie pas au clavier
                                     // ici : on passe par l'écran dédié, qui
                                     // impose la double saisie.
@@ -485,7 +490,6 @@ Widget build(BuildContext context) {
                                         );
                                         if (!mounted) return;
                                         setState(() {
-                                          _obscurePassword = true;
                                           _passwordController.text = "••••••••••••";
                                         });
                                       },
@@ -782,6 +786,7 @@ _buildMenuRow(
                 const SizedBox(height: 8),
 
                 StreamBuilder<List<String>>(
+                  initialData: _databaseService.categoriesEnCache,
                   stream: _databaseService.getCategoriesStream(),
                   builder: (context, snapshot) {
                     final List<String> categoriesBDD = snapshot.data ?? [];
@@ -972,6 +977,37 @@ _buildMenuRow(
                                           backgroundColor: orange,
                                         ),
                                       );
+                                      setLocalState(() {});
+                                    },
+                                  ),
+                                  const SizedBox(height: 20),
+                                  // Restauration des achats. Apple l'exige
+                                  // pour tout achat non consommable, et c'est
+                                  // le seul recours de quelqu'un qui a changé
+                                  // de téléphone ou réinstallé l'app.
+                                  _buildActionSauvegarde(
+                                    icone: Icons.restore,
+                                    titre: localizations?.premiumRestoreTitle
+                                        ?? "Restaurer mes achats",
+                                    sousTitre: localizations?.premiumRestoreSub ?? "",
+                                    isDark: isDark,
+                                    onTap: _restaurerAchats,
+                                  ),
+                                  const SizedBox(height: 20),
+                                  // Effacement total. Placé en DERNIER et
+                                  // teinté de rouge : c'est la seule action
+                                  // irréversible de tout l'écran, et rien
+                                  // n'oblige à la faire remarquer avant les
+                                  // autres.
+                                  _buildActionSauvegarde(
+                                    icone: Icons.delete_forever_outlined,
+                                    titre: localizations?.eraseAllTitle
+                                        ?? "Effacer tous mes souvenirs",
+                                    sousTitre: localizations?.eraseAllSub ?? "",
+                                    isDark: isDark,
+                                    destructive: true,
+                                    onTap: () async {
+                                      await _toutEffacer();
                                       setLocalState(() {});
                                     },
                                   ),
@@ -1195,6 +1231,7 @@ _buildMenuRow(
                     const SizedBox(height: 25),
                   ],
                 ),
+                    ),
               ),
             ),
           ],
@@ -1430,6 +1467,114 @@ _buildMenuRow(
     if (resultat.succes) _calculerEspaceOccupe();
   }
 
+  /// Rend le Premium à quelqu'un qui l'a déjà payé.
+  Future<void> _restaurerAchats() async {
+    final AppLocalizations? l10n = AppLocalizations.of(context);
+    final ResultatAchat resultat = await AchatService.restaurer();
+    if (!mounted) return;
+
+    final String message = switch (resultat) {
+      ResultatAchat.succes =>
+        l10n?.premiumRestoreDone ?? "Ton Premium a bien été restauré.",
+      ResultatAchat.rienARestaurer =>
+        l10n?.premiumRestoreNone ?? "Aucun achat à restaurer sur ce compte.",
+      ResultatAchat.indisponible =>
+        l10n?.premiumUnavailable ?? "La boutique n'est pas joignable.",
+      ResultatAchat.enAttente =>
+        l10n?.premiumPending ?? "Ton achat attend une validation.",
+      _ => l10n?.premiumError ?? "La restauration n'a pas abouti.",
+    };
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), backgroundColor: orange),
+    );
+    if (resultat == ResultatAchat.succes) setState(() {});
+  }
+
+  /// Efface le bocal, après DEUX confirmations.
+  ///
+  /// C'est la seule action irréversible de l'application, et elle répond à la
+  /// demande la plus courante sur ce genre d'app : repartir de zéro sans
+  /// désinstaller. La première boîte explique, la seconde fait taper le mot.
+  Future<void> _toutEffacer() async {
+    final AppLocalizations? l10n = AppLocalizations.of(context);
+
+    final bool? premier = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext contexteModale) => AlertDialog(
+        title: Text(l10n?.eraseAllConfirmTitle ?? "Effacer tous tes souvenirs ?"),
+        content: Text(
+          l10n?.eraseAllConfirmMessage ??
+              "Les souvenirs, les photos et les catégories que tu as créées seront supprimés de ce téléphone. Rien ne pourra être récupéré. Ton prénom, ta langue et tes réglages restent en place.",
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(contexteModale).pop(false),
+            child: Text(MaterialLocalizations.of(contexteModale).cancelButtonLabel),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(contexteModale).pop(true),
+            child: Text(
+              l10n?.eraseAllContinue ?? "Continuer",
+              style: const TextStyle(color: Colors.red),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (premier != true || !mounted) return;
+
+    // Seconde confirmation, volontairement plus sèche : on ne clique pas deux
+    // fois par distraction.
+    final bool? second = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext contexteModale) => AlertDialog(
+        title: Text(l10n?.eraseAllLastCallTitle ?? "Dernière vérification"),
+        content: Text(
+          l10n?.eraseAllLastCallMessage ??
+              "Si tu veux garder une trace, ferme cette fenêtre et exporte d'abord une sauvegarde.",
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(contexteModale).pop(false),
+            child: Text(MaterialLocalizations.of(contexteModale).cancelButtonLabel),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(contexteModale).pop(true),
+            child: Text(
+              l10n?.eraseAllConfirmButton ?? "Effacer définitivement",
+              style: const TextStyle(color: Colors.red),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (second != true || !mounted) return;
+
+    try {
+      await EffacementService.toutEffacer();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n?.eraseAllError ?? "L'effacement n'a pas abouti.")),
+      );
+      return;
+    }
+
+    if (!mounted) return;
+    await _calculerEspaceOccupe();
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(l10n?.eraseAllDone ?? "Ton bocal est vide."),
+        backgroundColor: orange,
+      ),
+    );
+  }
+
   /// Ligne d'action de la section Archivage : une icône, un titre, une
   /// explication. Le texte compte autant que le bouton — l'utilisateur doit
   /// comprendre où part son archive avant d'appuyer.
@@ -1439,13 +1584,16 @@ _buildMenuRow(
     required String sousTitre,
     required bool isDark,
     required Future<void> Function() onTap,
+    /// Action irréversible : l'icône passe au rouge, pour qu'on la
+    /// distingue au premier coup d'œil des actions sans conséquence.
+    bool destructive = false,
   }) {
     return InkWell(
       onTap: onTap,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icone, color: orange, size: 24),
+          Icon(icone, color: destructive ? Colors.red.shade400 : orange, size: 24),
           const SizedBox(width: 14),
           Expanded(
             child: Column(

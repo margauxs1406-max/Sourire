@@ -43,9 +43,12 @@ class ThemeService {
     );
   }
 
-  // Synchronise le statut Premium avec les UserPrefs
+  /// Statut Premium, en lecture seule.
+  ///
+  /// Le setter a disparu avec le faux achat : le Premium n'est plus une case
+  /// qu'on coche depuis l'interface, c'est une échéance que seule la boutique
+  /// repousse. Voir UserPrefs.confirmerPremium et AchatService.
   static bool get estUtilisateurPremium => UserPrefs.isPremium;
-  static set estUtilisateurPremium(bool value) => UserPrefs.isPremium = value;
 
   /// À APPELER DANS LE MAIN.DART JUSTE APRÈS UserPrefs.init()
   /// Permet de charger le thème sauvegardé au démarrage de l'application
@@ -79,15 +82,5 @@ class ThemeService {
     return true; 
   }
 
-  /// Déverrouille les thèmes (appelé après un achat réussi).
-  ///
-  /// Ne force plus de rebuild global : l'ancienne version appelait
-  /// `themeVisuelNotifier.notifyListeners()` depuis l'extérieur, une API que
-  /// Flutter marque comme protégée. C'était inutile — les deux appelants
-  /// (l'écran des thèmes et la modale d'achat de la Home) rafraîchissent
-  /// déjà ce qu'ils affichent, et le statut premium est relu à la demande
-  /// partout ailleurs.
-  static void deverrouillerPremium() {
-    estUtilisateurPremium = true;
-  }
+
 }
