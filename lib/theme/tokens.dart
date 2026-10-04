@@ -216,6 +216,21 @@ Color texteDoux(bool sombre) => sombre ? lightGrey : grey;
 /// l'encre, et une encre légèrement adoucie plutôt qu'un noir pur.
 Color texteTitre(bool sombre) => sombre ? white : darkGrey;
 
+/// Couleur du titre de l'ACCUEIL, en mode clair.
+///
+/// Un marron chaud plutôt que l'encre grise des autres titres : l'accueil est
+/// la seule page qui salue quelqu'un par son prénom, et ce marron la rapproche
+/// du verre du bocal.
+const Color marronTitre = Color(0xFF512902);
+
+/// Couleur du titre de l'accueil.
+///
+/// ⚠️ Le marron ne vaut qu'en mode clair. Sur le fond sombre `darkBg`, son
+/// rapport de contraste tombe à **1,3 pour 1** — le minimum lisible est de
+/// 4,5. Le mode sombre garde donc le blanc de [texteTitre]. Sur fond clair, le
+/// marron est à 12,6 pour 1, très au-delà du nécessaire.
+Color texteTitreAccueil(bool sombre) => sombre ? white : marronTitre;
+
 // Ces deux styles demandaient « Inclusive Sans » alors que la famille
 // n'était pas déclarée : Flutter retombait sans prévenir sur la police
 // système. La famille est désormais posée une seule fois, dans le

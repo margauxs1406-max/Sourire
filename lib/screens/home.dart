@@ -886,20 +886,26 @@ Positioned.fill(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               // L'accueil et sa question ne se touchent pas :
-                              // ils restent en encre. Dans cette application,
-                              // l'orange signale une action.
+                              // ils ne prennent donc jamais l'orange, qui
+                              // signale une action dans cette application. Ils
+                              // portent le marron de l'accueil, qui n'existe
+                              // qu'ici — et seulement en mode clair, où il est
+                              // lisible. Voir texteTitreAccueil.
+                              //
+                              // Les deux lignes forment un seul titre : elles
+                              // changent de couleur ensemble, toujours.
                               Text(
                                 l10n.welcomeMessage(prenomAffiche),
                                 style: styleTitreLora.copyWith(
-                                  color: texteTitre(isDarkMode),
+                                  color: texteTitreAccueil(isDarkMode),
                                   fontSize: tailleLora(responsiveWelcomeFontSize),
                                 ),
                               ),
                               const SizedBox(height: 8),
                               Text(
-                                l10n.mainQuestion(accordAffiche), 
+                                l10n.mainQuestion(accordAffiche),
                                 style: styleTitreLora.copyWith(
-                                  color: texteTitre(isDarkMode),
+                                  color: texteTitreAccueil(isDarkMode),
                                   fontSize: tailleLora(responsiveQuestionFontSize),
                                   height: 1.2,
                                 ),

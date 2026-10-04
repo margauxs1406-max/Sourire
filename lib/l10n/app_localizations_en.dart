@@ -28,16 +28,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get gender => 'Gender';
 
   @override
-  String get email => 'Email';
-
-  @override
   String get password => 'Password';
 
   @override
   String get biometrics => 'Biometrics';
 
   @override
-  String get accountSettings => 'Account settings';
+  String get accountSettings => 'App settings';
 
   @override
   String get notifications => 'Notifications';
@@ -257,25 +254,17 @@ class AppLocalizationsEn extends AppLocalizations {
   String get onboardingGenderNone => 'Inclusive language';
 
   @override
-  String get onboardingSecurityTitle => 'Secure your data';
-
-  @override
-  String get onboardingHintEmail => 'Email';
-
-  @override
-  String get onboardingEmailValid => 'valid email';
-
-  @override
-  String get onboardingEmailInvalid => 'invalid email';
+  String get onboardingSecurityTitle => 'Secure access to your space';
 
   @override
   String get onboardingHintPassword => 'Password (min. 6 chars)';
 
   @override
-  String get onboardingBiometricsTitle => 'Simplify your access to the app';
+  String get onboardingBiometricsLabel => 'Enable biometrics';
 
   @override
-  String get onboardingBiometricsLabel => 'Enable biometrics';
+  String get onboardingBiometricsHelp =>
+      'Turning on biometrics lets you unlock the app with your fingerprint or face recognition, without typing your password every time.';
 
   @override
   String get onboardingBtnNext => 'Next';

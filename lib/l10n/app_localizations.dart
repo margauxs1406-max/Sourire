@@ -130,12 +130,6 @@ abstract class AppLocalizations {
   /// **'Genre'**
   String get gender;
 
-  /// No description provided for @email.
-  ///
-  /// In fr, this message translates to:
-  /// **'Email'**
-  String get email;
-
   /// No description provided for @password.
   ///
   /// In fr, this message translates to:
@@ -151,7 +145,7 @@ abstract class AppLocalizations {
   /// No description provided for @accountSettings.
   ///
   /// In fr, this message translates to:
-  /// **'Paramètres du compte'**
+  /// **'Réglages de l\'application'**
   String get accountSettings;
 
   /// No description provided for @notifications.
@@ -559,26 +553,8 @@ abstract class AppLocalizations {
   /// No description provided for @onboardingSecurityTitle.
   ///
   /// In fr, this message translates to:
-  /// **'Sécurise tes données'**
+  /// **'Sécurise l\'accès à ton espace'**
   String get onboardingSecurityTitle;
-
-  /// No description provided for @onboardingHintEmail.
-  ///
-  /// In fr, this message translates to:
-  /// **'Email'**
-  String get onboardingHintEmail;
-
-  /// No description provided for @onboardingEmailValid.
-  ///
-  /// In fr, this message translates to:
-  /// **'email valide'**
-  String get onboardingEmailValid;
-
-  /// No description provided for @onboardingEmailInvalid.
-  ///
-  /// In fr, this message translates to:
-  /// **'email non valide'**
-  String get onboardingEmailInvalid;
 
   /// No description provided for @onboardingHintPassword.
   ///
@@ -586,17 +562,17 @@ abstract class AppLocalizations {
   /// **'Mot de passe (6 caractères min.)'**
   String get onboardingHintPassword;
 
-  /// No description provided for @onboardingBiometricsTitle.
-  ///
-  /// In fr, this message translates to:
-  /// **'Facilite ton accès à l\'application'**
-  String get onboardingBiometricsTitle;
-
   /// No description provided for @onboardingBiometricsLabel.
   ///
   /// In fr, this message translates to:
   /// **'Activer la biométrie'**
   String get onboardingBiometricsLabel;
+
+  /// No description provided for @onboardingBiometricsHelp.
+  ///
+  /// In fr, this message translates to:
+  /// **'L\'activation de la biométrie permet de déverrouiller l\'application grâce à l\'empreinte digitale ou la reconnaissance faciale, sans avoir à réécrire le mot de passe à chaque connexion.'**
+  String get onboardingBiometricsHelp;
 
   /// No description provided for @onboardingBtnNext.
   ///

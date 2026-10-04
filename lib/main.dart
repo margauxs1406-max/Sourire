@@ -55,6 +55,11 @@ void main() async {
   // refaire. Voir UserPrefs.
   await UserPrefs.migrerMotDePasseEnClair();
 
+  // L'adresse e-mail demandée à l'inscription est retirée de l'application et
+  // effacée des appareils où elle avait été saisie. Elle ne servait à rien, et
+  // elle faisait passer Sourire pour une application à comptes. Voir UserPrefs.
+  await UserPrefs.purgerEmail();
+
   // Efface le Premium donné par le FAUX ACHAT des versions de test. Les vrais
   // abonnés le récupèrent quelques secondes plus tard, quand la boutique
   // répond à AchatService.verifierAbonnement.
