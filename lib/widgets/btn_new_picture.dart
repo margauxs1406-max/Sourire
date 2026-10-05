@@ -10,8 +10,10 @@ class BtnNewPicture extends StatelessWidget {
   Widget build(BuildContext context) {
     double screenWidth = MediaQuery.of(context).size.width;
     
-    // Calcul de la dimension responsive (diamètre du cercle)
-    double buttonSize = screenWidth * 0.2; 
+    // Diamètre du cercle, proportionnel À L'ÉCRAN MAIS BORNÉ. Mêmes bornes
+    // que `BtnNewNote`, dont ce bouton est le jumeau : les deux sont posés
+    // côte à côte, ils doivent grandir et s'arrêter ensemble.
+    double buttonSize = (screenWidth * 0.2).clamp(64.0, 96.0);
     // Calcul de l'icône proportionnelle
     double iconSize = buttonSize * 0.46;
 

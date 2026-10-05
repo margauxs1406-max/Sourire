@@ -218,25 +218,40 @@ class _ScreenLockState extends State<ScreenLock> {
                     text: txtBtnValidate,
                     onTap: _validerMotDePasse,
                   ),
-
-                  if (UserPrefs.biomatrieActive) ...[
-                    const SizedBox(height: 12),
-                    TextButton.icon(
-                      onPressed: () {
-                        setState(() {
-                          _showPasswordInput = false;
-                          _hasError = false;
-                        });
-                        _authentifierBiometrie();
-                      },
-                      icon: const Icon(Icons.fingerprint, color: white),
-                      label: Text(
-                        txtBtnBio, 
-                        style: const TextStyle(color: white, fontWeight: FontWeight.w600),
-                      ),
-                    ),
-                  ],
+                  if (UserPrefs.biomatrieActive) const SizedBox(height: 12),
                 ],
+
+                // La relance de la biométrie vit DEHORS du bloc ci-dessus, et
+                // c'est important.
+                //
+                // Elle y était enfermée, donc invisible tant que le champ de
+                // mot de passe ne s'affichait pas. Or ce champ ne s'affiche que
+                // si un mot de passe a été enregistré : sans mot de passe, un
+                // échec ou une annulation de la biométrie ne faisait apparaître
+                // NI champ NI bouton. L'écran se réduisait au logo, et
+                // `PopScope(canPop: false)` interdisait d'en sortir — un
+                // cul-de-sac dont seule la réinstallation délivrait, avec les
+                // souvenirs perdus au passage.
+                //
+                // L'onboarding impose aujourd'hui un mot de passe, ce qui rend
+                // cet état inatteignable. Le jour où il deviendra facultatif,
+                // il le serait. On ne laisse pas une impasse dépendre d'une
+                // condition posée ailleurs dans l'application.
+                if (UserPrefs.biomatrieActive)
+                  TextButton.icon(
+                    onPressed: () {
+                      setState(() {
+                        _showPasswordInput = false;
+                        _hasError = false;
+                      });
+                      _authentifierBiometrie();
+                    },
+                    icon: const Icon(Icons.fingerprint, color: white),
+                    label: Text(
+                      txtBtnBio,
+                      style: const TextStyle(color: white, fontWeight: FontWeight.w600),
+                    ),
+                  ),
               ],
             ),
                     ),

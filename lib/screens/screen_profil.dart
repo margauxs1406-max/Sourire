@@ -49,7 +49,9 @@ class ScreenProfil extends StatefulWidget {
 class _ScreenProfilState extends State<ScreenProfil> {
   // Déclaration des contrôleurs et états locaux
   final TextEditingController _prenomController = TextEditingController();
-  final TextEditingController _emailController = TextEditingController();
+  // Plus de champ e-mail : l'adresse n'était lue nulle part, et son couple
+  // avec le mot de passe faisait de ce profil la page d'un compte. Voir
+  // UserPrefs.purgerEmail.
   final TextEditingController _passwordController = TextEditingController();
   late bool _biometrieActive; // Initialisé dans le initState
   // --- ÉTATS DES NOTIFICATIONS ---
@@ -65,19 +67,16 @@ class _ScreenProfilState extends State<ScreenProfil> {
     
     // 1. Remplissage et nettoyage du Prénom (Met la première lettre en majuscule dès le départ)
     // Plus de valeur de repli codée en dur : un champ vide vaut mieux que le
-    // prénom ou l'email de quelqu'un d'autre affiché à un nouvel utilisateur.
+    // prénom de quelqu'un d'autre affiché à un nouvel utilisateur.
     final String prenomBrut = UserPrefs.prenom.trim();
     _prenomController.text = prenomBrut.isEmpty
         ? ""
         : prenomBrut[0].toUpperCase() + prenomBrut.substring(1).toLowerCase();
 
-    // 2. Remplissage de l'email
-    _emailController.text = UserPrefs.email.trim();
-
-    // 3. Initialisation du mot de passe en mode masqué
+    // 2. Initialisation du mot de passe en mode masqué
     _passwordController.text = "••••••••••••";
 
-    // 4. Synchronisation de la biométrie avec l'onboarding
+    // 3. Synchronisation de la biométrie avec l'onboarding
     _biometrieActive = UserPrefs.biomatrieActive;
 
 
@@ -86,11 +85,6 @@ class _ScreenProfilState extends State<ScreenProfil> {
       UserPrefs.prenom = _prenomController.text.trim();
     });
 
-    // Idem pour l'email, désormais modifiable.
-    _emailController.addListener(() {
-      UserPrefs.email = _emailController.text.trim();
-    });
-    
     _calculerEspaceOccupe(); // Lance le calcul réel
   }
 
@@ -106,7 +100,6 @@ class _ScreenProfilState extends State<ScreenProfil> {
   @override
   void dispose() {
     _prenomController.dispose();
-    _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
@@ -423,14 +416,6 @@ Widget build(BuildContext context) {
                         const SizedBox(height: 16),
                         _buildGenreField(
                           localizations: localizations,
-                          couleurInputFond: couleurInputFond,
-                          couleurTextePrincipal: couleurTextePrincipal,
-                        ),
-                        const SizedBox(height: 16),
-                        _buildInputField(
-                          label: localizations?.email ?? "Email",
-                          controller: _emailController,
-                          readOnly: false,
                           couleurInputFond: couleurInputFond,
                           couleurTextePrincipal: couleurTextePrincipal,
                         ),

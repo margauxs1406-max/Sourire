@@ -21,25 +21,26 @@ class _ScreenOnboardingState extends State<ScreenOnboarding> {
   final PageController _pageController = PageController();
   int _currentStep = 0;
 
+  // Plus de champ e-mail ici. Il était obligatoire pour franchir l'étape, et
+  // l'adresse n'était ensuite lue par personne : pas d'envoi, pas de
+  // récupération de mot de passe, rien. Un prénom, une adresse et un mot de
+  // passe exigés au premier lancement, cela se lit comme une inscription — et
+  // c'est bien ainsi qu'Apple l'a lu (directive 5.1.1(v)). C'était aussi
+  // contraire à la politique de confidentialité, qui promet qu'aucune adresse
+  // n'est demandée. Voir UserPrefs.purgerEmail pour l'effacement des adresses
+  // déjà saisies.
   final TextEditingController _prenomController = TextEditingController();
-  final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
-  String _selectedGenre = ""; 
+  String _selectedGenre = "";
   bool _biometrieValue = false;
   bool _obscurePassword = true;
-  String _selectedLangue = UserPrefs.langue; 
-
-  bool _isEmailValid(String email) {
-    return RegExp(r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+")
-        .hasMatch(email.trim());
-  }
+  String _selectedLangue = UserPrefs.langue;
 
   @override
   void dispose() {
     _pageController.dispose();
     _prenomController.dispose();
-    _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
@@ -50,7 +51,9 @@ class _ScreenOnboardingState extends State<ScreenOnboarding> {
     FocusScope.of(context).unfocus();
     
     if (_validerEtapeActuelle()) {
-      if (_currentStep < 5) { 
+      // Quatre et non cinq : le mot de passe et la biométrie, qui parlaient
+      // tous deux de l'accès, tiennent désormais sur la même page.
+      if (_currentStep < 4) {
         _pageController.nextPage(
           duration: const Duration(milliseconds: 300),
           curve: Curves.easeInOut,
@@ -59,7 +62,6 @@ class _ScreenOnboardingState extends State<ScreenOnboarding> {
         debugPrint("ONBOARDING LOG : Validation finale de l'étape 5 lancée.");
         
         try {
-          UserPrefs.email = _emailController.text.trim();
           await UserPrefs.definirMotDePasse(_passwordController.text);
           UserPrefs.biomatrieActive = _biometrieValue; 
           UserPrefs.modeDemoAffiche = false; 
@@ -104,10 +106,12 @@ class _ScreenOnboardingState extends State<ScreenOnboarding> {
     if (_currentStep == 1) return true; 
     if (_currentStep == 2) return _prenomController.text.trim().isNotEmpty; 
     if (_currentStep == 3) return _selectedGenre.isNotEmpty; 
-    if (_currentStep == 4) { 
-      return _isEmailValid(_emailController.text) && _passwordController.text.length >= 6;
+    // Dernière étape : seul le mot de passe conditionne la validation. La
+    // biométrie qui partage désormais cette page est un confort, pas une
+    // obligation, et son interrupteur ne doit rien bloquer.
+    if (_currentStep == 4) {
+      return _passwordController.text.length >= 6;
     }
-    if (_currentStep == 5) return true; 
     return false;
   }
 
@@ -138,7 +142,7 @@ class _ScreenOnboardingState extends State<ScreenOnboarding> {
       } catch(_) {
         boutonTexte = (_selectedLangue == "en") ? "Get started" : "Commencer";
       }
-    } else if (_currentStep == 5) {
+    } else if (_currentStep == 4) {
       try {
         boutonTexte = localizations?.onboardingBtnValidate ?? "Valider";
       } catch(_) {
@@ -190,7 +194,9 @@ class _ScreenOnboardingState extends State<ScreenOnboarding> {
                 padding: const EdgeInsets.only(bottom: 20),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
-                  children: List.generate(4, (index) {
+                  // Trois pastilles : prénom, accord, accès. La quatrième a
+                  // disparu avec la fusion du mot de passe et de la biométrie.
+                  children: List.generate(3, (index) {
                     bool isSelected = (_currentStep - 2) == index;
                     return Container(
                       margin: const EdgeInsets.symmetric(horizontal: 6),
@@ -236,9 +242,8 @@ class _ScreenOnboardingState extends State<ScreenOnboarding> {
                       _buildEtapeLangue(),
                       _buildEtapeBienvenue(localizations),          
                       _buildEtapePrenom(localizations),             
-                      _buildEtapeGenre(localizations),              
-                      _buildEtapeSecurite(localizations), 
-                      _buildEtapeBiometrie(localizations), 
+                      _buildEtapeGenre(localizations),
+                      _buildEtapeSecurite(localizations),
                     ],
                   ),
                     ),
@@ -541,157 +546,114 @@ class _ScreenOnboardingState extends State<ScreenOnboarding> {
     );
   }
 
-  // --- ÉTAPE 4 : COMPTE + SÉCURITÉ ---
+  // --- ÉTAPE 4, LA DERNIÈRE : L'ACCÈS À L'ESPACE ---
+  //
+  // Mot de passe ET biométrie sur une seule page. Elles vivaient sur deux
+  // écrans successifs, ce qui obligeait à valider le premier pour découvrir
+  // que le second parlait de la même chose : comment on entre chez soi. Le
+  // mot de passe pose le verrou, la biométrie choisit par quoi l'ouvrir plus
+  // vite — cela se décide d'un seul regard, pas en deux temps.
+  //
+  // Rien d'autre n'est demandé ici : pas d'adresse e-mail, pas d'identifiant,
+  // aucun compte. Ce qui est saisi ne quitte jamais l'appareil, et seule une
+  // empreinte salée du mot de passe en est conservée (voir UserPrefs).
   Widget _buildEtapeSecurite(AppLocalizations? localizations) {
-    String titre = "Sécurise tes données";
-    String hintEmail = "Email";
-    String emailValideTxt = "email valide";
-    String emailInvalideTxt = "email non valide";
+    String titre = "Sécurise l'accès à ton espace";
     String hintPass = "Mot de passe (6 caractères min.)";
+    String bioLabel = "Activer la biométrie";
 
     try {
       titre = localizations?.onboardingSecurityTitle ?? titre;
-      hintEmail = localizations?.onboardingHintEmail ?? hintEmail;
-      emailValideTxt = localizations?.onboardingEmailValid ?? emailValideTxt;
-      emailInvalideTxt = localizations?.onboardingEmailInvalid ?? emailInvalideTxt;
       hintPass = localizations?.onboardingHintPassword ?? hintPass;
+      bioLabel = localizations?.onboardingBiometricsLabel ?? bioLabel;
     } catch(_) {}
 
     final double adaptiveTitleSize = (MediaQuery.of(context).size.width * 0.064).clamp(18.0, 30.0);
 
+    // Scrollable et non figée : à la fermeture du clavier, la hauteur
+    // disponible passe brièvement sous celle du contenu. Une Column rigide y
+    // affichait la bande jaune et noire de débordement. La page porte
+    // maintenant deux blocs au lieu d'un, donc la précaution compte double.
     return LayoutBuilder(
       builder: (context, constraints) {
-        final String emailSaisi = _emailController.text;
-        final bool emailEstValide = _isEmailValid(emailSaisi);
-
         return SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
           padding: const EdgeInsets.symmetric(horizontal: 30),
-          child: Container(
-            constraints: BoxConstraints(
-              minHeight: constraints.maxHeight,
-            ),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minHeight: constraints.maxHeight),
             child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: 10),
-                    Text(
-                      titre,
-                      style: styleTitreLora.copyWith(fontSize: tailleLora(adaptiveTitleSize), color: orange),
-                    ),
-                    const SizedBox(height: 14),
-
-                    DecoratedBox(
-                      decoration: BoxDecoration(
-                        borderRadius: const BorderRadius.all(Radius.circular(8)),
-                        boxShadow: _sombre ? null : shadowSoft,
-                      ),
-                      child: TextField(
-                        controller: _emailController,
-                        onChanged: (_) => setState(() {}),
-                        keyboardType: TextInputType.emailAddress,
-                        style: TextStyle(color: texteFort(_sombre)),
-                        decoration: InputDecoration(
-                          hintText: hintEmail,
-                          hintStyle: TextStyle(color: texteDoux(_sombre)),
-                          filled: true,
-                          fillColor: _sombre ? darkSurface : white,
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                        ),
-                      ),
-                    ),
-
-                    if (emailSaisi.isNotEmpty) ...[
-                      const SizedBox(height: 6),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 4),
-                        child: Text(
-                          emailEstValide ? emailValideTxt : emailInvalideTxt,
-                          style: TextStyle(
-                            color: emailEstValide ? const Color(0xFF2E7D32) : const Color(0xFFD32F2F),
-                            fontSize: 13,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                    ],
-                    const SizedBox(height: 14),
-
-                    DecoratedBox(
-                      decoration: BoxDecoration(
-                        borderRadius: const BorderRadius.all(Radius.circular(8)),
-                        boxShadow: _sombre ? null : shadowSoft,
-                      ),
-                      child: TextField(
-                        controller: _passwordController,
-                        onChanged: (_) => setState(() {}),
-                        obscureText: _obscurePassword,
-                        style: TextStyle(color: texteFort(_sombre)),
-                        decoration: InputDecoration(
-                          hintText: hintPass,
-                          hintStyle: TextStyle(color: texteDoux(_sombre)),
-                          filled: true,
-                          fillColor: _sombre ? darkSurface : white,
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                          suffixIcon: IconButton(
-                            icon: Icon(_obscurePassword ? Icons.visibility_off : Icons.visibility, color: orange),
-                            onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 30),
-                  ],
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 10),
+                Text(
+                  titre,
+                  style: styleTitreLora.copyWith(fontSize: tailleLora(adaptiveTitleSize), color: orange),
                 ),
-            ),
-          );
-        },
-      );
-    }
+                const SizedBox(height: 14),
 
-    // --- ÉTAPE 5 : BIOMÉTRIE ---
-    Widget _buildEtapeBiometrie(AppLocalizations? localizations) {
-      String titreBio = "Facilite ton accès à l'application";
-      String bioLabel = "Activer la biométrie";
+                DecoratedBox(
+                  decoration: BoxDecoration(
+                    borderRadius: const BorderRadius.all(Radius.circular(8)),
+                    boxShadow: _sombre ? null : shadowSoft,
+                  ),
+                  child: TextField(
+                    controller: _passwordController,
+                    onChanged: (_) => setState(() {}),
+                    obscureText: _obscurePassword,
+                    style: TextStyle(color: texteFort(_sombre)),
+                    decoration: InputDecoration(
+                      hintText: hintPass,
+                      hintStyle: TextStyle(color: texteDoux(_sombre)),
+                      filled: true,
+                      fillColor: _sombre ? darkSurface : white,
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                      suffixIcon: IconButton(
+                        icon: Icon(_obscurePassword ? Icons.visibility_off : Icons.visibility, color: orange),
+                        onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                      ),
+                    ),
+                  ),
+                ),
 
-      try {
-        titreBio = localizations?.onboardingBiometricsTitle ?? titreBio;
-        bioLabel = localizations?.onboardingBiometricsLabel ?? bioLabel;
-      } catch(_) {}
+                const SizedBox(height: 26),
 
-      final double adaptiveTitleSize = (MediaQuery.of(context).size.width * 0.064).clamp(18.0, 30.0);
-
-      // Scrollable et non figée : à la fermeture du clavier, la hauteur
-      // disponible passe brièvement sous celle du contenu. Une Column rigide y
-      // affichait la bande jaune et noire de débordement.
-      return LayoutBuilder(
-        builder: (context, constraints) {
-          return SingleChildScrollView(
-            physics: const BouncingScrollPhysics(),
-            padding: const EdgeInsets.symmetric(horizontal: 30),
-            child: ConstrainedBox(
-              constraints: BoxConstraints(minHeight: constraints.maxHeight),
-              child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                titreBio,
-                style: styleTitreLora.copyWith(fontSize: tailleLora(adaptiveTitleSize), color: orange),
-              ),
-              const SizedBox(height: 24),
-              Container(
-                padding: const EdgeInsets.symmetric(vertical: 10),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                // LA BIOMÉTRIE, posée sous le mot de passe qu'elle remplace au
+                // quotidien. L'ordre n'est pas indifférent : on pose d'abord le
+                // verrou, on choisit ensuite le raccourci qui l'ouvre.
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
+                    // Le libellé et son point d'interrogation forment un seul
+                    // bloc, qui prend la place restante. L'interrupteur garde
+                    // la sienne, à droite. Aucune largeur n'est calculée sur
+                    // celle de l'écran : voir item_categorie.dart pour ce que
+                    // cela coûte sur une tablette.
                     Expanded(
-                      child: Text(
-                        bioLabel,
-                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: orange),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Flexible(
+                            child: Text(
+                              bioLabel,
+                              maxLines: 2,
+                              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: orange),
+                            ),
+                          ),
+                          // Collé au libellé et non rejeté au bout de la
+                          // ligne : c'est le mot « biométrie » qu'il explique.
+                          // La zone tapable est élargie par le padding, le
+                          // dessin reste petit.
+                          GestureDetector(
+                            behavior: HitTestBehavior.opaque,
+                            onTap: () => _expliquerBiometrie(localizations, bioLabel),
+                            child: const Padding(
+                              padding: EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+                              child: Icon(Icons.help_outline, color: orange, size: 20),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                     const SizedBox(width: 15),
@@ -706,7 +668,8 @@ class _ScreenOnboardingState extends State<ScreenOnboarding> {
                           });
 
                           bool succes = await BiometricService.authentifier();
-                        
+
+                          if (!mounted) return;
                           setState(() {
                             _biometrieValue = succes;
                           });
@@ -719,12 +682,62 @@ class _ScreenOnboardingState extends State<ScreenOnboarding> {
                     ),
                   ],
                 ),
-              ),
-            ],
+
+                const SizedBox(height: 30),
+              ],
             ),
           ),
         );
       },
+    );
+  }
+
+  /// Dit à quoi sert la biométrie, sans jargon.
+  ///
+  /// Le réglage porte ce nom parce que c'est le sien, mais le mot ne dit rien
+  /// à qui ne l'a jamais croisé — et Sourire s'adresse aussi à ces
+  /// personnes-là. Le point d'interrogation est pour elles. Un texte d'aide
+  /// affiché en permanence sous un interrupteur, lui, alourdit la page de tout
+  /// le monde pour renseigner quelques-uns.
+  Future<void> _expliquerBiometrie(
+    AppLocalizations? localizations,
+    String titre,
+  ) async {
+    String message =
+        "L'activation de la biométrie permet de déverrouiller l'application "
+        "grâce à l'empreinte digitale ou la reconnaissance faciale, sans avoir "
+        "à réécrire le mot de passe à chaque connexion.";
+
+    try {
+      message = localizations?.onboardingBiometricsHelp ?? message;
+    } catch(_) {}
+
+    await showDialog<void>(
+      context: context,
+      builder: (contexteModale) => AlertDialog(
+        backgroundColor: _sombre ? darkSurface : white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text(
+          titre,
+          style: styleTitreAction.copyWith(color: texteFort(_sombre)),
+        ),
+        content: Text(
+          message,
+          style: styleSecondaire.copyWith(color: texteDoux(_sombre)),
+        ),
+        actions: [
+          TextButton(
+            // Le libellé du bouton vient de Flutter, qui le traduit déjà dans
+            // les trois langues. Une clé de plus dans les .arb pour écrire
+            // « OK » n'aurait servi qu'à être oubliée dans l'une des trois.
+            onPressed: () => Navigator.of(contexteModale).pop(),
+            child: Text(
+              MaterialLocalizations.of(contexteModale).okButtonLabel,
+              style: styleCorps.copyWith(color: orange, fontWeight: FontWeight.w600),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

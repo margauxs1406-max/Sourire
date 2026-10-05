@@ -43,8 +43,24 @@ class UserPrefs {
 
   static set codeGenre(String value) => genre = value;
 
-  static String get email => _prefs?.getString('email') ?? "";
-  static set email(String value) => _prefs?.setString('email', value);
+  /// Efface l'adresse e-mail enregistrée par les versions précédentes.
+  ///
+  /// L'onboarding exigeait une adresse valide pour continuer. Elle n'a jamais
+  /// servi à rien : aucun envoi, aucune récupération de mot de passe, aucune
+  /// lecture ailleurs que le champ du profil qui la réaffichait. Un prénom, une
+  /// adresse et un mot de passe demandés au premier lancement, cela s'appelle
+  /// une inscription — Apple l'a lu ainsi et a refusé l'application au titre de
+  /// la directive 5.1.1(v), qui impose à toute application créant des comptes
+  /// d'offrir aussi leur suppression. C'était surtout contraire à la politique
+  /// de confidentialité publiée, qui promet qu'aucune adresse n'est demandée.
+  ///
+  /// Jouée au démarrage, cette purge retire la clé pour de bon : les adresses
+  /// déjà saisies par les testeurs ne survivent pas à la mise à jour. Sans
+  /// effet aux lancements suivants, la clé ayant disparu.
+  static Future<void> purgerEmail() async {
+    if (_prefs?.containsKey('email') != true) return;
+    await _prefs?.remove('email');
+  }
 
   // --- MOT DE PASSE ---------------------------------------------------------
   //

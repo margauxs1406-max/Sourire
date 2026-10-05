@@ -10,8 +10,15 @@ class BtnNewNote extends StatelessWidget {
   Widget build(BuildContext context) {
     double screenWidth = MediaQuery.of(context).size.width;
     
-    // Calcul de la dimension responsive (diamètre du cercle)
-    double buttonSize = screenWidth * 0.2; 
+    // Diamètre du cercle, proportionnel À L'ÉCRAN MAIS BORNÉ.
+    //
+    // Un cinquième de la largeur donnait 75 points sur un téléphone — la
+    // valeur pour laquelle le bouton a été dessiné — mais 167 sur un iPad en
+    // portrait et 236 en paysage, soit un palet de cinq centimètres. Un
+    // bouton d'action ne grandit pas avec la dalle : la main qui le vise
+    // reste la même. Les bornes laissent les téléphones exactement où ils
+    // étaient et arrêtent la dérive au-delà.
+    double buttonSize = (screenWidth * 0.2).clamp(64.0, 96.0);
     // Calcul de l'icône proportionnelle
     double iconSize = buttonSize * 0.46;
 
