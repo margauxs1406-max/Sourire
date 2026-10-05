@@ -43,9 +43,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get personalization => 'Personalization';
 
   @override
-  String get permissions => 'Permissions';
-
-  @override
   String get archiving => 'Archiving';
 
   @override
@@ -56,13 +53,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get help => 'Help';
-
-  @override
-  String get photoGalleryAccess => 'Photo gallery access';
-
-  @override
-  String get photoGallerySubtitle =>
-      'Essential for adding photos of your previous moments.';
 
   @override
   String get secureLocalStorage => 'Secure local storage';
@@ -95,12 +85,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get smoothAnimationsSubtitle =>
       'Replaces the jar\'s tornado effect with a lighter fade-in effect.';
-
-  @override
-  String get francais => 'French';
-
-  @override
-  String get anglais => 'English';
 
   @override
   String get helpFaq => 'Help / FAQ';
@@ -210,16 +194,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get btnCategorizeSelection => 'Categorize';
 
   @override
-  String get alertWarningTitle => 'Warning';
-
-  @override
-  String get galleryDisabledMessage =>
-      'You have disabled access to your photo gallery. Please enable it in your permissions.';
-
-  @override
-  String get btnEnableAccess => 'Enable access';
-
-  @override
   String get emptyJarMessage => 'The jar is empty, add a memory!';
 
   @override
@@ -308,13 +282,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get demoBurgerDesc =>
       'Open this menu at any time to find the chronological list of all your precious saved memories.';
-
-  @override
-  String get profilAlertGalleryMessage =>
-      'Warning, if you decide to remove access to your photo gallery, you will no longer be able to save photos in your memories.';
-
-  @override
-  String get profilAlertBtnDisable => 'Disable access';
 
   @override
   String get notifLabelTitleGratitude => 'Gratitude reminder';

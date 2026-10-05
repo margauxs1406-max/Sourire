@@ -1,9 +1,10 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
-import 'package:sourire/main.dart'; 
+import 'package:sourire/main.dart';
 import 'package:sourire/theme/tokens.dart';
 import 'package:sourire/widgets/categorie_glissable.dart';
 import 'package:sourire/widgets/pastille_nombre.dart';
-import 'package:wechat_assets_picker/wechat_assets_picker.dart';
 import 'package:sourire/widgets/logo_sourire.dart';
 import 'package:sourire/widgets/btn_chevron_gauche.dart';
 import 'package:sourire/widgets/btn_categorisation.dart'; 
@@ -19,15 +20,18 @@ import 'package:sourire/widgets/souvenir_historique.dart';
 /// Valeur renvoyée par `Navigator.pop` quand l'utilisateur touche le chevron
 /// de retour depuis le PREMIER écran de catégorisation.
 ///
-/// La galerie n'est pas une page de l'application : `AssetPicker.pickAssets`
-/// est une fonction qui s'ouvre, se referme et rend une liste. Elle n'existe
-/// donc plus dans la pile de navigation au moment où l'on catégorise, et un
-/// simple `pop` ramènerait à l'accueil. On remonte plutôt ce drapeau jusqu'à
-/// la home, qui rouvre le sélecteur avec la sélection précédente déjà cochée.
+/// La galerie n'est pas une page de l'application : le sélecteur du système
+/// est une fonction qui s'ouvre, se referme et rend une liste de fichiers. Il
+/// n'existe donc plus dans la pile de navigation au moment où l'on catégorise,
+/// et un simple `pop` ramènerait à l'accueil. On remonte plutôt ce drapeau
+/// jusqu'à la home, qui rouvre le sélecteur.
 const String retourVersGalerie = 'retour_galerie';
 
 class ScreenCategorisationPhoto extends StatefulWidget {
-  final List<AssetEntity> photos; 
+  /// Les fichiers remis par le sélecteur du système, déjà réduits par la
+  /// plateforme. Cet écran ne connaît que des fichiers : il n'a aucun moyen
+  /// d'atteindre la photothèque, et n'en a pas besoin.
+  final List<File> photos;
   final int currentIndex;
 
   /// Catégoriser TOUTES les photos d'un coup plutôt qu'une par une.
@@ -142,10 +146,10 @@ class _ScreenCategorisationPhotoState extends State<ScreenCategorisationPhoto> {
   /// sans perte visible.
   ///
   /// Le redimensionnement est délégué au système plutôt qu'au décodeur Dart —
-  /// voir `PhotoService.enregistrerDepuisGalerie`, qui documente pourquoi la
+  /// voir `PhotoService.enregistrerDepuisSelecteur`, qui documente pourquoi la
   /// différence se compte en secondes.
-  Future<String?> _sauvegarderFichierEnLocal(AssetEntity asset) =>
-      PhotoService.enregistrerDepuisGalerie(asset);
+  Future<String?> _sauvegarderFichierEnLocal(File photo) =>
+      PhotoService.enregistrerDepuisSelecteur(photo);
 
   /// Prend le verrou de façon SYNCHRONE (aucun await avant l'affectation).
   /// Retourne false si un enregistrement est déjà en cours : le tap est ignoré.
@@ -195,11 +199,19 @@ class _ScreenCategorisationPhotoState extends State<ScreenCategorisationPhoto> {
         colorLabel: SourireTheme.getRandomPhoto().label,
         categories: categories.isEmpty ? ["unclassified"] : List<String>.from(categories),
         // `date` reste la date d'ENTRÉE dans le bocal : c'est elle qui ordonne
-        // l'historique. La date de la galerie va dans `datePrise`, purement
-        // informative — sans quoi une photo de 2019 importée aujourd'hui
-        // replongerait tout au fond de l'historique.
+        // l'historique.
         date: DateTime.now(),
-        datePrise: widget.photos[index].createDateTime,
+        // `datePrise` n'est plus renseignée à l'import, et c'est la
+        // conséquence directe du passage au sélecteur du système : il remet un
+        // FICHIER, pas une fiche de photothèque. La date de prise de vue était
+        // lue dans l'index de la galerie — ce même index dont l'accès nous est
+        // désormais refusé, et c'est bien tout l'objet du changement.
+        //
+        // Rien ne casse pour autant : `NoteSourire.dateAffichee` retombe sur
+        // `date`, et la date reste corrigeable à la main depuis le souvenir
+        // ouvert en grand (voir souvenir_tirage.dart). Une photo de 2019
+        // importée aujourd'hui s'affiche donc à la date du jour tant qu'on ne
+        // la corrige pas. Les souvenirs déjà en base gardent la leur.
       );
       _databaseService.insertNote(nouvellePhoto);
       preloadHistoriqueImage(localPath); // volontairement SANS await
@@ -260,10 +272,10 @@ class _ScreenCategorisationPhotoState extends State<ScreenCategorisationPhoto> {
           nombre: widget.photos.length,
           constructeurApercu: (context, index) => ClipRRect(
             borderRadius: BorderRadius.circular(20),
-            child: AssetEntityImage(
+            // Le fichier est déjà borné à 1600 px par le sélecteur : il n'y a
+            // plus de vignette à demander, l'image EST la vignette.
+            child: Image.file(
               widget.photos[index],
-              isOriginal: false,
-              thumbnailSize: const ThumbnailSize.square(1080),
               fit: BoxFit.cover,
             ),
           ),
@@ -516,10 +528,15 @@ class _ScreenCategorisationPhotoState extends State<ScreenCategorisationPhoto> {
                                         ),
                                         child: ClipRRect(
                                           borderRadius: BorderRadius.circular(4),
-                                          child: AssetEntityImage(
+                                          child: Image.file(
                                             widget.photos[widget.currentIndex],
-                                            isOriginal: false, // ← miniature, pas l'original
-                                            thumbnailSize: const ThumbnailSize.square(240),
+                                            // 240 px suffisent pour une
+                                            // vignette de 80 : on demande au
+                                            // décodeur de s'arrêter là plutôt
+                                            // que de monter 1600 px en mémoire
+                                            // pour les réduire ensuite.
+                                            cacheWidth: 240,
+                                            cacheHeight: 240,
                                             fit: BoxFit.cover,
                                           ),
                                         ),

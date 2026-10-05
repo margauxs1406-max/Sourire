@@ -43,9 +43,6 @@ class AppLocalizationsFr extends AppLocalizations {
   String get personalization => 'Personnalisation';
 
   @override
-  String get permissions => 'Autorisations';
-
-  @override
   String get archiving => 'Archivage';
 
   @override
@@ -56,13 +53,6 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get help => 'Aide';
-
-  @override
-  String get photoGalleryAccess => 'Accès à la galerie photo';
-
-  @override
-  String get photoGallerySubtitle =>
-      'Indispensable pour ajouter des photos de tes moments précieux.';
 
   @override
   String get secureLocalStorage => 'Stockage local sécurisé';
@@ -95,12 +85,6 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get smoothAnimationsSubtitle =>
       'Remplace l\'effet tornade du bocal par une apparition en fondu plus légère.';
-
-  @override
-  String get francais => 'Français';
-
-  @override
-  String get anglais => 'English';
 
   @override
   String get helpFaq => 'Aide / FAQ';
@@ -211,16 +195,6 @@ class AppLocalizationsFr extends AppLocalizations {
   String get btnCategorizeSelection => 'Catégoriser';
 
   @override
-  String get alertWarningTitle => 'Attention';
-
-  @override
-  String get galleryDisabledMessage =>
-      'Tu as désactivé l\'accès à ta galerie photo. Active-la dans tes autorisations.';
-
-  @override
-  String get btnEnableAccess => 'Activer l\'accès';
-
-  @override
   String get emptyJarMessage => 'Le bocal est vide, ajoute un souvenir !';
 
   @override
@@ -309,13 +283,6 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get demoBurgerDesc =>
       'Ouvre ce menu à tout moment pour retrouver la liste chronologique de tous tes précieux souvenirs enregistrés.';
-
-  @override
-  String get profilAlertGalleryMessage =>
-      'Attention, si tu décides de supprimer l\'accès à ta galerie photo, tu ne pourras plus enregistrer de photos dans tes souvenirs.';
-
-  @override
-  String get profilAlertBtnDisable => 'Désactiver l\'accès';
 
   @override
   String get notifLabelTitleGratitude => 'Rappel de gratitude';

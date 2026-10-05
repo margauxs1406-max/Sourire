@@ -9,7 +9,10 @@ import 'package:sourire/theme/tokens.dart';
 import 'package:sourire/widgets/header_app.dart';
 import 'package:sourire/widgets/btn_new_note.dart';
 import 'package:sourire/widgets/btn_new_picture.dart';
-import 'package:wechat_assets_picker/wechat_assets_picker.dart';
+import 'dart:io';
+
+import 'package:image_picker/image_picker.dart';
+import 'package:sourire/services/photo_service.dart';
 import 'package:sourire/screens/screen_categorisation_photo.dart';
 import 'package:sourire/screens/screen_new_note.dart';
 import 'package:sourire/services/database_service.dart';
@@ -472,61 +475,68 @@ void _verifierEtDeclencherSouvenir() async {
       // depuis. On revérifie avant de passer le context au sélecteur.
       if (!context.mounted) return;
 
+      // LE SÉLECTEUR EST CELUI DU SYSTÈME, et non plus une grille dessinée
+      // dans l'application.
+      //
+      // L'ancien parcourait toute la photothèque, ce qui exigeait la
+      // permission READ_MEDIA_IMAGES — réservée par Google Play aux
+      // applications dont la gestion des photos est la fonction même. Le
+      // sélecteur du système s'exécute hors de l'application et ne lui remet
+      // que les fichiers choisis : aucune permission, et Sourire ne voit
+      // jamais la photothèque. Voir AndroidManifest.xml.
+      //
+      // Ce qu'on y perd : les couleurs de l'application sur cet écran, et la
+      // sélection précédente qui revenait déjà cochée — le sélecteur du
+      // système ne se laisse pas pré-remplir. Ce qu'on y gagne : une
+      // application qui tient enfin la promesse de sa politique de
+      // confidentialité, « l'application accède à la photo que vous
+      // sélectionnez, pas à votre photothèque ».
+      //
+      // Le redimensionnement est demandé AU SÉLECTEUR, donc exécuté en natif :
+      // c'est ce qui remplace la vignette que l'on demandait à photo_manager,
+      // et ce qui évite de décoder douze mégapixels en Dart pur.
+      final ImagePicker selecteur = ImagePicker();
+
       // Boucle volontaire : le chevron de retour du premier écran de
       // catégorisation renvoie `retourVersGalerie`, et on ROUVRE alors le
       // sélecteur au lieu de retomber sur l'accueil. La galerie n'est pas une
       // page de l'app — c'est une fonction qui s'ouvre et se referme — donc
       // « revenir à la galerie » ne peut pas être un simple `pop`.
-      //
-      // La sélection précédente est repassée au sélecteur : on retrouve ses
-      // photos déjà cochées, exactement comme on les avait laissées.
-      List<AssetEntity>? selectionPrecedente;
-
       while (true) {
-        final List<AssetEntity>? result = await AssetPicker.pickAssets(
-          context,
-          pickerConfig: AssetPickerConfig(
-            maxAssets: maxAssetsAutorises,
-            selectedAssets: selectionPrecedente,
-            requestType: RequestType.image,
-            textDelegate: const FrenchAssetPickerTextDelegate(),
-            gridThumbnailSize: const ThumbnailSize.square(240),
-            dragToSelect: false,
-            pickerTheme: AssetPicker.themeData(orange).copyWith(
-              colorScheme: const ColorScheme.dark(
-                primary: orange,
-                secondary: orange,
-              ),
-              checkboxTheme: CheckboxThemeData(
-                fillColor: WidgetStateProperty.resolveWith<Color?>((states) {
-                  if (states.contains(WidgetState.selected)) {
-                    return orange; 
-                  }
-                  return Colors.white.withValues(alpha: 0.2); 
-                }),
-                checkColor: WidgetStateProperty.all(Colors.white),
-              ),
-              elevatedButtonTheme: ElevatedButtonThemeData(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: orange, 
-                  foregroundColor: Colors.white, 
-                  disabledBackgroundColor: Colors.grey[800], 
-                ),
-              ),
-            ),
-          ),
-        );
+        final List<XFile> choisies;
+
+        if (maxAssetsAutorises <= 1) {
+          // Une seule place restante avant la limite gratuite : la sélection
+          // multiple n'a plus de sens, et `limit: 1` n'est pas accepté partout.
+          final XFile? une = await selecteur.pickImage(
+            source: ImageSource.gallery,
+            maxWidth: PhotoService.coteMax.toDouble(),
+            maxHeight: PhotoService.coteMax.toDouble(),
+            imageQuality: PhotoService.qualiteJpeg,
+          );
+          choisies = une == null ? const <XFile>[] : <XFile>[une];
+        } else {
+          choisies = await selecteur.pickMultiImage(
+            limit: maxAssetsAutorises,
+            maxWidth: PhotoService.coteMax.toDouble(),
+            maxHeight: PhotoService.coteMax.toDouble(),
+            imageQuality: PhotoService.qualiteJpeg,
+          );
+        }
 
         // Sélecteur fermé sans rien choisir : l'utilisateur voulait sortir.
-        if (result == null || result.isEmpty) return;
+        if (choisies.isEmpty) return;
         if (!context.mounted) return;
 
-        selectionPrecedente = result;
+        // Le reste de l'application ne manipule que des fichiers : elle n'a
+        // aucune notion de photothèque, et ne doit pas en acquérir une.
+        final List<File> fichiers =
+            choisies.map((XFile x) => File(x.path)).toList();
 
         final Object? retour = await Navigator.push<Object?>(
           context,
           MaterialPageRoute(
-            builder: (context) => ScreenCategorisationPhoto(photos: result),
+            builder: (context) => ScreenCategorisationPhoto(photos: fichiers),
           ),
         );
 
@@ -538,79 +548,6 @@ void _verifierEtDeclencherSouvenir() async {
     } catch (e) {
       debugPrint("Erreur : $e");
     }
-  }
-
-  void _ouvrirAlerteActivationGalerie(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        final ThemeMode currentMode = MyApp.themeNotifier.value;
-        
-        final bool isDark = currentMode == ThemeMode.dark || 
-            (currentMode == ThemeMode.system && MediaQuery.of(context).platformBrightness == Brightness.dark);
-
-        final Color couleurFond = isDark ? const Color(0xFF1E1E1E) : white;
-        final Color couleurTitre = isDark ? white : black;
-        final Color couleurDescription = isDark ? Colors.white70 : grey; 
-
-        return Dialog(
-          backgroundColor: couleurFond,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      l10n.alertWarningTitle,
-                      style: styleTitreAction.copyWith(color: couleurTitre),
-                    ),
-                    GestureDetector(
-                      onTap: () => Navigator.of(context).pop(),
-                      child: const Icon(Icons.close, color: grey), 
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  l10n.galleryDisabledMessage,
-                  style: styleSecondaire.copyWith(color: couleurDescription),
-                ),
-                const SizedBox(height: 24),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: orange,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                      elevation: 0,
-                    ),
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => const ScreenProfil()),
-                      );
-                    },
-                    child: Text(
-                      l10n.btnEnableAccess,
-                      style: styleCorps.copyWith(color: white, fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
   }
 
   /// Modale « Limite atteinte ». Le message est unique : la limite gratuite
@@ -1088,22 +1025,23 @@ Positioned.fill(
                             children: [
                               BtnNewPicture(
                                 key: _cleBoutonPhoto, 
+                                // Plus de verrou « accès à la galerie » avant
+                                // d'arriver ici : il gardait une permission
+                                // que l'application ne demande plus. Le
+                                // sélecteur du système ne réclame rien, donc
+                                // il n'y a plus rien à autoriser au préalable.
                                 onTap: () async {
-                                  if (!ScreenProfil.accesGalerieActive) {
-                                    _ouvrirAlerteActivationGalerie(context);
-                                  } else {
-                                    final int souvenirsActuels = await DatabaseService().getTotalNotesCount();
+                                  final int souvenirsActuels = await DatabaseService().getTotalNotesCount();
 
-                                    // Une seule source de vérité pour le statut
-                                    // premium : UserPrefs (persistant).
-                                    if (!UserPrefs.isPremium &&
-                                        souvenirsActuels >= UserPrefs.limiteSouvenirsGratuits) {
-                                      if (!context.mounted) return;
-                                      _ouvrirAlerteAchat(context);
-                                    } else {
-                                      if (!context.mounted) return;
-                                      _ouvrirGalerieSelectionMultiple(context);
-                                    }
+                                  // Une seule source de vérité pour le statut
+                                  // premium : UserPrefs (persistant).
+                                  if (!UserPrefs.isPremium &&
+                                      souvenirsActuels >= UserPrefs.limiteSouvenirsGratuits) {
+                                    if (!context.mounted) return;
+                                    _ouvrirAlerteAchat(context);
+                                  } else {
+                                    if (!context.mounted) return;
+                                    _ouvrirGalerieSelectionMultiple(context);
                                   }
                                 },
                               ),

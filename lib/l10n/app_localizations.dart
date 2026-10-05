@@ -160,12 +160,6 @@ abstract class AppLocalizations {
   /// **'Personnalisation'**
   String get personalization;
 
-  /// No description provided for @permissions.
-  ///
-  /// In fr, this message translates to:
-  /// **'Autorisations'**
-  String get permissions;
-
   /// No description provided for @archiving.
   ///
   /// In fr, this message translates to:
@@ -189,18 +183,6 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Aide'**
   String get help;
-
-  /// No description provided for @photoGalleryAccess.
-  ///
-  /// In fr, this message translates to:
-  /// **'Accès à la galerie photo'**
-  String get photoGalleryAccess;
-
-  /// No description provided for @photoGallerySubtitle.
-  ///
-  /// In fr, this message translates to:
-  /// **'Indispensable pour ajouter des photos de tes moments précieux.'**
-  String get photoGallerySubtitle;
 
   /// No description provided for @secureLocalStorage.
   ///
@@ -255,18 +237,6 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Remplace l\'effet tornade du bocal par une apparition en fondu plus légère.'**
   String get smoothAnimationsSubtitle;
-
-  /// No description provided for @francais.
-  ///
-  /// In fr, this message translates to:
-  /// **'Français'**
-  String get francais;
-
-  /// No description provided for @anglais.
-  ///
-  /// In fr, this message translates to:
-  /// **'English'**
-  String get anglais;
 
   /// No description provided for @helpFaq.
   ///
@@ -466,24 +436,6 @@ abstract class AppLocalizations {
   /// **'Catégoriser'**
   String get btnCategorizeSelection;
 
-  /// No description provided for @alertWarningTitle.
-  ///
-  /// In fr, this message translates to:
-  /// **'Attention'**
-  String get alertWarningTitle;
-
-  /// No description provided for @galleryDisabledMessage.
-  ///
-  /// In fr, this message translates to:
-  /// **'Tu as désactivé l\'accès à ta galerie photo. Active-la dans tes autorisations.'**
-  String get galleryDisabledMessage;
-
-  /// No description provided for @btnEnableAccess.
-  ///
-  /// In fr, this message translates to:
-  /// **'Activer l\'accès'**
-  String get btnEnableAccess;
-
   /// No description provided for @emptyJarMessage.
   ///
   /// In fr, this message translates to:
@@ -651,18 +603,6 @@ abstract class AppLocalizations {
   /// In fr, this message translates to:
   /// **'Ouvre ce menu à tout moment pour retrouver la liste chronologique de tous tes précieux souvenirs enregistrés.'**
   String get demoBurgerDesc;
-
-  /// No description provided for @profilAlertGalleryMessage.
-  ///
-  /// In fr, this message translates to:
-  /// **'Attention, si tu décides de supprimer l\'accès à ta galerie photo, tu ne pourras plus enregistrer de photos dans tes souvenirs.'**
-  String get profilAlertGalleryMessage;
-
-  /// No description provided for @profilAlertBtnDisable.
-  ///
-  /// In fr, this message translates to:
-  /// **'Désactiver l\'accès'**
-  String get profilAlertBtnDisable;
 
   /// No description provided for @notifLabelTitleGratitude.
   ///

@@ -4,8 +4,9 @@ import 'package:flutter/foundation.dart';
 import 'package:image/image.dart' as img;
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
-// Réexporte photo_manager, la couche d'accès à la photothèque du système.
-import 'package:wechat_assets_picker/wechat_assets_picker.dart';
+// Plus aucune couche d'accès à la photothèque ici : les photos arrivent sous
+// forme de fichiers, remis un par un par le sélecteur du système. Ce service
+// ne sait plus ce qu'est une galerie, et c'est très bien ainsi.
 import 'package:sourire/services/database_service.dart';
 import 'package:sourire/models/note_model.dart';
 import 'package:sourire/theme/user_prefs.dart';
@@ -89,51 +90,27 @@ class PhotoService {
 
   // --- IMPORT -----------------------------------------------------------------
 
-  /// Enregistre une photo choisie dans la galerie, par le chemin le plus court.
+  /// Enregistre une photo remise par le sélecteur du système.
   ///
-  /// C'EST LA VOIE RAPIDE, et la différence est spectaculaire. [enregistrer]
-  /// devait faire sortir le fichier d'origine de la photothèque, le lire en
-  /// entier (3 à 6 Mo), puis le décoder, le redresser, le réduire et le
-  /// réencoder — le tout avec le décodeur JPEG du paquet `image`, écrit en
-  /// Dart pur. Décoder 12 mégapixels par ce chemin prend facilement une à
-  /// trois secondes, auxquelles s'ajoute le lancement de l'isolate. D'où
-  /// l'attente sur « Valider », même pour UNE seule photo.
+  /// Le sélecteur fait déjà le gros du travail. On lui demande une image bornée
+  /// à [coteMax] et compressée à [qualiteJpeg] : ce redimensionnement est
+  /// exécuté par la plateforme, en natif, et rend un fichier déjà léger en
+  /// quelques dizaines de millisecondes. C'est ce qui remplace l'ancienne voie
+  /// rapide, qui demandait une vignette à `photo_manager` — et c'est la même
+  /// idée : ne jamais décoder douze mégapixels avec le décodeur JPEG en Dart
+  /// pur, qui met une à trois secondes par photo.
   ///
-  /// Or le système sait déjà faire tout cela, en natif : c'est exactement ce
-  /// qu'il fait pour peupler la grille de la galerie.
-  /// [AssetEntity.thumbnailDataWithSize] lui délègue le travail et rend
-  /// directement du JPEG réduit, en quelques dizaines de millisecondes.
-  ///
-  /// La taille demandée est calculée à partir des dimensions de l'asset — que
-  /// l'on connaît SANS ouvrir le fichier — de sorte que le rapport largeur /
-  /// hauteur soit déjà juste. Aucun mode de redimensionnement ne peut alors
-  /// déformer ni rogner l'image.
-  ///
-  /// Retombe sur [enregistrer] si quoi que ce soit manque à l'appel.
-  static Future<String?> enregistrerDepuisGalerie(AssetEntity asset) async {
+  /// Il reste donc seulement à ranger le fichier dans le dossier de
+  /// l'application. S'il arrivait malgré tout au-dessus de
+  /// [seuilRecompression] — sélecteur ancien, plateforme qui ignore les bornes
+  /// — on repasse par [enregistrer], qui réduit en Dart. Mieux vaut trois
+  /// secondes d'attente qu'une photo de six mégaoctets gardée à vie.
+  static Future<String?> enregistrerDepuisSelecteur(File origine) async {
     try {
-      // L'orientation vit à part des dimensions sur Android : une photo prise
-      // à la verticale est stockée couchée, avec une rotation de 90°. Sans
-      // cet échange, on demanderait une vignette au rapport inversé.
-      int largeur = asset.width;
-      int hauteur = asset.height;
-      if (asset.orientation == 90 || asset.orientation == 270) {
-        final int pivot = largeur;
-        largeur = hauteur;
-        hauteur = pivot;
-      }
-      if (largeur <= 0 || hauteur <= 0) return _enregistrerParLeFichier(asset);
-
-      final int cote = largeur > hauteur ? largeur : hauteur;
-      final double facteur = cote <= coteMax ? 1.0 : coteMax / cote;
-
-      final Uint8List? reduite = await asset.thumbnailDataWithSize(
-        ThumbnailSize((largeur * facteur).round(), (hauteur * facteur).round()),
-        quality: qualiteJpeg,
-        format: ThumbnailFormat.jpeg,
-      );
-      if (reduite == null || reduite.isEmpty) {
-        return _enregistrerParLeFichier(asset);
+      final int poids = await origine.length();
+      if (poids > seuilRecompression) {
+        debugPrint("Photo encore lourde (${poids ~/ 1024} Ko) : réduction en Dart.");
+        return enregistrer(origine);
       }
 
       final Directory dossier = await getApplicationDocumentsDirectory();
@@ -141,23 +118,13 @@ class PhotoService {
         dossier.path,
         "sourire_${DateTime.now().microsecondsSinceEpoch}.jpg",
       );
-      await File(destination).writeAsBytes(reduite, flush: true);
-      debugPrint("Photo réduite en natif : ${reduite.length ~/ 1024} Ko");
-      return destination;
+      final File copie = await origine.copy(destination);
+      debugPrint("Photo rangée telle quelle : ${poids ~/ 1024} Ko");
+      return copie.path;
     } catch (e) {
-      debugPrint("Voie rapide indisponible ($e) : on repasse par le fichier.");
-      return _enregistrerParLeFichier(asset);
+      debugPrint("Rangement direct impossible ($e) : on réduit en Dart.");
+      return enregistrer(origine);
     }
-  }
-
-  /// Voie de secours : on ressort le fichier d'origine et on le traite en Dart.
-  static Future<String?> _enregistrerParLeFichier(AssetEntity asset) async {
-    final File? origine = await asset.file;
-    if (origine == null) {
-      debugPrint("Erreur : fichier d'origine inaccessible.");
-      return null;
-    }
-    return enregistrer(origine);
   }
 
   /// Réduit [origine] et l'écrit dans le dossier de l'app.

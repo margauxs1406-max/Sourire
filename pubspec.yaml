@@ -10,7 +10,17 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  wechat_assets_picker: ^9.1.0
+  # Sélecteur de photos DU SYSTÈME, et non plus un sélecteur dessiné dans
+  # l'application. Sur Android 13 et au-delà, image_picker ouvre le Photo
+  # Picker d'Android ; sur iOS 14 et au-delà, le PHPicker d'Apple. Ni l'un ni
+  # l'autre ne réclame d'autorisation : ils s'exécutent hors de l'application
+  # et ne lui remettent que les fichiers explicitement choisis.
+  #
+  # `wechat_assets_picker` a été retiré pour cette raison : il parcourait la
+  # photothèque entière, donc exigeait READ_MEDIA_IMAGES, que Google Play
+  # réserve aux applications dont la gestion des photos est la fonction même.
+  # Voir AndroidManifest.xml.
+  image_picker: ^1.1.2
   cupertino_icons: ^1.0.8
   path_provider: ^2.1.5
   intl: ^0.20.2

@@ -27,8 +27,6 @@ import 'package:sourire/screens/screen_reset_password.dart';
 
 class ScreenProfil extends StatefulWidget {
   const ScreenProfil({super.key});
-  // Déclaration globale de l'état de l'autorisation (accessible depuis la Home)
-  static bool accesGalerieActive = true;
   
   /// Réglage « Animations douces ».
   ///
@@ -102,72 +100,6 @@ class _ScreenProfilState extends State<ScreenProfil> {
     _prenomController.dispose();
     _passwordController.dispose();
     super.dispose();
-  }
-
-
-  void _afficherAlerteGalerie(BuildContext context, VoidCallback onConfirmer, bool currentIsDark) {
-    final localizations = AppLocalizations.of(context);
-    final Color couleurTextePopup = currentIsDark ? white : black;
-
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return Dialog(
-          // Surface d'écran : le même blanc chaud que la home. Le blanc pur
-          // reste réservé à ce qui PORTE des souvenirs (volet historique,
-          // vignettes), pour que les couleurs de note s'en détachent.
-          backgroundColor: currentIsDark ? darkBg : lightOrange,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      localizations?.alertWarningTitle ?? "Attention",
-                      style: styleTitreAction.copyWith(color: couleurTextePopup),
-                    ),
-                    GestureDetector(
-                      onTap: () => Navigator.of(context).pop(),
-                      child: const Icon(Icons.close, color: grey),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  localizations?.profilAlertGalleryMessage ?? "Attention, si tu décides de supprimer l'accès à ta galerie photo, tu ne pourras plus enregistrer de photos dans tes souvenirs.",
-                  style: styleSecondaire.copyWith(color: texteDoux(currentIsDark)),
-                ),
-                const SizedBox(height: 24),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: orange,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                      elevation: 0,
-                    ),
-                    onPressed: () {
-                      onConfirmer();
-                      Navigator.of(context).pop();
-                    },
-                    child: Text(
-                      localizations?.profilAlertBtnDisable ?? "Désactiver l'accès",
-                      style: styleCorps.copyWith(color: white, fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
   }
 
   String _getCategoryDisplayLabel(String key) {
@@ -820,44 +752,6 @@ _buildMenuRow(
   },
 ),
 
-                    // 3. AUTORISATIONS
-                    _buildMenuRow(
-                      icon: Icons.lock_open_outlined,
-                      title: localizations?.permissions ?? "Autorisations",
-                      couleurTextePrincipal: couleurTextePrincipal,
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => StatefulBuilder(
-                              builder: (context, setLocalState) => ScreenTemplateReglages(
-                                isDarkMode: isDark,
-                                titre: localizations?.permissions ?? "Autorisations",
-                                content: [
-                                  _buildRowWithSwitch(
-                                    localizations?.photoGalleryAccess ?? "Accès à la galerie photo",
-                                    localizations?.photoGallerySubtitle ?? "Indispensable pour ajouter des photos de tes moments précieux.",
-                                    ScreenProfil.accesGalerieActive,
-                                    isDark: isDark,
-                                    (val) {
-                                      if (val == false) {
-                                        _afficherAlerteGalerie(context, () {
-                                          setState(() => ScreenProfil.accesGalerieActive = false);
-                                          setLocalState(() {});
-                                        }, isDark);
-                                      } else {
-                                        setState(() => ScreenProfil.accesGalerieActive = true);
-                                        setLocalState(() {});
-                                      }
-                                    }
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        );
-                      },
-                    ),
                     // 3. ARCHIVAGE
                     _buildMenuRow(
                       icon: Icons.inventory_2_outlined,

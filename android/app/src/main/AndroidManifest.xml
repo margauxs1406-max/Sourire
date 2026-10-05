@@ -2,15 +2,29 @@
     xmlns:tools="http://schemas.android.com/tools">
     <uses-permission android:name="android.permission.USE_BIOMETRIC"/>
 
-    <!-- Photos. READ_MEDIA_VISUAL_USER_SELECTED couvre l'accès PARTIEL
-         introduit par Android 14 : sans elle, l'utilisateur qui ne partage
-         que quelques photos obtient un comportement incohérent selon les
-         appareils. La vidéo est explicitement retirée : Sourire n'en lit
-         aucune, et une permission demandée pour rien se paie en confiance. -->
-    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
-    <uses-permission android:name="android.permission.READ_MEDIA_VISUAL_USER_SELECTED" />
+    <!-- Photos : AUCUNE permission, et c'est volontaire.
+         ========================================================
+         Sourire passait par un sélecteur de photos dessiné dans l'application,
+         qui parcourait toute la photothèque et réclamait donc READ_MEDIA_IMAGES.
+         Google Play l'a refusé au titre de sa politique sur les autorisations
+         photos et vidéos : ces permissions sont réservées aux applications dont
+         la fonction MÊME est de gérer l'ensemble des photos — une galerie, un
+         éditeur. Ajouter une image à un souvenir n'en fait pas partie, et un
+         sélecteur maison ne constitue pas une justification.
+
+         L'application ouvre désormais le sélecteur du système, qui ne demande
+         aucune permission : il s'exécute hors de l'application, et ne lui remet
+         que les fichiers explicitement choisis. Sourire ne voit jamais la
+         photothèque.
+
+         Les trois `tools:node="remove"` ci-dessous ne sont pas décoratifs : ils
+         garantissent qu'aucune dépendance ne pourra réintroduire ces
+         permissions par fusion de manifeste, ce que Google demande
+         explicitement — « retirez ces autorisations de tous les
+         sous-ensembles ». -->
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" tools:node="remove" />
     <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" tools:node="remove" />
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
+    <uses-permission android:name="android.permission.READ_MEDIA_VISUAL_USER_SELECTED" tools:node="remove" />
 
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>

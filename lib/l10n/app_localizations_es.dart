@@ -43,9 +43,6 @@ class AppLocalizationsEs extends AppLocalizations {
   String get personalization => 'Personalización';
 
   @override
-  String get permissions => 'Permisos';
-
-  @override
   String get archiving => 'Archivado';
 
   @override
@@ -56,13 +53,6 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get help => 'Ayuda';
-
-  @override
-  String get photoGalleryAccess => 'Acceso a la galería de fotos';
-
-  @override
-  String get photoGallerySubtitle =>
-      'Imprescindible para añadir fotos de tus momentos preciados.';
 
   @override
   String get secureLocalStorage => 'Almacenamiento local seguro';
@@ -95,12 +85,6 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get smoothAnimationsSubtitle =>
       'Sustituye el efecto tornado del tarro por una aparición en fundido más ligera.';
-
-  @override
-  String get francais => 'Français';
-
-  @override
-  String get anglais => 'English';
 
   @override
   String get helpFaq => 'Ayuda / Preguntas frecuentes';
@@ -210,16 +194,6 @@ class AppLocalizationsEs extends AppLocalizations {
   String get btnCategorizeSelection => 'Categorizar';
 
   @override
-  String get alertWarningTitle => 'Atención';
-
-  @override
-  String get galleryDisabledMessage =>
-      'Has desactivado el acceso a tu galería de fotos. Actívalo en tus permisos.';
-
-  @override
-  String get btnEnableAccess => 'Activar el acceso';
-
-  @override
   String get emptyJarMessage => 'El tarro está vacío, ¡añade un recuerdo!';
 
   @override
@@ -308,13 +282,6 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get demoBurgerDesc =>
       'Abre este menú cuando quieras para encontrar la lista cronológica de todos tus preciados recuerdos guardados.';
-
-  @override
-  String get profilAlertGalleryMessage =>
-      'Atención: si decides quitar el acceso a tu galería de fotos, ya no podrás guardar fotos en tus recuerdos.';
-
-  @override
-  String get profilAlertBtnDisable => 'Desactivar el acceso';
 
   @override
   String get notifLabelTitleGratitude => 'Recordatorio de gratitud';
