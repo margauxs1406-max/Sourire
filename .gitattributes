@@ -1,0 +1,50 @@
+# Fins de ligne : LF partout, dans le dépôt comme dans les copies de travail.
+#
+# POURQUOI CE FICHIER EXISTE
+#
+# Sans lui, git livre les fichiers texte en CRLF sur Windows et en LF sur
+# macOS. Les deux machines voient alors le MÊME fichier comme modifié de bout
+# en bout, sur toutes ses lignes, alors que personne n'y a touché. Trois
+# conséquences, de la plus bénigne à la plus grave :
+#
+#   - des avertissements « LF will be replaced by CRLF » à chaque `git add` ;
+#   - des `git pull` refusés pour des fichiers qu'on n'a pas modifiés ;
+#   - et surtout : une fusion qui écrase SANS CONFLIT une correction faite sur
+#     l'autre machine. Git ne voit pas « deux lignes contre deux lignes », il
+#     voit « deux lignes contre tout le fichier », et il tranche tout seul.
+#
+# Ce n'est pas théorique. Le 6 octobre 2026, les quatre orientations iPad ont
+# disparu d'ios/Runner/Info.plist exactement de cette façon, sans le moindre
+# conflit signalé, et l'archive a été refusée par Apple (erreur 90474).
+#
+# `eol=lf` et pas seulement `text=auto` : c'est `eol=lf` qui impose le LF
+# jusque dans la copie de travail Windows. Sans lui, git normalise en LF dans
+# le dépôt mais redonne du CRLF sur le disque, et le problème reste entier.
+* text=auto eol=lf
+
+# Les fichiers binaires ne doivent JAMAIS être convertis : une substitution de
+# fin de ligne au milieu d'une image ou d'une police la corrompt.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.gif binary
+*.ico binary
+*.icns binary
+*.pdf binary
+*.ttf binary
+*.otf binary
+*.woff binary
+*.woff2 binary
+*.zip binary
+*.jar binary
+*.keystore binary
+*.jks binary
+
+# Le SVG est du texte, et on le veut en LF comme le reste.
+*.svg text eol=lf
+
+# Les scripts de commandes Windows, eux, ont réellement besoin de CRLF :
+# l'interpréteur de Windows ne les exécute pas correctement autrement.
+*.bat text eol=crlf
+*.cmd text eol=crlf
