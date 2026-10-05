@@ -2,8 +2,6 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Sourire a besoin d&apos;accéder à vos photos pour les ajouter au bocal.</string>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
 	<key>CFBundleDevelopmentRegion</key>
@@ -28,10 +26,12 @@
 	<string>18</string>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
-	<key>NSFaceIDUsageDescription</key>
-	<string>Nous utilisons la biométrie pour sécuriser l&apos;accès à ton bocal de souvenirs.</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSFaceIDUsageDescription</key>
+	<string>Nous utilisons la biométrie pour sécuriser l'accès à ton bocal de souvenirs.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Sourire a besoin d'accéder à vos photos pour les ajouter au bocal.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
@@ -62,9 +62,12 @@
 	<key>UISupportedInterfaceOrientations</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>
+		<string>UIInterfaceOrientationPortraitUpsideDown</string>
 	</array>
 	<key>UISupportedInterfaceOrientations~ipad</key>
 	<array>
+		<string>UIInterfaceOrientationLandscapeLeft</string>
+		<string>UIInterfaceOrientationLandscapeRight</string>
 		<string>UIInterfaceOrientationPortrait</string>
 		<string>UIInterfaceOrientationPortraitUpsideDown</string>
 	</array>
