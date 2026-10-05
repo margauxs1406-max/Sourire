@@ -2,7 +2,7 @@ name: sourire
 description: "Sourire : une collection de souvenirs heureux, gardée sur le téléphone et nulle part ailleurs."
 publish_to: 'none'
 
-version: 1.0.0+15
+version: 1.0.0+16
 
 environment:
   sdk: ^3.11.5
