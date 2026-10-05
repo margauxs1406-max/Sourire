@@ -90,6 +90,19 @@ class PhotoService {
 
   // --- IMPORT -----------------------------------------------------------------
 
+  /// Au-dessus de ce poids, un fichier sorti du sélecteur n'a visiblement PAS
+  /// été redimensionné par la plateforme, et il faut le réduire nous-mêmes.
+  ///
+  /// Trois mégaoctets et non [seuilRecompression] : ce seuil-là vaut 400 Ko, ce
+  /// qui est la bonne borne pour décider si une photo DÉJÀ en base mérite d'être
+  /// recompressée, mais une très mauvaise pour un fichier qui sort du sélecteur.
+  /// Une image de 1600 px en qualité 82 pèse couramment 300 à 600 Ko : avec
+  /// l'ancien seuil, la plupart des photos repassaient par le décodeur Dart
+  /// alors qu'elles étaient déjà à la bonne taille — une à trois secondes
+  /// perdues PAR PHOTO, soit une demi-minute sur un lot de dix. C'était la
+  /// latence ressentie sur « Passer » et « Valider ».
+  static const int seuilSelecteurNonBorne = 3 * 1024 * 1024;
+
   /// Enregistre une photo remise par le sélecteur du système.
   ///
   /// Le sélecteur fait déjà le gros du travail. On lui demande une image bornée
@@ -98,18 +111,16 @@ class PhotoService {
   /// quelques dizaines de millisecondes. C'est ce qui remplace l'ancienne voie
   /// rapide, qui demandait une vignette à `photo_manager` — et c'est la même
   /// idée : ne jamais décoder douze mégapixels avec le décodeur JPEG en Dart
-  /// pur, qui met une à trois secondes par photo.
+  /// pur.
   ///
-  /// Il reste donc seulement à ranger le fichier dans le dossier de
-  /// l'application. S'il arrivait malgré tout au-dessus de
-  /// [seuilRecompression] — sélecteur ancien, plateforme qui ignore les bornes
-  /// — on repasse par [enregistrer], qui réduit en Dart. Mieux vaut trois
-  /// secondes d'attente qu'une photo de six mégaoctets gardée à vie.
+  /// Il reste donc seulement à ranger le fichier. On ne retouche à rien tant
+  /// qu'il reste sous [seuilSelecteurNonBorne] : recompresser un JPEG déjà
+  /// compressé ne fait que le dégrader, lentement.
   static Future<String?> enregistrerDepuisSelecteur(File origine) async {
     try {
       final int poids = await origine.length();
-      if (poids > seuilRecompression) {
-        debugPrint("Photo encore lourde (${poids ~/ 1024} Ko) : réduction en Dart.");
+      if (poids > seuilSelecteurNonBorne) {
+        debugPrint("Photo non bornée (${poids ~/ 1024} Ko) : réduction en Dart.");
         return enregistrer(origine);
       }
 
@@ -124,6 +135,70 @@ class PhotoService {
     } catch (e) {
       debugPrint("Rangement direct impossible ($e) : on réduit en Dart.");
       return enregistrer(origine);
+    }
+  }
+
+  /// La date de prise de vue lue dans les métadonnées EXIF, ou `null`.
+  ///
+  /// C'est le seul moyen de retrouver la vraie date d'une photo depuis le
+  /// sélecteur du système : celui-ci remet un fichier et rien d'autre, jamais
+  /// l'identifiant de l'image dans la photothèque. L'ancien sélecteur, lui,
+  /// lisait la date dans l'index de la galerie — ce même index dont l'accès
+  /// nous est désormais refusé.
+  ///
+  /// Les deux plateformes recopient l'EXIF dans le fichier redimensionné :
+  /// Android par son `ExifDataCopier`, iOS en réinjectant le dictionnaire de
+  /// métadonnées de l'image d'origine. La date survit donc au
+  /// redimensionnement — mais au conditionnel, et c'est important :
+  ///
+  /// - la recopie échoue en silence des deux côtés, sans rien remonter ;
+  /// - **beaucoup de photos n'ont aucune date EXIF** : captures d'écran,
+  ///   images reçues par messagerie, visuels retouchés, exports de réseaux
+  ///   sociaux.
+  ///
+  /// `null` n'est donc PAS une anomalie, c'est un cas de figure ordinaire que
+  /// l'appelant doit traiter comme tel. Et la date obtenue reste une
+  /// proposition : l'utilisateur peut toujours la corriger depuis le souvenir
+  /// ouvert en grand.
+  ///
+  /// Aucun pixel n'est décodé ici. `decodeJpgExif` parcourt les marqueurs du
+  /// fichier et s'arrête au premier segment EXIF rencontré.
+  static Future<DateTime?> dateDePriseDeVue(File fichier) async {
+    try {
+      final Uint8List octets = await fichier.readAsBytes();
+      final img.ExifData? exif = img.decodeJpgExif(octets);
+      if (exif == null) return null;
+
+      // DateTimeOriginal vit dans la sous-IFD Exif, et non dans l'IFD
+      // principale. `DateTime` y est le repli : certains appareils ne
+      // renseignent que celle-là.
+      final String? brut = exif.exifIfd['DateTimeOriginal']?.toString() ??
+          exif.imageIfd['DateTime']?.toString();
+      if (brut == null) return null;
+
+      // Format EXIF : « AAAA:MM:JJ HH:MM:SS ». Ce ne sont pas des tirets, et
+      // DateTime.parse n'en veut pas.
+      final RegExp forme = RegExp(
+        r'^(\d{4}):(\d{2}):(\d{2})[ T](\d{2}):(\d{2}):(\d{2})',
+      );
+      final Match? m = forme.firstMatch(brut.trim());
+      if (m == null) return null;
+
+      final DateTime lue = DateTime(
+        int.parse(m[1]!), int.parse(m[2]!), int.parse(m[3]!),
+        int.parse(m[4]!), int.parse(m[5]!), int.parse(m[6]!),
+      );
+
+      // Un appareil mal réglé peut dater une photo de 1970 ou de l'an
+      // prochain. On refuse l'invraisemblable plutôt que de l'afficher sur un
+      // souvenir partagé.
+      if (lue.year < 1990 || lue.isAfter(DateTime.now().add(const Duration(days: 1)))) {
+        return null;
+      }
+      return lue;
+    } catch (e) {
+      debugPrint("Date EXIF illisible : $e");
+      return null;
     }
   }
 

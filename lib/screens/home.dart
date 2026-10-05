@@ -9,11 +9,7 @@ import 'package:sourire/theme/tokens.dart';
 import 'package:sourire/widgets/header_app.dart';
 import 'package:sourire/widgets/btn_new_note.dart';
 import 'package:sourire/widgets/btn_new_picture.dart';
-import 'dart:io';
-
-import 'package:image_picker/image_picker.dart';
-import 'package:sourire/services/photo_service.dart';
-import 'package:sourire/screens/screen_categorisation_photo.dart';
+import 'package:sourire/screens/screen_selection_photos.dart';
 import 'package:sourire/screens/screen_new_note.dart';
 import 'package:sourire/services/database_service.dart';
 import 'package:sourire/widgets/souvenir_tirage.dart';
@@ -475,76 +471,26 @@ void _verifierEtDeclencherSouvenir() async {
       // depuis. On revérifie avant de passer le context au sélecteur.
       if (!context.mounted) return;
 
-      // LE SÉLECTEUR EST CELUI DU SYSTÈME, et non plus une grille dessinée
-      // dans l'application.
+      // L'ACCUEIL N'OUVRE PLUS LE SÉLECTEUR LUI-MÊME.
       //
-      // L'ancien parcourait toute la photothèque, ce qui exigeait la
-      // permission READ_MEDIA_IMAGES — réservée par Google Play aux
-      // applications dont la gestion des photos est la fonction même. Le
-      // sélecteur du système s'exécute hors de l'application et ne lui remet
-      // que les fichiers choisis : aucune permission, et Sourire ne voit
-      // jamais la photothèque. Voir AndroidManifest.xml.
+      // Le sélecteur du système est une activité à part : elle recouvre
+      // l'application, puis se retire en laissant réapparaître l'écran qui
+      // était là avant. Quand c'était l'accueil, on le voyait revenir une
+      // fraction de seconde — bocal, titre, boutons — avant de glisser vers la
+      // catégorisation. Deux changements d'écran non demandés, qui donnaient
+      // l'impression d'une application qui rame.
       //
-      // Ce qu'on y perd : les couleurs de l'application sur cet écran, et la
-      // sélection précédente qui revenait déjà cochée — le sélecteur du
-      // système ne se laisse pas pré-remplir. Ce qu'on y gagne : une
-      // application qui tient enfin la promesse de sa politique de
-      // confidentialité, « l'application accède à la photo que vous
-      // sélectionnez, pas à votre photothèque ».
-      //
-      // Le redimensionnement est demandé AU SÉLECTEUR, donc exécuté en natif :
-      // c'est ce qui remplace la vignette que l'on demandait à photo_manager,
-      // et ce qui évite de décoder douze mégapixels en Dart pur.
-      final ImagePicker selecteur = ImagePicker();
-
-      // Boucle volontaire : le chevron de retour du premier écran de
-      // catégorisation renvoie `retourVersGalerie`, et on ROUVRE alors le
-      // sélecteur au lieu de retomber sur l'accueil. La galerie n'est pas une
-      // page de l'app — c'est une fonction qui s'ouvre et se referme — donc
-      // « revenir à la galerie » ne peut pas être un simple `pop`.
-      while (true) {
-        final List<XFile> choisies;
-
-        if (maxAssetsAutorises <= 1) {
-          // Une seule place restante avant la limite gratuite : la sélection
-          // multiple n'a plus de sens, et `limit: 1` n'est pas accepté partout.
-          final XFile? une = await selecteur.pickImage(
-            source: ImageSource.gallery,
-            maxWidth: PhotoService.coteMax.toDouble(),
-            maxHeight: PhotoService.coteMax.toDouble(),
-            imageQuality: PhotoService.qualiteJpeg,
-          );
-          choisies = une == null ? const <XFile>[] : <XFile>[une];
-        } else {
-          choisies = await selecteur.pickMultiImage(
-            limit: maxAssetsAutorises,
-            maxWidth: PhotoService.coteMax.toDouble(),
-            maxHeight: PhotoService.coteMax.toDouble(),
-            imageQuality: PhotoService.qualiteJpeg,
-          );
-        }
-
-        // Sélecteur fermé sans rien choisir : l'utilisateur voulait sortir.
-        if (choisies.isEmpty) return;
-        if (!context.mounted) return;
-
-        // Le reste de l'application ne manipule que des fichiers : elle n'a
-        // aucune notion de photothèque, et ne doit pas en acquérir une.
-        final List<File> fichiers =
-            choisies.map((XFile x) => File(x.path)).toList();
-
-        final Object? retour = await Navigator.push<Object?>(
-          context,
-          MaterialPageRoute(
-            builder: (context) => ScreenCategorisationPhoto(photos: fichiers),
-          ),
-        );
-
-        // Tout sauf `retourVersGalerie` signifie que le parcours est terminé :
-        // souvenirs enregistrés, ou abandon depuis un écran plus profond.
-        if (retour != retourVersGalerie) return;
-        if (!context.mounted) return;
-      }
+      // On pose donc d'abord un écran d'antichambre, qui porte exactement le
+      // décor de l'écran de catégorisation et ouvre le sélecteur lui-même. Au
+      // retour, le fond n'a pas bougé : seul le contenu arrive. Voir
+      // ScreenSelectionPhotos, qui porte aussi la boucle du retour vers la
+      // galerie.
+      await Navigator.push<Object?>(
+        context,
+        MaterialPageRoute<Object?>(
+          builder: (_) => ScreenSelectionPhotos(maxPhotos: maxAssetsAutorises),
+        ),
+      );
     } catch (e) {
       debugPrint("Erreur : $e");
     }

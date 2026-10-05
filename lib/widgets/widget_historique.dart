@@ -97,6 +97,22 @@ class _WidgetHistoriqueState extends State<WidgetHistorique>
           backgroundColor: Colors.transparent,
           insetPadding: const EdgeInsets.all(40),
           child: GestureDetector(
+            // `opaque`, et c'est tout l'objet du correctif.
+            //
+            // Par défaut, un GestureDetector qui a un enfant ne reçoit les
+            // touchers QUE là où cet enfant peint réellement. Son enfant est
+            // ici un `ContenuCentre`, donc un `Center` : il occupe toute la
+            // boîte mais ne « dessine » que le carré du souvenir. Taper à
+            // côté ne touchait donc pas le détecteur — et ne touchait pas non
+            // plus le voile du fond, puisque la boîte de dialogue, large de
+            // presque tout l'écran, absorbait le toucher au passage. Le
+            // souvenir ne se refermait qu'en tapant dessus.
+            //
+            // En opaque, le détecteur revendique toute sa surface : taper
+            // n'importe où referme. Les boutons du souvenir continuent de
+            // fonctionner, Flutter donnant la main au plus intérieur des
+            // détecteurs.
+            behavior: HitTestBehavior.opaque,
             onTap: () => Navigator.pop(context),
             // Bornée : sans cette limite, le souvenir agrandi occupait un
             // carré de neuf cents points sur un iPad 13 pouces. Une note

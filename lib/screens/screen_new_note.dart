@@ -49,6 +49,22 @@ class ScreenNewNote extends StatefulWidget {
 class _ScreenNewNoteState extends State<ScreenNewNote> {
   final TextEditingController _controller = TextEditingController();
 
+  /// Focus du champ de saisie, tenu explicitement.
+  ///
+  /// Le champ montait auparavant le clavier par `autofocus: true`, et c'est ce
+  /// qui faisait sauter le clavier sous la modale Premium. `autofocus` n'est
+  /// pas un geste ponctuel : il INSCRIT une demande de focus auprès du
+  /// `FocusScope` de la route, et ce scope la rejoue chaque fois qu'il
+  /// redevient actif sans que rien d'autre ne tienne le focus. Or c'est
+  /// exactement l'état où se trouve cet écran au retour de l'écran des thèmes,
+  /// puisqu'on y a justement relâché le focus avant de partir : la demande en
+  /// attente se déclenchait alors au pire moment, pendant que la boîte
+  /// s'ouvrait par-dessus.
+  ///
+  /// Avec un nœud explicite, le focus est demandé UNE FOIS, à l'ouverture de
+  /// l'écran, et plus jamais de lui-même.
+  final FocusNode _focusNote = FocusNode();
+
   /// Décor du post-it. Part de celui reçu, puis suit la baguette.
   late ThemeApp _themeVisuel;
   
@@ -66,6 +82,12 @@ class _ScreenNewNoteState extends State<ScreenNewNote> {
         TextSelection.collapsed(offset: _controller.text.length);
     _controller.addListener(_updateValidationState);
     _updateValidationState();
+
+    // Le clavier s'ouvre dès l'arrivée sur l'écran — on vient y écrire — mais
+    // par une demande UNIQUE, après la première image. Rien ne la rejouera.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _focusNote.requestFocus();
+    });
   }
 
   void _updateValidationState() {
@@ -112,6 +134,25 @@ class _ScreenNewNoteState extends State<ScreenNewNote> {
   /// L'aperçu envoyé est un souvenir ÉPHÉMÈRE : la note n'existe pas encore en
   /// base, on n'en fabrique une copie que pour la donner à peindre.
   Future<void> _ouvrirChoixTheme() async {
+    // LE CLAVIER PART AVANT D'EMPILER L'ÉCRAN DES THÈMES.
+    //
+    // Sans cela, la route de saisie retient que le champ avait le focus et le
+    // lui rend dès qu'elle réapparaît — c'est-à-dire à l'instant précis où la
+    // modale Premium s'ouvre par-dessus. On voyait le clavier remonter sous la
+    // boîte, dans un écran où plus rien ne s'écrit : c'est ce qui donnait
+    // l'impression que les deux se disputaient l'écran.
+    //
+    // L'écran des thèmes ne contient aucun champ de saisie : la note n'y est
+    // qu'un aperçu peint, et le clavier n'y a rien à faire.
+    //
+    // Conséquence assumée : au retour, le clavier ne remonte pas tout seul. Il
+    // faut toucher la note pour reprendre l'écriture — ce qui vaut mieux qu'un
+    // clavier qui jaillit sans qu'on ait rien demandé.
+    //
+    // On relâche le NŒUD du champ, et non le scope : relâcher le scope laissait
+    // la demande d'`autofocus` reprendre la main au retour. Voir _focusNote.
+    _focusNote.unfocus();
+
     final NoteSourire apercu = NoteSourire(
       text: _controller.text,
       themeLabel: _themeVisuel.id,
@@ -162,6 +203,7 @@ class _ScreenNewNoteState extends State<ScreenNewNote> {
   void dispose() {
     _controller.removeListener(_updateValidationState);
     _controller.dispose();
+    _focusNote.dispose();
     _canValidateNotifier.dispose();
     super.dispose();
   }
@@ -296,7 +338,10 @@ class _ScreenNewNoteState extends State<ScreenNewNote> {
                                                 physics: const BouncingScrollPhysics(),
                                                 child: TextField(
                                                   controller: _controller,
-                                                  autofocus: true,
+                                                  // Pas d'`autofocus` : voir
+                                                  // _focusNote, c'est lui qui
+                                                  // ouvre le clavier, une fois.
+                                                  focusNode: _focusNote,
                                                   maxLines: null,
                                                   keyboardType: TextInputType.multiline,
                                                   textAlign: TextAlign.center,

@@ -21,6 +21,12 @@ dependencies:
   # réserve aux applications dont la gestion des photos est la fonction même.
   # Voir AndroidManifest.xml.
   image_picker: ^1.1.2
+  # Ces deux-là ne sont PAS redondantes avec la précédente : image_picker les
+  # embarque déjà, mais on importe directement `ImagePickerAndroid` dans
+  # main.dart pour activer le Photo Picker d'Android, et pub exige alors de les
+  # déclarer. Voir le commentaire de `main()`.
+  image_picker_android: ^0.8.13
+  image_picker_platform_interface: ^2.11.0
   cupertino_icons: ^1.0.8
   path_provider: ^2.1.5
   intl: ^0.20.2

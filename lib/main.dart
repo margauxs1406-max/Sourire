@@ -4,6 +4,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:image_picker_android/image_picker_android.dart';
+import 'package:image_picker_platform_interface/image_picker_platform_interface.dart';
 import 'package:sourire/l10n/app_localizations.dart';
 import 'package:sourire/l10n/app_localizations_en.dart';
 import 'package:sourire/l10n/app_localizations_es.dart';
@@ -41,6 +43,26 @@ void main() async {
   // qu'ils ont eux-mêmes saisis.
   if (kReleaseMode) {
     debugPrint = (String? message, {int? wrapWidth}) {};
+  }
+
+  // LE VRAI SÉLECTEUR DE PHOTOS D'ANDROID, et non le navigateur de fichiers.
+  //
+  // Contre toute attente, `image_picker` n'ouvre PAS le Photo Picker d'Android
+  // par défaut : son drapeau `useAndroidPhotoPicker` vaut `false`, et le
+  // greffon se rabat alors sur `ACTION_GET_CONTENT`, c'est-à-dire l'explorateur
+  // de documents — celui qui n'affiche que des dossiers, sans grille de photos.
+  // Le README du paquet principal affirme le contraire ; c'est un bug de
+  // documentation connu (flutter/flutter#184826), et seul le README du
+  // sous-paquet Android dit juste.
+  //
+  // Ce drapeau commande aussi le plafond de sélection multiple : sans lui, le
+  // `limit` passé à `pickMultiImage` n'est pas respecté.
+  //
+  // Le test de type suffit à rendre la ligne multiplateforme : sur iOS,
+  // l'implémentation n'est pas `ImagePickerAndroid` et rien ne se passe.
+  final ImagePickerPlatform selecteurPhotos = ImagePickerPlatform.instance;
+  if (selecteurPhotos is ImagePickerAndroid) {
+    selecteurPhotos.useAndroidPhotoPicker = true;
   }
 
   await SystemChrome.setPreferredOrientations([

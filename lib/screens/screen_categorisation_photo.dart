@@ -192,6 +192,15 @@ class _ScreenCategorisationPhotoState extends State<ScreenCategorisationPhoto> {
         return;
       }
 
+      // La date de prise de vue est lue dans les métadonnées EXIF du fichier
+      // rangé — et non de l'original, qui vit dans un cache temporaire que le
+      // système peut vider à tout moment.
+      //
+      // Elle est lue APRÈS l'enregistrement et jamais avant : si elle manque,
+      // le souvenir existe quand même. Une date absente n'empêche pas de
+      // garder un moment heureux.
+      final DateTime? prise = await PhotoService.dateDePriseDeVue(File(localPath));
+
       final nouvellePhoto = NoteSourire(
         text: null,
         photoPath: localPath,
@@ -199,19 +208,17 @@ class _ScreenCategorisationPhotoState extends State<ScreenCategorisationPhoto> {
         colorLabel: SourireTheme.getRandomPhoto().label,
         categories: categories.isEmpty ? ["unclassified"] : List<String>.from(categories),
         // `date` reste la date d'ENTRÉE dans le bocal : c'est elle qui ordonne
-        // l'historique.
+        // l'historique. Une photo de 2019 importée aujourd'hui ne doit pas
+        // replonger au fond de l'historique.
         date: DateTime.now(),
-        // `datePrise` n'est plus renseignée à l'import, et c'est la
-        // conséquence directe du passage au sélecteur du système : il remet un
-        // FICHIER, pas une fiche de photothèque. La date de prise de vue était
-        // lue dans l'index de la galerie — ce même index dont l'accès nous est
-        // désormais refusé, et c'est bien tout l'objet du changement.
+        // `datePrise` est la date affichée sur le souvenir, y compris sur
+        // l'image partagée — d'où l'importance d'y mettre la vraie.
         //
-        // Rien ne casse pour autant : `NoteSourire.dateAffichee` retombe sur
-        // `date`, et la date reste corrigeable à la main depuis le souvenir
-        // ouvert en grand (voir souvenir_tirage.dart). Une photo de 2019
-        // importée aujourd'hui s'affiche donc à la date du jour tant qu'on ne
-        // la corrige pas. Les souvenirs déjà en base gardent la leur.
+        // Elle vaut `null` quand la photo n'en porte pas : capture d'écran,
+        // image reçue par messagerie, visuel retouché. Ce n'est pas une
+        // anomalie. `NoteSourire.dateAffichee` retombe alors sur `date`, et
+        // l'utilisateur peut corriger depuis le souvenir ouvert en grand.
+        datePrise: prise,
       );
       _databaseService.insertNote(nouvellePhoto);
       preloadHistoriqueImage(localPath); // volontairement SANS await
@@ -272,10 +279,14 @@ class _ScreenCategorisationPhotoState extends State<ScreenCategorisationPhoto> {
           nombre: widget.photos.length,
           constructeurApercu: (context, index) => ClipRRect(
             borderRadius: BorderRadius.circular(20),
-            // Le fichier est déjà borné à 1600 px par le sélecteur : il n'y a
-            // plus de vignette à demander, l'image EST la vignette.
+            // `cacheWidth` seul, jamais les deux : voir la vignette du
+            // bandeau, qui se retrouvait écrasée quand les deux étaient
+            // donnés. Mille points suffisent pour un carrousel plein écran,
+            // et évitent de décoder le fichier à sa taille d'origine pour
+            // chaque photo du lot — c'est ce qui rendait l'ouverture lente.
             child: Image.file(
               widget.photos[index],
+              cacheWidth: 1000,
               fit: BoxFit.cover,
             ),
           ),
@@ -530,13 +541,22 @@ class _ScreenCategorisationPhotoState extends State<ScreenCategorisationPhoto> {
                                           borderRadius: BorderRadius.circular(4),
                                           child: Image.file(
                                             widget.photos[widget.currentIndex],
-                                            // 240 px suffisent pour une
-                                            // vignette de 80 : on demande au
-                                            // décodeur de s'arrêter là plutôt
-                                            // que de monter 1600 px en mémoire
-                                            // pour les réduire ensuite.
+                                            // UNE SEULE DIMENSION, et c'est
+                                            // tout le sujet : donner les deux
+                                            // force le décodeur à produire
+                                            // exactement 240 × 240, donc à
+                                            // ÉCRASER l'image. `BoxFit.cover`
+                                            // ne peut plus rien rattraper, la
+                                            // déformation est déjà dans les
+                                            // pixels. Avec la seule largeur,
+                                            // la hauteur suit le rapport
+                                            // d'origine.
+                                            //
+                                            // 240 px pour une vignette de 80 :
+                                            // de quoi rester net sur un écran
+                                            // à 3×, sans monter 1600 px en
+                                            // mémoire pour les réduire après.
                                             cacheWidth: 240,
-                                            cacheHeight: 240,
                                             fit: BoxFit.cover,
                                           ),
                                         ),

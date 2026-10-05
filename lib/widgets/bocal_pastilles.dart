@@ -117,6 +117,38 @@ class _BocalPastillesState extends State<BocalPastilles> with SingleTickerProvid
   late final Ticker _ticker;
   Duration _dernierTemps = Duration.zero;
 
+  /// Temps écoulé pas encore consommé par la simulation.
+  ///
+  /// Voir [_onTick] : la physique avance par pas FIXES, et ce reliquat est ce
+  /// qui reste entre deux pas.
+  double _reliquat = 0;
+
+  /// Pas de simulation, en secondes. **Fixe, et volontairement découplé de la
+  /// fréquence de l'écran.**
+  ///
+  /// La physique avançait auparavant d'un pas par image affichée. Sur un écran
+  /// 60 Hz — iPhone XR, Galaxy S10 — cela fait soixante résolutions de
+  /// collisions par seconde, ce qui passe. Sur un écran 120 Hz — Galaxy S24 —
+  /// cela en faisait cent vingt, dans un budget d'image deux fois plus court :
+  /// le solveur est en O(n²) et rejoué quatre fois par pas, soit près de vingt
+  /// mille tests de paires par image avec un bocal plein. D'où des billes
+  /// saccadées sur les téléphones les plus rapides, et seulement sur eux.
+  ///
+  /// Avec un pas fixe, un écran 120 Hz simule une image sur deux : la charge
+  /// par seconde redevient celle d'un 60 Hz, et surtout le bocal se comporte
+  /// EXACTEMENT pareil sur tous les appareils. C'est la vraie raison de ce
+  /// changement — une simulation dont le résultat dépend de l'écran n'est pas
+  /// une simulation, c'est un hasard.
+  static const double _pasPhysique = 1 / 60;
+
+  /// Nombre maximal de pas rattrapés en une image.
+  ///
+  /// Sans cette borne, une image lente demanderait plusieurs pas, qui la
+  /// rendraient plus lente encore, qui en demanderaient davantage : la
+  /// « spirale de la mort » classique des boucles à pas fixe. Au-delà, on
+  /// laisse simplement filer le temps.
+  static const int _pasMaxParImage = 3;
+
   double _width = 0;
   double _height = 0;
 
@@ -176,12 +208,28 @@ class _BocalPastillesState extends State<BocalPastilles> with SingleTickerProvid
     _dernierTemps = elapsed;
 
     // Sécurité : ignore les dt aberrants (ex: app remise au premier plan après veille)
-    final double dtClamp = dt.clamp(0.0, 1 / 30);
+    _reliquat += dt.clamp(0.0, 1 / 15);
 
-    _world.updateBounds(_width, _height);
-    _world.step(dtClamp);
+    // La simulation avance par pas fixes, et seulement quand il y a de quoi en
+    // faire un. Sur un écran 120 Hz, une image sur deux ne fait donc rien —
+    // ni physique, ni reconstruction — et le bocal coûte exactement ce qu'il
+    // coûte sur un 60 Hz.
+    bool aAvance = false;
+    int pas = 0;
+    while (_reliquat >= _pasPhysique && pas < _pasMaxParImage) {
+      _world.updateBounds(_width, _height);
+      _world.step(_pasPhysique);
+      _reliquat -= _pasPhysique;
+      aAvance = true;
+      pas++;
+    }
 
-    if (mounted) setState(() {});
+    // Retard trop important pour être rattrapé : on repart à zéro plutôt que
+    // de traîner une dette qui ferait accélérer les billes au moment où
+    // l'appareil respire enfin.
+    if (_reliquat > _pasPhysique) _reliquat = 0;
+
+    if (aAvance && mounted) setState(() {});
   }
 
   @override
