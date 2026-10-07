@@ -16,6 +16,51 @@ class UserPrefs {
   static String get prenom => _prefs?.getString('prenom') ?? "";
   static set prenom(String value) => _prefs?.setString('prenom', value);
 
+  /// Ce qui coupe un prénom en plusieurs morceaux.
+  ///
+  /// L'apostrophe est présente deux fois : la droite, celle des claviers, et la
+  /// typographique, que les téléphones substituent souvent d'eux-mêmes. Les
+  /// oublier reviendrait à traiter « O'Brien » et « O’Brien » différemment
+  /// selon le clavier, ce qui est exactement le genre d'écart invisible qu'on
+  /// ne retrouve jamais.
+  static const Set<String> _separateursPrenom = <String>{
+    '-', ' ', "'", '’',
+  };
+
+  /// Met un prénom en forme pour l'affichage, segment par segment.
+  ///
+  /// Chaque morceau prend sa majuscule, et pas seulement le premier. On
+  /// écrivait auparavant « première lettre en capitale, TOUT le reste en
+  /// minuscules », ce qui donnait « Marie-christine » et « Jean-luc » : la
+  /// règle marchait pour les prénoms simples et trahissait tous les autres.
+  ///
+  /// Le reste passe bien en minuscules, à dessein : quelqu'un qui saisit
+  /// « MARIE-CHRISTINE » en capitales ne veut pas être interpellé en criant à
+  /// chaque ouverture de l'application.
+  static String prenomEnForme(String brut) {
+    final String propre = brut.trim();
+    if (propre.isEmpty) return '';
+
+    final StringBuffer sortie = StringBuffer();
+    bool debutDeSegment = true;
+
+    // Par `runes` et non par index : un prénom peut contenir des caractères
+    // que Dart stocke sur deux unités, et les découper au milieu produirait
+    // des losanges à la place des lettres.
+    for (final int unite in propre.runes) {
+      final String caractere = String.fromCharCode(unite);
+      sortie.write(
+        debutDeSegment ? caractere.toUpperCase() : caractere.toLowerCase(),
+      );
+      debutDeSegment = _separateursPrenom.contains(caractere);
+    }
+
+    return sortie.toString();
+  }
+
+  /// Le prénom tel qu'il doit s'afficher. Voir [prenomEnForme].
+  static String get prenomAffiche => prenomEnForme(prenom);
+
   // --- GENRE ----------------------------------------------------------------
   // Stocké sous forme de CODE ('f' / 'h') et non plus du libellé traduit :
   // l'ancien stockage ("Une femme" / "A woman") cassait l'accord dès que

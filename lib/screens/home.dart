@@ -643,9 +643,10 @@ Widget build(BuildContext context) {
   double screenWidth = MediaQuery.of(context).size.width;
   final l10n = AppLocalizations.of(context)!;
 
-  String prenomBrut = UserPrefs.prenom.trim();
-  if (prenomBrut.isEmpty) prenomBrut = "Etranger";
-  final String prenomAffiche = prenomBrut[0].toUpperCase() + prenomBrut.substring(1).toLowerCase();
+  // La mise en forme vit dans UserPrefs : elle traite les prénoms composés
+  // segment par segment, là où le calcul fait ici écrivait « Marie-christine ».
+  String prenomAffiche = UserPrefs.prenomAffiche;
+  if (prenomAffiche.isEmpty) prenomAffiche = "Etranger";
 
   final String accordAffiche = UserPrefs.accordHeureux;
 

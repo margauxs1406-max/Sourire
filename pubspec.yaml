@@ -2,7 +2,14 @@ name: sourire
 description: "Sourire : une collection de souvenirs heureux, gardée sur le téléphone et nulle part ailleurs."
 publish_to: 'none'
 
-version: 1.0.0+18
+# Avant le `+` : la version affichée aux utilisateurs, sur les deux boutiques.
+# Après le `+` : le numéro de build, qui ne sert qu'aux boutiques pour ranger
+# les envois. Il ne redescend JAMAIS, même quand la version affichée change.
+#
+# Android lit les deux ici, par `flutter.versionName` et `flutter.versionCode`
+# dans android/app/build.gradle.kts : rien à recopier de ce côté. iOS, lui, les
+# duplique dans ios/Runner/Info.plist, et les deux doivent rester d'accord.
+version: 1.1.0+19
 
 environment:
   sdk: ^3.11.5

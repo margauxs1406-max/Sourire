@@ -19,8 +19,12 @@ import 'package:sourire/widgets/souvenir_historique.dart';
 /// on voit le texte réel, sur le vrai fond, et on change d'avis autant qu'on
 /// veut avant d'appliquer.
 ///
-/// Retourne le thème retenu, ou `null` si l'utilisateur ressort sans rien
-/// changer.
+/// **Tous les décors sont visibles, abonnement ou non.** On essaie librement,
+/// cadenas compris ; c'est seulement en appliquant un décor réservé que
+/// l'offre apparaît.
+///
+/// Retourne le thème retenu, `_AppelPremium` si le décor appliqué est réservé,
+/// ou `null` si l'utilisateur ressort sans rien changer.
 class ScreenChoixThemeNote extends StatefulWidget {
   /// Le souvenir tel qu'il est en train d'être écrit — texte et couleur
   /// compris. Il n'existe pas encore en base : on ne s'en sert que pour
@@ -63,18 +67,36 @@ class _ScreenChoixThemeNoteState extends State<ScreenChoixThemeNote> {
 
   bool get _estPremium => UserPrefs.isPremium;
 
-  /// Un thème verrouillé ne s'applique pas : il ouvre l'offre premium.
+  /// Le thème choisi s'affiche sur la note. TOUS les thèmes, y compris ceux
+  /// qui sont réservés aux abonnés.
   ///
-  /// C'est le moment le plus favorable pour la présenter — la personne est en
-  /// train d'écrire, elle vient de voir ce que le thème donnerait, et l'offre
-  /// répond à une envie qu'elle a formulée d'elle-même une seconde plus tôt.
+  /// Toucher un thème verrouillé renvoyait auparavant vers l'offre premium
+  /// sur-le-champ. On demandait donc d'acheter quelque chose que la personne
+  /// n'avait jamais vu : elle connaissait le nom du décor et une pastille de
+  /// soixante points, rien de plus. C'est exactement l'inverse de ce qu'il
+  /// faut faire — on n'a envie que de ce qu'on a vu.
+  ///
+  /// Le cadenas reste sur la pastille : rien ne laisse croire que le décor est
+  /// acquis. C'est au moment d'appliquer, et seulement là, que l'offre
+  /// apparaît — voir le bouton Appliquer.
   void _choisir(ThemeApp theme) {
-    if (theme.isPremium && !_estPremium) {
+    HapticFeedback.selectionClick();
+    setState(() => _themeCourant = theme);
+  }
+
+  /// Applique le thème en cours, ou présente l'offre s'il est réservé.
+  ///
+  /// C'est le moment le plus favorable pour la présenter : la personne est en
+  /// train d'écrire, elle a sous les yeux SA note dans le décor qu'elle veut,
+  /// et elle vient de demander à le garder. L'offre répond alors à une envie
+  /// qu'elle a formulée elle-même, une seconde plus tôt, en connaissance de
+  /// cause.
+  void _appliquer() {
+    if (_themeCourant.isPremium && !_estPremium) {
       Navigator.pop(context, _AppelPremium.instance);
       return;
     }
-    HapticFeedback.selectionClick();
-    setState(() => _themeCourant = theme);
+    Navigator.pop(context, _themeCourant);
   }
 
   @override
@@ -226,9 +248,12 @@ class _ScreenChoixThemeNoteState extends State<ScreenChoixThemeNote> {
                           height: 56,
                           child: BtnAction(
                             text: mots.btnApply,
+                            // Actif même sur un thème verrouillé : c'est ce
+                            // bouton qui ouvre l'offre, le griser reviendrait
+                            // à fermer la porte qu'on veut ouvrir.
                             isActive: true,
                             color: orange,
-                            onTap: () => Navigator.pop(context, _themeCourant),
+                            onTap: _appliquer,
                           ),
                         ),
                       ),

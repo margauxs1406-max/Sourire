@@ -63,13 +63,12 @@ class _ScreenProfilState extends State<ScreenProfil> {
   void initState() {
     super.initState();
     
-    // 1. Remplissage et nettoyage du Prénom (Met la première lettre en majuscule dès le départ)
-    // Plus de valeur de repli codée en dur : un champ vide vaut mieux que le
-    // prénom de quelqu'un d'autre affiché à un nouvel utilisateur.
-    final String prenomBrut = UserPrefs.prenom.trim();
-    _prenomController.text = prenomBrut.isEmpty
-        ? ""
-        : prenomBrut[0].toUpperCase() + prenomBrut.substring(1).toLowerCase();
+    // 1. Remplissage et mise en forme du prénom, par UserPrefs : chaque segment
+    //    prend sa majuscule, y compris après un trait d'union. Le calcul fait
+    //    ici écrivait « Marie-christine ».
+    //    Plus de valeur de repli codée en dur : un champ vide vaut mieux que le
+    //    prénom de quelqu'un d'autre affiché à un nouvel utilisateur.
+    _prenomController.text = UserPrefs.prenomAffiche;
 
     // 2. Initialisation du mot de passe en mode masqué
     _passwordController.text = "••••••••••••";
