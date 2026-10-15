@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:sourire/l10n/app_localizations.dart';
 import 'package:sourire/l10n/langues.dart';
 import 'package:sourire/screens/home.dart';
+import 'package:sourire/services/amorcage_service.dart';
 import 'package:sourire/services/biometric_service.dart';
 import 'package:sourire/theme/tokens.dart';
 import 'package:sourire/widgets/logo_sourire.dart';
@@ -68,8 +69,19 @@ class _ScreenOnboardingState extends State<ScreenOnboarding> {
           
           debugPrint("ONBOARDING LOG : Données UserPrefs sauvegardées avec succès (Biométrie active : $_biometrieValue). Transition vers Home...");
 
-          // L'enregistrement du mot de passe est un `await` : l'écran a pu
-          // être démonté entre-temps.
+          // Les cinq souvenirs d'amorçage sont déposés ICI, et pas dans
+          // `main()` : c'est le premier instant du cycle de vie où la langue
+          // est connue, puisque l'utilisateur vient de la choisir à la
+          // première page. Avant, l'amorçage avait lieu au lancement, donc
+          // avant ce choix, et les textes partaient toujours en français.
+          //
+          // `await` indispensable : `amorcerBocal` rafraîchit le cache du
+          // DatabaseService avant de rendre la main, et la home lit ce cache
+          // dès son `initState`.
+          await AmorcageService.deposerSiNecessaire();
+
+          // Deux `await` derrière nous — le mot de passe et l'amorçage :
+          // l'écran a pu être démonté entre-temps.
           if (!mounted) return;
 
           debugPrint("ONBOARDING LOG : Exécution directe du pushReplacement de la Home.");

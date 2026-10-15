@@ -7,9 +7,6 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:image_picker_android/image_picker_android.dart';
 import 'package:image_picker_platform_interface/image_picker_platform_interface.dart';
 import 'package:sourire/l10n/app_localizations.dart';
-import 'package:sourire/l10n/app_localizations_en.dart';
-import 'package:sourire/l10n/app_localizations_es.dart';
-import 'package:sourire/l10n/app_localizations_fr.dart';
 import 'package:sourire/l10n/langues.dart';
 import 'package:sourire/screens/home.dart';
 import 'package:sourire/screens/screen_boot.dart'; 
@@ -22,6 +19,7 @@ import 'package:sourire/services/timezone_service.dart';
 import 'package:sourire/theme/theme_service.dart';
 import 'package:sourire/services/database_service.dart';
 import 'package:sourire/services/achat_service.dart';
+import 'package:sourire/services/amorcage_service.dart';
 import 'package:sourire/services/photo_service.dart';
 import 'package:sourire/widgets/bocal_preloader.dart';
 
@@ -95,31 +93,26 @@ void main() async {
   // jours cochés. Bascule unique, sans effet ensuite.
   await UserPrefs.migrerVersJoursMultiples();
 
-  // Cinq souvenirs d'amorçage au tout premier lancement : le bocal n'est pas
-  // vide, on peut tirer immédiatement, et ce sont autant d'invitations à
-  // écrire. Sans effet si le bocal contient déjà quelque chose.
-  if (!UserPrefs.amorcageEffectue) {
-    // Traductions choisies à la main : on est avant `runApp`, donc sans
-    // contexte ni `AppLocalizations.of`.
-    final AppLocalizations textes = switch (UserPrefs.langue) {
-      'en' => AppLocalizationsEn(),
-      'es' => AppLocalizationsEs(),
-      _ => AppLocalizationsFr(),
-    };
-
-    await DatabaseService().amorcerBocal(
-      [
-        textes.amorceVoyage,
-        textes.amorceFouRire,
-        textes.amorceCadeau,
-        textes.amorceToi,
-        textes.amorceFierte,
-      ],
-      // Les souvenirs d'amorçage sont des notes : ils portent le thème des
-      // NOTES, pas celui du décor de la home.
-      UserPrefs.themeNoteId,
-    );
-    UserPrefs.amorcageEffectue = true;
+  // Cinq souvenirs d'amorçage : le bocal n'est pas vide, on peut tirer
+  // immédiatement, et ce sont autant d'invitations à écrire.
+  //
+  // Ils ne sont PLUS déposés ici pour un nouvel arrivant. Leurs textes sont
+  // traduits, et au tout premier lancement la langue n'est pas encore
+  // choisie : elle l'est à la première page de l'onboarding, donc après ce
+  // point du code. `UserPrefs.langue` renvoyait son défaut, "fr", et les cinq
+  // souvenirs arrivaient en français dans le bocal de quelqu'un qui venait de
+  // choisir l'anglais ou l'espagnol. C'est l'onboarding qui s'en charge
+  // désormais, juste avant d'ouvrir la home.
+  //
+  // Reste le cas de la mise à jour : une installation déjà en place ne reverra
+  // jamais l'onboarding, et sa langue est déjà connue. Pour elle — et pour
+  // elle seule — l'amorçage a bien lieu ici. La condition est la négation
+  // exacte de celle qui envoie vers l'onboarding dans ScreenBoot, pour que les
+  // deux ne puissent jamais être vraies ni fausses en même temps.
+  final bool onboardingAVenir =
+      UserPrefs.prenom.isEmpty && !UserPrefs.aUnMotDePasse;
+  if (!onboardingAVenir) {
+    await AmorcageService.deposerSiNecessaire();
   }
 
   // Première et unique lecture de la base au démarrage. Les flux du
